@@ -24,6 +24,9 @@ public class PCB implements Comparable<PCB> {
     private EstadoProceso estado;
     private TipoProceso tipo;
     private int prioridad;
+    // Prioridad del proceso.
+// Convención: 1 = baja, 2 = media, 3 = alta.
+// A mayor número, mayor prioridad.
 
     // ---------- Recursos ----------
     private int memoria;
