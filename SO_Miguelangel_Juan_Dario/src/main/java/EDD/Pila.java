@@ -83,4 +83,33 @@ public class Pila {
     public Object leerCabeza(){
         return pInicio.getDato();
     }
+    
+        /**
+     * Apila (push) un nuevo elemento en la cima de la pila.
+     * El nuevo nodo se inserta al inicio de la lista enlazada.
+     *
+     * @param dato el dato que se desea almacenar en la pila.
+     */
+    public void push(Object dato) {
+        Nodo nuevo = new Nodo(dato);
+        nuevo.setpNext(getpInicio());
+        setpInicio(nuevo);
+        setSize(getSize() + 1);
+    }
+    
+    /**
+ * Desapila (pop) el elemento que está en la cima de la pila.
+ * Se elimina el nodo inicial y se retorna su dato.
+ *
+ * @return el dato que estaba en la cima de la pila, o null si la pila está vacía.
+ */
+public Object pop() {
+    if (esVacio()) {
+        return null;
+    }
+    Object dato = leerCabeza();                    
+    setpInicio(getpInicio().getpNext());           
+    setSize(getSize() - 1);
+    return dato;
+}
 }
