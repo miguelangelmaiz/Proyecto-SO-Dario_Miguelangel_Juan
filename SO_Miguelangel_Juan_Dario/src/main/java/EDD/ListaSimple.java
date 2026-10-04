@@ -150,26 +150,26 @@ public class ListaSimple {
     }
 
     public void insertForReference(Object ref, Object dato) {
-        if (this.search(ref) || ref == null) {
-            if (ref == null) {
-                this.insertFinale(dato);
-            } else {
-                Nodo nuevo = new Nodo(dato);
-
-                Nodo aux = this.pFirst;
-                while (aux.getDato() != ref) {
-                    aux = aux.getpNext();
-                }
-                Nodo siguiente = aux.getpNext();
-                aux.setpNext(nuevo);
-                nuevo.setpNext(siguiente);
-
-            }
-            size++;
+    if (ref == null || this.search(ref)) {
+        if (ref == null) {
+            this.insertFinale(dato);
         } else {
-            System.out.println("No se encuentra la referencia.");
+            Nodo nuevo = new Nodo(dato);
+
+            Nodo aux = this.pFirst;
+            while (!aux.getDato().equals(ref)) {
+                aux = aux.getpNext();
+            }
+            Nodo siguiente = aux.getpNext();
+            aux.setpNext(nuevo);
+            nuevo.setpNext(siguiente);
+
         }
+        size++;
+    } else {
+        System.out.println("No se encuentra la referencia.");
     }
+}
 
     public void editObject(Object ref, Object newValue) {
         if (this.search(ref)) {
@@ -178,9 +178,9 @@ public class ListaSimple {
             } else {
                 Nodo aux = this.pFirst;
                 while (aux != null) {
-                    if (aux.getDato() == ref) {
-                        aux.setDato(newValue);
-                    }
+                    if (aux.getDato().equals(ref)) {
+                    aux.setDato(newValue);
+                    }   
                     aux = aux.getpNext();
                 }
             }
@@ -231,9 +231,9 @@ public class ListaSimple {
                 Nodo aux = this.pFirst;
                 int count = 0;
                 while (aux != null) {
-                    if (aux.getDato() == dato) {
-                        return count;
-                    }
+                    if (aux.getDato().equals(dato)) {
+    return count;
+}
                     count++;
                     aux = aux.getpNext();
                 }
@@ -321,13 +321,14 @@ public class ListaSimple {
     public void deleteForReference(Object referencia) {
 
         if (this.search(referencia)) {
-            if (pFirst.getDato() == referencia) {
-                pFirst = pFirst.getpNext();
-            } else {
-                Nodo aux = pFirst;
-                while (aux.getpNext().getDato() != referencia) {
-                    aux = aux.getpNext();
+            if (pFirst.getDato().equals(referencia)) {
+            pFirst = pFirst.getpNext();
+        } else {
+            Nodo aux = pFirst;
+            while (!aux.getpNext().getDato().equals(referencia)) {
+               aux = aux.getpNext();
                 }
+    
                 Nodo siguiente = aux.getpNext().getpNext();
                 aux.setpNext(siguiente);
             }
@@ -352,18 +353,17 @@ public class ListaSimple {
     public boolean search(Object dato) {
         boolean encontrado = false;
         if (!this.isEmpty()) {
-            if (this.size == 1 && this.pFirst.getDato() == dato) {
-                encontrado = true;
+            if (this.size == 1 && this.pFirst.getDato().equals(dato)) {
+            encontrado = true;
             } else {
-                Nodo aux = this.pFirst;
-                while (aux != null) {
-                    if (aux.getDato() == dato) {
-                        encontrado = true;
-                    }
-
-                    aux = aux.getpNext();
-                }
-            }
+             Nodo aux = this.pFirst;
+                 while (aux != null) {
+                 if (aux.getDato().equals(dato)) {
+               encontrado = true;
+                }   
+                aux = aux.getpNext();
+    }
+}
         }
         return encontrado;
     }

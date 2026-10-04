@@ -12,6 +12,7 @@ public class ColaPrioridad {
    private Nodo cabeza;
    private int size;
    
+   
    public ColaPrioridad(){
        this.cabeza = null;
        this.size = 0;
