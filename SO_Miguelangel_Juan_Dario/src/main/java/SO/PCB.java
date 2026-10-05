@@ -11,9 +11,18 @@ import Enums.TipoProceso;
  *
  * @author Miguel
  */
-public class PCB implements Comparable<PCB> {
+public class PCB  {
 
     private static int contadorId = 1;
+
+    // Convención de prioridad: a mayor número, mayor prioridad.
+    //   1 → baja
+    //   2 → media
+    //   3 → alta
+    // El envejecimiento (aging) sube este valor con el tiempo.
+    public static final int PRIORIDAD_BAJA  = 1;
+    public static final int PRIORIDAD_MEDIA = 2;
+    public static final int PRIORIDAD_ALTA  = 3;
 
     // ---------- Identificación ----------
     private final int id;
@@ -24,9 +33,6 @@ public class PCB implements Comparable<PCB> {
     private EstadoProceso estado;
     private TipoProceso tipo;
     private int prioridad;
-    // Prioridad del proceso.
-// Convención: 1 = baja, 2 = media, 3 = alta.
-// A mayor número, mayor prioridad.
 
     // ---------- Recursos ----------
     private int memoria;
@@ -71,6 +77,7 @@ public class PCB implements Comparable<PCB> {
         this.cicloInicio = -1;
         this.cicloFin = -1;
         this.ciclosBloqueado = 0;
+        this.motivoBloqueo = null;
     }
 
     // ---------- Getters y Setters ----------
@@ -130,16 +137,63 @@ public class PCB implements Comparable<PCB> {
     public MotivoBloqueo getMotivoBloqueo() { return motivoBloqueo; }
     public void setMotivoBloqueo(MotivoBloqueo motivoBloqueo) { this.motivoBloqueo = motivoBloqueo; }
 
+    // ----------  ----------
+
+    /** Avanza una instrucción: PC++, MAR++, restante--. */
+    public void ejecutarInstruccion() {
+        if (restante > 0) {
+            pc++;
+            mar++;
+            restante--;
+        }
+        if (restante <= 0) {
+            this.estado = EstadoProceso.TERMINADO;
+        }
+    }
+
+    /** ¿Ya no le quedan instrucciones? */
+    public boolean estaCompletado() {
+        return restante <= 0;
+    }
+
+    /** ¿Está en CPU? */
+    public boolean estaEjecutando() {
+        return estado == EstadoProceso.EJECUCION;
+    }
+
+    /** ¿Está bloqueado? */
+    public boolean estaBloqueado() {
+        return estado == EstadoProceso.BLOQUEADO;
+    }
+
+    /** ¿Ya terminó (por fin normal o por deadline)? */
+    public boolean estaTerminado() {
+        return estado == EstadoProceso.TERMINADO;
+    }
+
+    /** Tipo legible para la GUI y el log. */
+    public String getTipoString() {
+        if (tipo == TipoProceso.CPU_BOUND) return "CPU-Bound";
+        if (tipo == TipoProceso.IO_BOUND)  return "I/O-Bound";
+        if (tipo == TipoProceso.PRODUCTOR) return "Productor";
+        return "Consumidor";
+    }
+
+    /** Prioridad legible para la GUI. */
+    public String getPrioridadString() {
+        if (prioridad >= PRIORIDAD_ALTA)  return "Alta";
+        if (prioridad >= PRIORIDAD_MEDIA) return "Media";
+        return "Baja";
+    }
+
     // ---------- Utilidades ----------
 
     /** Para el log y la GUI. */
-    @Override
     public String toString() {
         return "P" + id + "-" + nombre + "[" + estado + "]";
     }
 
-    /** equals por id: un PCB es único en todo el sistema distribuido. */
-    @Override
+    /** Igualdad por id: un PCB es único en todo el sistema distribuido. */
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PCB)) return false;
@@ -147,19 +201,7 @@ public class PCB implements Comparable<PCB> {
         return this.id == otro.id;
     }
 
-    @Override
     public int hashCode() {
-        return Integer.hashCode(id);
+        return id;
     }
-    
-    /**
- * Orden natural del PCB: mayor prioridad va primero.
- * Lo usa ColaPrioridad para saber quién va al frente.
- */
-@Override
-public int compareTo(PCB otro) {
-    // Si this tiene mayor prioridad, retorna negativo (va antes)
-    return otro.prioridad - this.prioridad;
-}
-
 }

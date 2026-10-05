@@ -11,12 +11,14 @@ package EDD;
 public class ColaPrioridad {
    private Nodo cabeza;
    private int size;
-   
-   
+
    public ColaPrioridad(){
        this.cabeza = null;
        this.size = 0;
+       
+    
    }
+ 
 // GETTERS AND SETTERS  
     /**
      * @return the cabeza
@@ -45,7 +47,7 @@ public class ColaPrioridad {
     public void setSize(int size) {
         this.size = size;
     }
-    
+  
     
    // Metodos de la clase ColaPrioridad
  
