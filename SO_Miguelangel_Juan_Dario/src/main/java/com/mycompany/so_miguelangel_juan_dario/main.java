@@ -8,6 +8,7 @@ import EDD.ColaPrioridad;
 import SO.PCB;
 import EDD.Nodo;
 import Enums.TipoProceso;
+import EDD.Criterio;
 
 /**
  *
@@ -16,10 +17,13 @@ import Enums.TipoProceso;
 public class main {
 
     public static void main(String[] args) {
-        ColaPrioridad cp = new ColaPrioridad();
-cp.Insertar(new PCB("A", TipoProceso.CPU_BOUND, 2, 256, 20, 5, 1));
-cp.Insertar(new PCB("B", TipoProceso.CPU_BOUND, 5, 256, 20, 5, 1));
-cp.Insertar(new PCB("C", TipoProceso.CPU_BOUND, 1, 256, 20, 5, 1));
+        Criterio porPrioridad = (a, b) ->
+                ((PCB) a).getPrioridad() > ((PCB) b).getPrioridad();
+
+        ColaPrioridad cp = new ColaPrioridad(porPrioridad);
+cp.insertarObjeto(new PCB("A", TipoProceso.CPU_BOUND, 2, 256, 20, 5, 1));
+cp.insertarObjeto(new PCB("B", TipoProceso.CPU_BOUND, 5, 256, 20, 5, 1));
+cp.insertarObjeto(new PCB("C", TipoProceso.CPU_BOUND, 1, 256, 20, 5, 1));
 
 System.out.println("--- ColaPrioridad ---");
 Nodo aux = cp.getCabeza();
