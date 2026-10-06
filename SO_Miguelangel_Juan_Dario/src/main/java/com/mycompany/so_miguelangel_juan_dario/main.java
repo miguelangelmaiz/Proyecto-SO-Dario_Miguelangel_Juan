@@ -9,6 +9,8 @@ import SO.PCB;
 import EDD.Nodo;
 import Enums.TipoProceso;
 import EDD.Criterio;
+import hardware.CPU;
+import hardware.ComponenteReloj;
 
 /**
  *
@@ -17,19 +19,28 @@ import EDD.Criterio;
 public class main {
 
     public static void main(String[] args) {
-        Criterio porPrioridad = (a, b) ->
-                ((PCB) a).getPrioridad() > ((PCB) b).getPrioridad();
+        PCB p = new PCB("tarea", TipoProceso.CPU_BOUND,
+                        2, 256, 20, 5, 1);
 
-        ColaPrioridad cp = new ColaPrioridad(porPrioridad);
-cp.insertarObjeto(new PCB("A", TipoProceso.CPU_BOUND, 2, 256, 20, 5, 1));
-cp.insertarObjeto(new PCB("B", TipoProceso.CPU_BOUND, 5, 256, 20, 5, 1));
-cp.insertarObjeto(new PCB("C", TipoProceso.CPU_BOUND, 1, 256, 20, 5, 1));
+        CPU cpu = new CPU();
+        System.out.println("inicio: " + cpu.estaLibre());     // true
 
-System.out.println("--- ColaPrioridad ---");
-Nodo aux = cp.getCabeza();
-while (aux != null) {
-    System.out.print(aux.getDato() + " -> ");
-    aux = aux.getpNext();
+        cpu.cargar(p);
+        System.out.println("cargado: " + cpu.estaLibre());    // false
+        System.out.println("estado: " + p.getEstado());       // EJECUCION
+        System.out.println("modo: " + cpu.getModo());         // USUARIO
+
+        for (int c = 1; c <= 6; c++) {
+            cpu.tic(c);
+            System.out.println("ciclo " + c
+                    + " | pc=" + p.getPc()
+                    + " mar=" + p.getMar()
+                    + " restante=" + p.getRestante()
+                    + " estado=" + p.getEstado()
+                    + " ocupada=" + cpu.getCiclosOcupados());
+        }
+
+        cpu.liberar();
+        System.out.println("fin libre? " + cpu.estaLibre());  // true
 }
-System.out.println("NULL");}
 }
