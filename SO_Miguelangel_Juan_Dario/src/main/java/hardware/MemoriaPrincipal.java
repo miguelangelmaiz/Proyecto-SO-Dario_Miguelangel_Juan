@@ -28,13 +28,13 @@ public class MemoriaPrincipal {
     return usada;
     }
     public int getLibre(){
-    return usada - total;
+    return total - usada;
     }
     
     public boolean hayEspacio(int kb){
     return kb > 0 && kb <= getLibre();
     }
-    
+    //Asigna proceso a la memoria principal
     public boolean asignar(int kb){
         if(!hayEspacio(kb)){
         return false;
@@ -42,6 +42,7 @@ public class MemoriaPrincipal {
         usada += kb;
         return true;  
     }
+    //Libera procesos de la memoria principal
     public boolean liberar(int kb) {
         if (kb <= 0 || kb > usada) return false;
         usada -= kb;

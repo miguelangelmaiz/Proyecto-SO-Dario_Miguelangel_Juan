@@ -25,10 +25,6 @@ public class RelojGlobal implements Runnable {
         this.cantidad = 0;
     }
 
-    @Override
-    public void run() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 
     /**
      * @return the corriendo
@@ -75,8 +71,8 @@ public class RelojGlobal implements Runnable {
     /**
      * @param duracionCicloMs the duracionCicloMs to set
      */
-    public void setDuracionCicloMs(int duracionCicloMs) {
-        this.duracionCicloMs = duracionCicloMs;
+    public void setDuracionCicloMs(int ms) {
+        this.duracionCicloMs = ms;
     }
 
     /**
@@ -117,7 +113,23 @@ public class RelojGlobal implements Runnable {
      public boolean isCorriendo() {
          return corriendo;
      }
-     
+
+public void run() {
+    while (corriendo) {
+        ciclo++;
+        for (int i = 0; i < cantidad; i++) {
+            suscritos[i].tic(ciclo);
+        }
+        try {
+            Thread.sleep(duracionCicloMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+        }
+    }
+    
+}
+
      
      
      

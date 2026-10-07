@@ -11,6 +11,7 @@ import Enums.TipoProceso;
 import EDD.Criterio;
 import hardware.CPU;
 import hardware.ComponenteReloj;
+import hardware.MemoriaPrincipal;
 
 /**
  *
@@ -19,19 +20,21 @@ import hardware.ComponenteReloj;
 public class main {
 
     public static void main(String[] args) {
-        Criterio porPrioridad = (a, b) ->
-                ((PCB) a).getPrioridad() > ((PCB) b).getPrioridad();
+        MemoriaPrincipal ram = new MemoriaPrincipal(1024);
 
-        ColaPrioridad cp = new ColaPrioridad(porPrioridad);
-cp.insertarObjeto(new PCB("A", TipoProceso.CPU_BOUND, 2, 256, 20, 5, 1));
-cp.insertarObjeto(new PCB("B", TipoProceso.CPU_BOUND, 5, 256, 20, 5, 1));
-cp.insertarObjeto(new PCB("C", TipoProceso.CPU_BOUND, 1, 256, 20, 5, 1));
+System.out.println("libre inicial: " + ram.getLibre());   // 1024
+System.out.println("hay 512? " + ram.hayEspacio(512));    // true
 
-System.out.println("--- ColaPrioridad ---");
-Nodo aux = cp.getCabeza();
-while (aux != null) {
-    System.out.print(aux.getDato() + " -> ");
-    aux = aux.getpNext();
-}
-System.out.println("NULL");}
+ram.asignar(512);
+System.out.println("usada: " + ram.getUsada());           // 512
+System.out.println("libre: " + ram.getLibre());           // 512
+
+System.out.println("hay 700? " + ram.hayEspacio(700));    // false
+System.out.println("asignar 700: " + ram.asignar(700));   // false
+
+ram.liberar(512);
+System.out.println("libre tras liberar: " + ram.getLibre());
+        
+        
+    }
 }

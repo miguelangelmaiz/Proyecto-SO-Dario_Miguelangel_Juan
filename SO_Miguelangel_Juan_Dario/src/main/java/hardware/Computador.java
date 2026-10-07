@@ -8,6 +8,8 @@ package hardware;
  *
  * @author jmmor
  */
+
+import SO.PCB;
 public class Computador {
     
 }
