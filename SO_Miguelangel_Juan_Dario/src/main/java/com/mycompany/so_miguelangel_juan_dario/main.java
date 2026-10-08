@@ -12,6 +12,10 @@ import EDD.Criterio;
 import hardware.CPU;
 import hardware.ComponenteReloj;
 import hardware.MemoriaPrincipal;
+import SO.Nucleo;
+import SO.Planificacion.FCFS;
+
+import hardware.CPU;
 
 /**
  *
@@ -20,21 +24,36 @@ import hardware.MemoriaPrincipal;
 public class main {
 
     public static void main(String[] args) {
-        MemoriaPrincipal ram = new MemoriaPrincipal(1024);
+        CPU cpu = new CPU();
+        MemoriaPrincipal ram = new MemoriaPrincipal(2048);
+        Nucleo nucleo = new Nucleo(1, cpu, ram, new FCFS());
 
-System.out.println("libre inicial: " + ram.getLibre());   // 1024
-System.out.println("hay 512? " + ram.hayEspacio(512));    // true
+        PCB p1 = new PCB("A", TipoProceso.CPU_BOUND,
+                PCB.PRIORIDAD_MEDIA, 256, 20, 5, 1);
+        PCB p2 = new PCB("B", TipoProceso.CPU_BOUND,
+                PCB.PRIORIDAD_MEDIA, 256, 20, 3, 1);
 
-ram.asignar(512);
-System.out.println("usada: " + ram.getUsada());           // 512
-System.out.println("libre: " + ram.getLibre());           // 512
+        nucleo.admitir(p1);
+        nucleo.admitir(p2);
 
-System.out.println("hay 700? " + ram.hayEspacio(700));    // false
-System.out.println("asignar 700: " + ram.asignar(700));   // false
+        System.out.println("=== INICIO ===");
+        System.out.println("RAM usada/libre: "
+                + ram.getUsada() + " / " + ram.getLibre());
 
-ram.liberar(512);
-System.out.println("libre tras liberar: " + ram.getLibre());
-        
-        
+        for (int i = 1; i <= 12; i++) {
+            nucleo.tic(i);
+
+            System.out.println("--- Ciclo " + i + " ---");
+            PCB enCpu = cpu.getProcesoActual();
+            System.out.println("CPU: " + (enCpu == null ? "(libre)" : enCpu));
+            System.out.print("Listos: ");
+            nucleo.getColaListos().imprimir();
+            System.out.print("Terminados: ");
+            nucleo.getTerminados().imprimir();
+            System.out.println("RAM usada/libre: "
+                    + ram.getUsada() + " / " + ram.getLibre());
+        }
     }
+        
+    
 }
