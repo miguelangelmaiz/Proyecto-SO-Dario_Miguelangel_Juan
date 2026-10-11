@@ -25,5 +25,11 @@ public class FCFS implements PoliticaPlanificacion {
     public String getNombre() {
         return "FCFS";                         // ← el cuerpo
     }
-    
+    public boolean esMejor(PCB candidato, PCB enCpu) {
+    return false;   // FCFS nunca expropia
+}
+
+public int getQuantum() {
+    return -1;      // no aplica
+}
 }

@@ -3,21 +3,16 @@
  */
 
 package com.mycompany.so_miguelangel_juan_dario;
-import EDD.Cola;
-import EDD.ColaPrioridad;
 import SO.PCB;
-import EDD.Nodo;
-import Enums.TipoProceso;
-import EDD.Criterio;
-import hardware.CPU;
-import hardware.ComponenteReloj;
-import hardware.MemoriaPrincipal;
 import SO.Nucleo;
 import SO.Planificacion.FCFS;
-import hardware.RelojGlobal;
+import SO.Planificacion.RoundRobin;
+import SO.Planificacion.EDF;
+import SO.Planificacion.PrioridadApropiativa;
 import SO.Planificacion.PoliticaPlanificacion;
-import hardware.Computador;
+import Enums.TipoProceso;
 import hardware.CPU;
+import hardware.MemoriaPrincipal;
 
 /**
  *
@@ -27,38 +22,59 @@ public class main {
 
     public static void main(String[] args) throws InterruptedException {
   
-RelojGlobal reloj = new RelojGlobal(300, 2);
+System.out.println("========================================");
+        System.out.println("   COMPARACION DE LAS 4 POLITICAS");
+        System.out.println("========================================\n");
 
-        PoliticaPlanificacion p1 = new FCFS();
-        PoliticaPlanificacion p2 = new FCFS();
+        correr("FCFS", new FCFS());
+        correr("Round Robin q=2", new RoundRobin(2));
+        correr("EDF", new EDF());
+        correr("Prioridades", new PrioridadApropiativa());
+    }
 
-        Computador c1 = new Computador(1, 2048, p1);
-        Computador c2 = new Computador(2, 2048, p2);
+    private static void correr(String nombre, PoliticaPlanificacion pol) {
 
-        reloj.suscribir(c1);
-        reloj.suscribir(c2);
+        System.out.println("========== " + nombre + " ==========");
 
-        c1.getNucleo().admitir(new PCB("A", TipoProceso.CPU_BOUND, 2, 256, 20, 5, 1));
-        c1.getNucleo().admitir(new PCB("B", TipoProceso.CPU_BOUND, 5, 256, 30, 8, 1));
-        c1.getNucleo().admitir(new PCB("C", TipoProceso.CPU_BOUND, 1, 256, 40, 3, 1));
+        CPU cpu = new CPU();
+        MemoriaPrincipal ram = new MemoriaPrincipal(2048);
+        Nucleo nucleo = new Nucleo(1, cpu, ram, pol);
 
-        Thread hilo = new Thread(reloj, "reloj-prueba");
-        hilo.setDaemon(true);
-        hilo.start();
-        reloj.iniciar();
+        // Mismos 4 procesos en cada prueba
+        PCB p1 = new PCB("A", TipoProceso.CPU_BOUND,
+                PCB.PRIORIDAD_BAJA,  256, 25, 4, 1);
+        PCB p2 = new PCB("B", TipoProceso.CPU_BOUND,
+                PCB.PRIORIDAD_ALTA,  256, 30, 6, 1);
+        PCB p3 = new PCB("C", TipoProceso.CPU_BOUND,
+                PCB.PRIORIDAD_MEDIA, 256, 15, 5, 1);
+        PCB p4 = new PCB("D", TipoProceso.CPU_BOUND,
+                PCB.PRIORIDAD_MEDIA, 256, 20, 3, 1);
 
-        Thread.sleep(3000);
-        reloj.detener();
+        nucleo.admitir(p1);
+        nucleo.admitir(p2);
+        nucleo.admitir(p3);
+        nucleo.admitir(p4);
 
-        System.out.println("=== Fin ===");
-        System.out.println("Ciclo: " + reloj.getCiclo());
-        System.out.println("Nuevos: " + c1.getNucleo().getColaNuevos().getTamano());
-        System.out.println("Listos: " + c1.getNucleo().getColaListos().getTamano());
-        System.out.println("Terminados: " + c1.getNucleo().getTerminados().getTamano());
-        System.out.println("CPU c1: " + c1.getCpu());
-        System.out.println("RAM c1: " + c1.getRam());
+        // Correr 40 ciclos o hasta que todos terminen
+        for (int i = 1; i <= 40; i++) {
+            nucleo.tic(i);
 
+            PCB enCpu = cpu.getProcesoActual();
+            String cpuStr = (enCpu == null) ? "(libre)" : enCpu.toString();
+            System.out.println("Ciclo " + i + " | CPU: " + cpuStr
+                    + " | Listos: " + contar(nucleo));
         }
+
+        System.out.println("\n-- Resultado " + nombre + " --");
+        System.out.print("Terminados: ");
+        nucleo.getTerminados().imprimir();
+        System.out.println("RAM libre: " + ram.getLibre());
+        System.out.println();
+    }
+
+    private static int contar(Nucleo n) {
+        return n.getColaListos().getTamano();
+    }
     }
         
     
