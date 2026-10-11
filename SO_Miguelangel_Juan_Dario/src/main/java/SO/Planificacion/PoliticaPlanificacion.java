@@ -31,5 +31,18 @@ public interface PoliticaPlanificacion {
 
     /** Nombre para el log y la GUI. */
     String getNombre();
+    
+    /**
+ * ¿El candidato es mejor que el que está en CPU ahora?
+ * Se usa cuando la política es apropiativa.
+ * FCFS y RR devuelven false (no expropian por comparación).
+ */
+boolean esMejor(PCB candidato, PCB enCpu);
+
+/**
+ * Quantum para Round Robin.
+ * Devuelve -1 si la política no usa quantum (FCFS, EDF, Prioridades).
+ */
+int getQuantum();
 
 }

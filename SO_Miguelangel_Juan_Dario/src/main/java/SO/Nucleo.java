@@ -25,7 +25,8 @@ public class Nucleo {
     private final Cola colaListos;
     private final Cola colaBloqueados;
     private final Cola terminados;
-
+    // Cuántos ciclos lleva el proceso actual en CPU (para Round Robin)
+    private int ciclosEnCpu = 0;
     public Nucleo(int idComputador, CPU cpu, MemoriaPrincipal ram,
                   PoliticaPlanificacion politica) {
         this.idComputador = idComputador;
@@ -87,6 +88,15 @@ public class Nucleo {
         planificar(ciclo);           // 4
         cpu.tic(ciclo);              // 5 (ejecuta una instrucción)
         cerrarCiclo(ciclo);          // 6
+        // Contador de quantum
+    if (!cpu.estaLibre()) {
+        ciclosEnCpu++;
+    } else {
+        ciclosEnCpu = 0;
+    }
+
+    cerrarCiclo(ciclo);
+
     }
 
     // ---------- Paso 1: vencer plazos ----------
@@ -171,26 +181,45 @@ public class Nucleo {
     // ---------- Paso 4: planificar ----------
 
     private void planificar(int ciclo) {
-        // Si hay alguien en CPU y la política es apropiativa,
-        // aquí irá la lógica de expropiación (Semana 3).
-        if (!cpu.estaLibre()) {
-            return;
+
+    // ---------- Paso 1: ¿hay que desalojar al que está en CPU? ----------
+    if (!cpu.estaLibre()) {
+        PCB enCpu = cpu.getProcesoActual();
+        boolean desalojar = false;
+
+        // Por quantum (Round Robin)
+        if (politica.getQuantum() > 0 && ciclosEnCpu >= politica.getQuantum()) {
+            desalojar = true;
+        }
+        // Por expropiación (Prioridades, EDF)
+        else if (politica.esApropiativa() && !colaListos.estaVacia()) {
+            PCB candidato = politica.seleccionar(colaListos);
+            if (candidato != null && politica.esMejor(candidato, enCpu)) {
+                desalojar = true;
+            }
         }
 
-        if (colaListos.estaVacia()) {
-            return;
+        if (desalojar) {
+            cpu.liberar();                          // saca al actual
+            enCpu.setEstado(EstadoProceso.LISTO);
+            colaListos.encolar(enCpu);              // vuelve al final de listos
+            ciclosEnCpu = 0;
         }
+    }
 
+    // ---------- Paso 2: si CPU libre, meter al siguiente ----------
+    if (cpu.estaLibre() && !colaListos.estaVacia()) {
         PCB elegido = politica.seleccionar(colaListos);
         if (elegido != null) {
             colaListos.eliminar(elegido);
             if (elegido.getCicloInicio() < 0) {
                 elegido.setCicloInicio(ciclo);
             }
-            cpu.cargar(elegido);  // el CPU ya le pone el estado EJECUCION
+            cpu.cargar(elegido);
+            ciclosEnCpu = 0;
         }
     }
-
+}
     // ---------- Paso 6: cerrar el ciclo ----------
 
     private void cerrarCiclo(int ciclo) {
