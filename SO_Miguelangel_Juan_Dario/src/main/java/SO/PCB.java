@@ -3,61 +3,49 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package SO;
+
 import Enums.EstadoProceso;
-import Enums.ModoEjecucion;
 import Enums.MotivoBloqueo;
 import Enums.TipoProceso;
 /**
  *
  * @author Miguel
  */
-public class PCB  {
+public class PCB {
 
     private static int contadorId = 1;
 
-    // Convención de prioridad: a mayor número, mayor prioridad.
-    //   1 → baja
-    //   2 → media
-    //   3 → alta
-    // El envejecimiento (aging) sube este valor con el tiempo.
     public static final int PRIORIDAD_BAJA  = 1;
     public static final int PRIORIDAD_MEDIA = 2;
     public static final int PRIORIDAD_ALTA  = 3;
 
-    // ---------- Identificación ----------
     private final int id;
     private String nombre;
     private int computador;
 
-    // ---------- Estado y tipo ----------
     private EstadoProceso estado;
     private TipoProceso tipo;
     private int prioridad;
 
-    // ---------- Recursos ----------
     private int memoria;
     private int deadline;
     private int restante;
 
-    // ---------- Contexto de ejecución ----------
-    private int pc;   // program counter
-    private int mar;  // memory address register
+    private int pc;
+    private int mar;
 
-    // ---------- Métricas ----------
     private int cicloLlegada;
     private int cicloInicio;
     private int cicloFin;
     private int ciclosBloqueado;
 
-    // ---------- Productor / consumidor ----------
     private int bufferAsociado;
     private int ciclosPorElemento;
     private int elementosRestantes;
+    private int contadorCiclos;   // ← NUEVO (semana 4)
 
-    // ---------- CPU / IO bound ----------
     private int ciclosParaSatisfacer;
 
-    // ---------- Bloqueo ----------
     private MotivoBloqueo motivoBloqueo;
 
     public PCB(String nombre, TipoProceso tipo, int prioridad,
@@ -78,9 +66,9 @@ public class PCB  {
         this.cicloFin = -1;
         this.ciclosBloqueado = 0;
         this.motivoBloqueo = null;
+        this.contadorCiclos = 0;
     }
 
-    // ---------- Getters y Setters ----------
     public int getId() { return id; }
 
     public String getNombre() { return nombre; }
@@ -131,47 +119,29 @@ public class PCB  {
     public int getElementosRestantes() { return elementosRestantes; }
     public void setElementosRestantes(int elementosRestantes) { this.elementosRestantes = elementosRestantes; }
 
+    public int getContadorCiclos() { return contadorCiclos; }
+    public void setContadorCiclos(int contadorCiclos) { this.contadorCiclos = contadorCiclos; }
+
     public int getCiclosParaSatisfacer() { return ciclosParaSatisfacer; }
     public void setCiclosParaSatisfacer(int ciclosParaSatisfacer) { this.ciclosParaSatisfacer = ciclosParaSatisfacer; }
 
     public MotivoBloqueo getMotivoBloqueo() { return motivoBloqueo; }
     public void setMotivoBloqueo(MotivoBloqueo motivoBloqueo) { this.motivoBloqueo = motivoBloqueo; }
 
-    // ----------  ----------
-
-    /** Avanza una instrucción: PC++, MAR++, restante--. */
     public void ejecutarInstruccion() {
         if (restante > 0) {
             pc++;
             mar++;
             restante--;
         }
-        if (restante <= 0) {
-            this.estado = EstadoProceso.TERMINADO;
-        }
+        if (restante <= 0) this.estado = EstadoProceso.TERMINADO;
     }
 
-    /** ¿Ya no le quedan instrucciones? */
-    public boolean estaCompletado() {
-        return restante <= 0;
-    }
+    public boolean estaCompletado() { return restante <= 0; }
+    public boolean estaEjecutando() { return estado == EstadoProceso.EJECUCION; }
+    public boolean estaBloqueado() { return estado == EstadoProceso.BLOQUEADO; }
+    public boolean estaTerminado() { return estado == EstadoProceso.TERMINADO; }
 
-    /** ¿Está en CPU? */
-    public boolean estaEjecutando() {
-        return estado == EstadoProceso.EJECUCION;
-    }
-
-    /** ¿Está bloqueado? */
-    public boolean estaBloqueado() {
-        return estado == EstadoProceso.BLOQUEADO;
-    }
-
-    /** ¿Ya terminó (por fin normal o por deadline)? */
-    public boolean estaTerminado() {
-        return estado == EstadoProceso.TERMINADO;
-    }
-
-    /** Tipo legible para la GUI y el log. */
     public String getTipoString() {
         if (tipo == TipoProceso.CPU_BOUND) return "CPU-Bound";
         if (tipo == TipoProceso.IO_BOUND)  return "I/O-Bound";
@@ -179,29 +149,24 @@ public class PCB  {
         return "Consumidor";
     }
 
-    /** Prioridad legible para la GUI. */
     public String getPrioridadString() {
         if (prioridad >= PRIORIDAD_ALTA)  return "Alta";
         if (prioridad >= PRIORIDAD_MEDIA) return "Media";
         return "Baja";
     }
 
-    // ---------- Utilidades ----------
-
-    /** Para el log y la GUI. */
+    @Override
     public String toString() {
         return "P" + id + "-" + nombre + "[" + estado + "]";
     }
 
-    /** Igualdad por id: un PCB es único en todo el sistema distribuido. */
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PCB)) return false;
-        PCB otro = (PCB) o;
-        return this.id == otro.id;
+        return this.id == ((PCB) o).id;
     }
 
-    public int hashCode() {
-        return id;
-    }
+    @Override
+    public int hashCode() { return id; }
 }
