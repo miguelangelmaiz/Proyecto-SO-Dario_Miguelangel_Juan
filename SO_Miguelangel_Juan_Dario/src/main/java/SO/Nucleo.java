@@ -6,9 +6,11 @@ package SO;
 import EDD.Cola;
 import Enums.EstadoProceso;
 import Enums.MotivoBloqueo;
+import Enums.TipoProceso;
 import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import SO.Planificacion.PoliticaPlanificacion;
+import EDD.ListaSimple;
 /**
  *
  * @author Miguel
@@ -19,20 +21,27 @@ public class Nucleo {
     private final CPU cpu;
     private final MemoriaPrincipal ram;
     private PoliticaPlanificacion politica;
+    private final GestorBuffers gestorBuffers;
 
     // Las cuatro colas del sistema
     private final Cola colaNuevos;
     private final Cola colaListos;
     private final Cola colaBloqueados;
     private final Cola terminados;
+
     // Cuántos ciclos lleva el proceso actual en CPU (para Round Robin)
     private int ciclosEnCpu = 0;
+
+    // Latencia de red configurable (en ciclos)
+    private int latenciaRed = 3;
+
     public Nucleo(int idComputador, CPU cpu, MemoriaPrincipal ram,
-                  PoliticaPlanificacion politica) {
+                  PoliticaPlanificacion politica, GestorBuffers gestorBuffers) {
         this.idComputador = idComputador;
         this.cpu = cpu;
         this.ram = ram;
         this.politica = politica;
+        this.gestorBuffers = gestorBuffers;
         this.colaNuevos = new Cola();
         this.colaListos = new Cola();
         this.colaBloqueados = new Cola();
@@ -55,15 +64,18 @@ public class Nucleo {
         this.politica = politica;
     }
 
+    public GestorBuffers getGestorBuffers() { return gestorBuffers; }
+
+    public int getLatenciaRed() { return latenciaRed; }
+    public void setLatenciaRed(int latenciaRed) { this.latenciaRed = latenciaRed; }
+
     // ---------- API del sistema ----------
 
-    /** La GUI (o el Clúster) llama a esto para crear un proceso. */
     public void admitir(PCB p) {
         p.setEstado(EstadoProceso.NUEVO);
         colaNuevos.encolar(p);
     }
 
-    /** Lo llamará un semWait cuando el proceso no pueda continuar. */
     public void bloquear(PCB p, MotivoBloqueo motivo) {
         p.setEstado(EstadoProceso.BLOQUEADO);
         p.setMotivoBloqueo(motivo);
@@ -71,7 +83,6 @@ public class Nucleo {
         colaBloqueados.encolar(p);
     }
 
-    /** Lo llamará un semSignal cuando despierte a alguien. */
     public void despertar(PCB p) {
         p.setEstado(EstadoProceso.LISTO);
         p.setMotivoBloqueo(null);
@@ -79,24 +90,19 @@ public class Nucleo {
         colaListos.encolar(p);
     }
 
-    // ---------- El tic, con los 6 pasos del enunciado ----------
+    // ---------- EL TIC, con los 6 pasos ----------
 
     public void tic(int ciclo) {
-        vencerPlazos(ciclo);         // 1
-        despertarBloqueados();       // 2
-        admitirSiHayMemoria();       // 3
-        planificar(ciclo);           // 4
-        cpu.tic(ciclo);              // 5 (ejecuta una instrucción)
-        cerrarCiclo(ciclo);          // 6
-        // Contador de quantum
-    if (!cpu.estaLibre()) {
-        ciclosEnCpu++;
-    } else {
-        ciclosEnCpu = 0;
-    }
+        vencerPlazos(ciclo);           // 1
+        despertarBloqueados();         // 2
+        admitirSiHayMemoria();         // 3
+        planificar(ciclo);             // 4
+        ejecutarInstruccion(ciclo);    // 5
 
-    cerrarCiclo(ciclo);
+        if (!cpu.estaLibre()) ciclosEnCpu++;
+        else ciclosEnCpu = 0;
 
+        cerrarCiclo(ciclo);            // 6
     }
 
     // ---------- Paso 1: vencer plazos ----------
@@ -105,6 +111,7 @@ public class Nucleo {
         vencerEnCola(colaNuevos, ciclo);
         vencerEnCola(colaListos, ciclo);
         vencerEnCola(colaBloqueados, ciclo);
+        vencerEnSemaforos(ciclo);
 
         // El de la CPU también baja su deadline
         PCB enCpu = cpu.getProcesoActual();
@@ -127,7 +134,6 @@ public class Nucleo {
             p.setDeadline(p.getDeadline() - 1);
 
             if (p.getDeadline() <= 0) {
-                // Solo libera RAM si ya había sido admitido
                 if (p.getEstado() == EstadoProceso.LISTO
                         || p.getEstado() == EstadoProceso.BLOQUEADO) {
                     ram.liberar(p.getMemoria());
@@ -141,16 +147,42 @@ public class Nucleo {
         }
     }
 
-    // ---------- Paso 2: despertar bloqueados por E/S ----------
+    private void vencerEnSemaforos(int ciclo) {
+        ListaSimple buffers = gestorBuffers.getLista();
+        for (int i = 0; i < buffers.getSize(); i++) {
+            Buffer b = (Buffer) buffers.getValue(i);
+            vencerEnSemaforo(b.getMutex(), ciclo);
+            vencerEnSemaforo(b.getVacios(), ciclo);
+            vencerEnSemaforo(b.getLlenos(), ciclo);
+        }
+    }
+
+    private void vencerEnSemaforo(Semaforo s, int ciclo) {
+        int n = s.getBloqueados().getTamano();
+        for (int i = 0; i < n; i++) {
+            PCB p = (PCB) s.getBloqueados().desencolar();
+            p.setDeadline(p.getDeadline() - 1);
+
+            if (p.getDeadline() <= 0) {
+                ram.liberar(p.getMemoria());
+                p.setEstado(EstadoProceso.TERMINADO);
+                p.setCicloFin(ciclo);
+                terminados.encolar(p);
+            } else {
+                s.getBloqueados().encolar(p);
+            }
+        }
+    }
+
+    // ---------- Paso 2: despertar bloqueados por E/S o RED ----------
 
     private void despertarBloqueados() {
         int n = colaBloqueados.getTamano();
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaBloqueados.desencolar();
 
-            // Solo E/S se despierta sola por el reloj.
-            // Los de semáforo los despierta semSignal (Semana 4).
-            if (p.getMotivoBloqueo() == MotivoBloqueo.E_S) {
+            if (p.getMotivoBloqueo() == MotivoBloqueo.E_S
+                    || p.getMotivoBloqueo() == MotivoBloqueo.RED) {
                 p.setCiclosParaSatisfacer(p.getCiclosParaSatisfacer() - 1);
                 if (p.getCiclosParaSatisfacer() <= 0) {
                     p.setEstado(EstadoProceso.LISTO);
@@ -182,44 +214,103 @@ public class Nucleo {
 
     private void planificar(int ciclo) {
 
-    // ---------- Paso 1: ¿hay que desalojar al que está en CPU? ----------
-    if (!cpu.estaLibre()) {
-        PCB enCpu = cpu.getProcesoActual();
-        boolean desalojar = false;
+        if (!cpu.estaLibre()) {
+            PCB enCpu = cpu.getProcesoActual();
+            boolean desalojar = false;
 
-        // Por quantum (Round Robin)
-        if (politica.getQuantum() > 0 && ciclosEnCpu >= politica.getQuantum()) {
-            desalojar = true;
-        }
-        // Por expropiación (Prioridades, EDF)
-        else if (politica.esApropiativa() && !colaListos.estaVacia()) {
-            PCB candidato = politica.seleccionar(colaListos);
-            if (candidato != null && politica.esMejor(candidato, enCpu)) {
+            if (politica.getQuantum() > 0 && ciclosEnCpu >= politica.getQuantum()) {
                 desalojar = true;
+            } else if (politica.esApropiativa() && !colaListos.estaVacia()) {
+                PCB candidato = politica.seleccionar(colaListos);
+                if (candidato != null && politica.esMejor(candidato, enCpu)) {
+                    desalojar = true;
+                }
+            }
+
+            if (desalojar) {
+                cpu.liberar();
+                enCpu.setEstado(EstadoProceso.LISTO);
+                colaListos.encolar(enCpu);
+                ciclosEnCpu = 0;
             }
         }
 
-        if (desalojar) {
-            cpu.liberar();                          // saca al actual
-            enCpu.setEstado(EstadoProceso.LISTO);
-            colaListos.encolar(enCpu);              // vuelve al final de listos
-            ciclosEnCpu = 0;
+        if (cpu.estaLibre() && !colaListos.estaVacia()) {
+            PCB elegido = politica.seleccionar(colaListos);
+            if (elegido != null) {
+                colaListos.eliminar(elegido);
+                if (elegido.getCicloInicio() < 0) {
+                    elegido.setCicloInicio(ciclo);
+                }
+                cpu.cargar(elegido);
+                ciclosEnCpu = 0;
+            }
         }
     }
 
-    // ---------- Paso 2: si CPU libre, meter al siguiente ----------
-    if (cpu.estaLibre() && !colaListos.estaVacia()) {
-        PCB elegido = politica.seleccionar(colaListos);
-        if (elegido != null) {
-            colaListos.eliminar(elegido);
-            if (elegido.getCicloInicio() < 0) {
-                elegido.setCicloInicio(ciclo);
-            }
-            cpu.cargar(elegido);
-            ciclosEnCpu = 0;
+    // ---------- Paso 5: ejecutar UNA instrucción ----------
+
+    private void ejecutarInstruccion(int ciclo) {
+        PCB p = cpu.getProcesoActual();
+        if (p == null) return;
+
+        if (p.getTipo() == TipoProceso.PRODUCTOR
+                || p.getTipo() == TipoProceso.CONSUMIDOR) {
+            ejecutarProductorConsumidor(p);
+        } else {
+            p.ejecutarInstruccion();
         }
     }
-}
+
+    private void ejecutarProductorConsumidor(PCB p) {
+        p.setContadorCiclos(p.getContadorCiclos() + 1);
+
+        if (p.getContadorCiclos() < p.getCiclosPorElemento()) {
+            p.setPc(p.getPc() + 1);
+            p.setMar(p.getMar() + 1);
+            return;
+        }
+
+        Buffer b = gestorBuffers.getBuffer(p.getBufferAsociado());
+        if (b == null) {
+            p.setContadorCiclos(0);
+            p.setPc(p.getPc() + 1);
+            p.setMar(p.getMar() + 1);
+            return;
+        }
+
+                // Latencia de red para buffer remoto.
+        // Solo se paga UNA VEZ por operación, no cada ciclo.
+        boolean esRemoto = (p.getComputador() != b.getAnfitrion());
+        if (esRemoto && !p.isLatenciaPagada()) {
+            p.setLatenciaPagada(true);
+            p.setCiclosParaSatisfacer(latenciaRed);
+            bloquear(p, MotivoBloqueo.RED);
+            cpu.liberar();
+            return;
+        }
+        // Si ya pagó latencia (o es local), puede operar
+        p.setMotivoBloqueo(null);
+        p.setLatenciaPagada(false);
+
+        boolean exito;
+        if (p.getTipo() == TipoProceso.PRODUCTOR) {
+            exito = b.producir(p, this);
+        } else {
+            exito = b.consumir(p, this);
+        }
+
+        if (exito) {
+            p.setContadorCiclos(0);
+            p.setElementosRestantes(p.getElementosRestantes() - 1);
+            p.setPc(p.getPc() + 1);
+            p.setMar(p.getMar() + 1);
+            if (p.getElementosRestantes() <= 0) {
+                p.setEstado(EstadoProceso.TERMINADO);
+            }
+        }
+    }
+
     // ---------- Paso 6: cerrar el ciclo ----------
 
     private void cerrarCiclo(int ciclo) {
@@ -231,10 +322,7 @@ public class Nucleo {
             cpu.liberar();
             ram.liberar(p.getMemoria());
             terminados.encolar(p);
-
-            // Barrido obligatorio: si se liberó RAM, puede entrar alguien más
             admitirSiHayMemoria();
         }
     }
-    
 }

@@ -14,61 +14,39 @@ import SO.Nucleo;
 import SO.Planificacion.FCFS;
 import SO.Planificacion.PoliticaPlanificacion;
 import hardware.CPU;
+import SO.GestorBuffers;
 
 public class Computador implements ComponenteReloj {
-    private final int id;
+     private final int id;
     private final CPU cpu;
     private final MemoriaPrincipal ram;
     private final Nucleo nucleo;
 
-    public Computador(int id, int ramKB, PoliticaPlanificacion politica) {
+    public Computador(int id, int ramKB, PoliticaPlanificacion politica,
+                      GestorBuffers gestorBuffers) {
         this.id = id;
         this.cpu = new CPU();
         this.ram = new MemoriaPrincipal(ramKB);
-        this.nucleo = new Nucleo(id, this.cpu, this.ram, politica);
+        this.nucleo = new Nucleo(id, this.cpu, this.ram, politica, gestorBuffers);
     }
 
-    /**
-     * @return the id
-     */
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public CPU getCpu() { return cpu; }
+    public MemoriaPrincipal getRam() { return ram; }
+    public Nucleo getNucleo() { return nucleo; }
 
-    /**
-     * @return the cpu
-     */
-    public CPU getCpu() {
-        return cpu;
-    }
-
-    /**
-     * @return the ram
-     */
-    public MemoriaPrincipal getRam() {
-        return ram;
-    }
-
-    /**
-     * @return the nucleo
-     */
-    public Nucleo getNucleo() {
-        return nucleo;
-    }
-    
-    public void Setpolitica(PoliticaPlanificacion politica){
+    public void setPolitica(PoliticaPlanificacion politica) {
         nucleo.setPolitica(politica);
     }
-    
-    public void tic(int ciclo){
+
+    @Override
+    public void tic(int ciclo) {
         nucleo.tic(ciclo);
     }
-    
-    public void reset(){
-    
-    cpu.reset();
-    ram.reset();
+
+    public void reset() {
+        cpu.reset();
+        ram.reset();
     }
-    
     
 }
