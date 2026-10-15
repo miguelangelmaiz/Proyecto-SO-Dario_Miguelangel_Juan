@@ -1,10 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package SO;
-import Enums.EstadoProceso;
-import Enums.MotivoBloqueo;
+
+package sistemaOperativo;
+import losEnums.EstadoProceso;
+import losEnums.MotivoBloqueo;
 /**
  *
  * @author Miguel

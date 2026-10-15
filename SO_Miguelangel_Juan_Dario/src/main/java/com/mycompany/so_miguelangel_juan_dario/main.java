@@ -1,18 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
 
 package com.mycompany.so_miguelangel_juan_dario;
-import SO.PCB;
-import SO.Cluster;
-import SO.Buffer;
-import SO.GestorBuffers;
-import SO.Planificacion.FCFS;
-import SO.Planificacion.RoundRobin;
-import SO.Planificacion.EDF;
-import SO.Planificacion.PrioridadApropiativa;
-import SO.Planificacion.PoliticaPlanificacion;
-import Enums.TipoProceso;
+import sistemaOperativo.PCB;
+import sistemaOperativo.Cluster;
+import sistemaOperativo.Buffer;
+import sistemaOperativo.GestorBuffers;
+import planificacionSO.FCFS;
+import planificacionSO.RoundRobin;
+import planificacionSO.EDF;
+import planificacionSO.PrioridadApropiativa;
+import planificacionSO.PoliticaPlanificacion;
+import losEnums.TipoProceso;
 
 /**
  *

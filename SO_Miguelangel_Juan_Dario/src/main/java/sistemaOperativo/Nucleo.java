@@ -1,16 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package SO;
-import EDD.Cola;
-import Enums.EstadoProceso;
-import Enums.MotivoBloqueo;
-import Enums.TipoProceso;
+
+package sistemaOperativo;
+import estructuraDeDatos.Cola;
+import losEnums.EstadoProceso;
+import losEnums.MotivoBloqueo;
+import losEnums.TipoProceso;
 import hardware.CPU;
 import hardware.MemoriaPrincipal;
-import SO.Planificacion.PoliticaPlanificacion;
-import EDD.ListaSimple;
+import planificacionSO.PoliticaPlanificacion;
+import estructuraDeDatos.ListaSimple;
 /**
  *
  * @author Miguel

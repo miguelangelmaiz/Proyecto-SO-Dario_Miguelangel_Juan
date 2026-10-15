@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package hardware;
 
 
@@ -75,26 +72,9 @@ public class RelojGlobal implements Runnable {
         this.duracionCicloMs = ms;
     }
 
-    /**
-     * @param ciclo the ciclo to set
-     */
-    public void setCiclo(int ciclo) {
-        this.ciclo = ciclo;
-    }
+   
 
-    /**
-     * @param suscritos the suscritos to set
-     */
-    public void setSuscritos(ComponenteReloj[] suscritos) {
-        this.suscritos = suscritos;
-    }
-
-    /**
-     * @param cantidad the cantidad to set
-     */
-    public void setCantidad(int cantidad) {
-        this.cantidad = cantidad;
-    }
+  
         
      public void suscribir(ComponenteReloj c) {
         if (cantidad < suscritos.length) {

@@ -1,17 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package hardware;
 
 /**
  *
  * @author jmmor
  */
-import Enums.ModoEjecucion;
-import Enums.EstadoProceso;
-import SO.PCB;
-public class CPU implements ComponenteReloj{
+import losEnums.ModoEjecucion;
+import losEnums.EstadoProceso;
+import sistemaOperativo.PCB;
+
+public class CPU {
 
 
  private PCB procesoActual;
@@ -24,12 +22,23 @@ public class CPU implements ComponenteReloj{
         this.modo = ModoEjecucion.USUARIO;
     }
 
-    public PCB getProcesoActual() { return procesoActual; }
-    public void setProcesoActual(PCB procesoActual) { this.procesoActual = procesoActual; }
-    public ModoEjecucion getModo() { return modo; }
-    public void setModo(ModoEjecucion modo) { this.modo = modo; }
-    public int getCiclosOcupados() { return ciclosOcupados; }
-    public void setCiclosOcupados(int ciclosOcupados) { this.ciclosOcupados = ciclosOcupados; }
+    public PCB getProcesoActual() {
+     return procesoActual; }
+    
+    public void setProcesoActual(PCB procesoActual) { 
+        this.procesoActual = procesoActual; }
+    
+    public ModoEjecucion getModo() { 
+        return modo; }
+    
+    public void setModo(ModoEjecucion modo) { 
+        this.modo = modo; }
+    
+    public int getCiclosOcupados() { 
+        return ciclosOcupados; }
+    
+    public void setCiclosOcupados(int ciclosOcupados) { 
+        this.ciclosOcupados = ciclosOcupados; }
 
     public boolean estaLibre() { return procesoActual == null; }
 
@@ -56,11 +65,10 @@ public class CPU implements ComponenteReloj{
     }
 
     /**
-     * La CPU ya no ejecuta instrucciones: eso lo hace el Núcleo, porque
-     * necesita interceptar semWait / semSignal / accesos a buffer.
-     * Aquí sólo contamos ciclos ocupados.
+     Un ciclo de CPU. Lo llama el Núcleo en el paso 5 de su tic().
+     * Solo cuenta ciclos ocupados; la ejecución de instrucciones
+     * la hace el Núcleo para poder interceptar semWait/semSignal/buffer.
      */
-    @Override
     public void tic(int ciclo) {
         if (procesoActual == null) return;
         ciclosOcupados++;

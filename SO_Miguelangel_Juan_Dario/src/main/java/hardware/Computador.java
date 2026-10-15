@@ -1,22 +1,17 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package hardware;
 
 /**
  *
  * @author jmmor
  */
-import Enums.TipoProceso;
-import SO.PCB;
-import SO.Nucleo;
-import SO.Planificacion.FCFS;
-import SO.Planificacion.PoliticaPlanificacion;
-import hardware.CPU;
-import SO.GestorBuffers;
+
+import sistemaOperativo.Nucleo;
+import planificacionSO.PoliticaPlanificacion;
+import sistemaOperativo.GestorBuffers;
 
 public class Computador implements ComponenteReloj {
+    
      private final int id;
     private final CPU cpu;
     private final MemoriaPrincipal ram;

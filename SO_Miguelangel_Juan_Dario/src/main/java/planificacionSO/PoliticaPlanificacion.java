@@ -1,10 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
-package SO.Planificacion;
-import EDD.Cola;
-import SO.PCB;
+
+package planificacionSO;
+import estructuraDeDatos.Cola;
+import sistemaOperativo.PCB;
 
 /**
  *

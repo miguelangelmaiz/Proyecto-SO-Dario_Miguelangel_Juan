@@ -1,12 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package SO;
+
+package sistemaOperativo;
 import hardware.Computador;
 import hardware.RelojGlobal;
-import SO.Planificacion.FCFS;
-import SO.Planificacion.PoliticaPlanificacion;
+import planificacionSO.FCFS;
+import planificacionSO.PoliticaPlanificacion;
 
 /**
  *
