@@ -1,5 +1,6 @@
 
 package sistemaOperativo;
+
 import estructuraDeDatos.Cola;
 import losEnums.EstadoProceso;
 import losEnums.MotivoBloqueo;
@@ -159,6 +160,7 @@ public class Nucleo {
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) s.getBloqueados().desencolar();
             p.setDeadline(p.getDeadline() - 1);
+            p.setCiclosBloqueado(p.getCiclosBloqueado() + 1);
 
             if (p.getDeadline() <= 0) {
                 ram.liberar(p.getMemoria());
@@ -177,6 +179,8 @@ public class Nucleo {
         int n = colaBloqueados.getTamano();
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaBloqueados.desencolar();
+             p.setCiclosBloqueado(p.getCiclosBloqueado() + 1);
+            
 
             if (p.getMotivoBloqueo() == MotivoBloqueo.E_S
                     || p.getMotivoBloqueo() == MotivoBloqueo.RED) {
@@ -286,10 +290,6 @@ public class Nucleo {
             cpu.liberar();
             return;
         }
-        // Si ya pagó latencia (o es local), puede operar
-        p.setMotivoBloqueo(null);
-        p.setLatenciaPagada(false);
-
         boolean exito;
         if (p.getTipo() == TipoProceso.PRODUCTOR) {
             exito = b.producir(p, this);
@@ -298,6 +298,7 @@ public class Nucleo {
         }
 
         if (exito) {
+            p.setLatenciaPagada(false);
             p.setContadorCiclos(0);
             p.setElementosRestantes(p.getElementosRestantes() - 1);
             p.setPc(p.getPc() + 1);

@@ -1,5 +1,6 @@
 
 package sistemaOperativo;
+
 import estructuraDeDatos.Cola;
 import losEnums.EstadoProceso;
 import losEnums.MotivoBloqueo;

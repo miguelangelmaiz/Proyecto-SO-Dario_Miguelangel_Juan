@@ -1,5 +1,6 @@
 
 package sistemaOperativo;
+
 import losEnums.EstadoProceso;
 import losEnums.MotivoBloqueo;
 /**
