@@ -1,7 +1,7 @@
 
 package hardware;
 
-
+import estructuraDeDatos.ListaSimple;
 /**
  *
  * @author jmmor
@@ -11,100 +11,42 @@ public class RelojGlobal implements Runnable {
     private volatile boolean corriendo;
     private volatile int duracionCicloMs;
     private int ciclo;
-    private ComponenteReloj[] suscritos;
-    private int cantidad;
+    private final ListaSimple suscritos;   // ← antes era arreglo
 
-      public RelojGlobal(int duracionCicloMs, int maxComputadores) {
+    public RelojGlobal(int duracionCicloMs) {   // ← ya no pide maxComputadores
         this.duracionCicloMs = duracionCicloMs;
         this.ciclo = 0;
         this.corriendo = false;
-        this.suscritos = new ComponenteReloj[maxComputadores];
-        this.cantidad = 0;
+        this.suscritos = new ListaSimple();
     }
 
+    public boolean isCorriendo() { return corriendo; }
+    public int getDuracionCicloMs() { return duracionCicloMs; }
+    public int getCiclo() { return ciclo; }
+    public int getCantidad() { return suscritos.getSize(); }
 
-    /**
-     * @return the corriendo
-     */
-    public boolean Corriendo() {
-        return corriendo;
+    public void setDuracionCicloMs(int ms) { this.duracionCicloMs = ms; }
+
+    public void suscribir(ComponenteReloj c) {
+        suscritos.insertFinale(c);   // ← ya no hay if
     }
 
-    /**
-     * @return the duracionCicloMs
-     */
-    public int getDuracionCicloMs() {
-        return duracionCicloMs;
-    }
+    public void iniciar() { this.corriendo = true; }
+    public void detener() { this.corriendo = false; }
 
-    /**
-     * @return the ciclo
-     */
-    public int getCiclo() {
-        return ciclo;
-    }
-
-    /**
-     * @return the suscritos
-     */
-    public ComponenteReloj[] getSuscritos() {
-        return suscritos;
-    }
-
-    /**
-     * @return the cantidad
-     */
-    public int getCantidad() {
-        return cantidad;
-    }
-
-    /**
-     * @param corriendo the corriendo to set
-     */
-    public void setCorriendo(boolean corriendo) {
-        this.corriendo = corriendo;
-    }
-
-    /**
-     * @param duracionCicloMs the duracionCicloMs to set
-     */
-    public void setDuracionCicloMs(int ms) {
-        this.duracionCicloMs = ms;
-    }
-
-   
-
-  
-        
-     public void suscribir(ComponenteReloj c) {
-        if (cantidad < suscritos.length) {
-            suscritos[cantidad++] = c;
-        }
-    }
-     
-     public void iniciar(){
-         this.corriendo = true;
-     }
-     
-     public void detener(){
-         this.corriendo = false;
-     }
-    
-     public boolean isCorriendo() {
-         return corriendo;
-     }
-
-public void run() {
-    while (corriendo) {
-        ciclo++;
-        for (int i = 0; i < cantidad; i++) {
-            suscritos[i].tic(ciclo);
-        }
-        try {
-            Thread.sleep(duracionCicloMs);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            break;
+    public void run() {
+        while (corriendo) {
+            ciclo++;
+            for (int i = 0; i < suscritos.getSize(); i++) {
+                ComponenteReloj c = (ComponenteReloj) suscritos.getValue(i);
+                c.tic(ciclo);
+            }
+            try {
+                Thread.sleep(duracionCicloMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
     }
     
@@ -116,4 +58,4 @@ public void run() {
      
      
 }
-}
+

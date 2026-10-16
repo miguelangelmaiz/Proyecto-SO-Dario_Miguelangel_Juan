@@ -13,21 +13,22 @@ import estructuraDeDatos.ListaSimple;
 public class Cluster {
     private final RelojGlobal reloj;
     private final GestorBuffers gestorBuffers;
-    private final ListaSimple computadores ;
-    
-    public Cluster (int numComputadores, int ramPorComputador, int duracionCicloMs){
-            this(ramIgualParaTodos(numComputadores, ramPorComputador), duracionCicloMs);
+    private final ListaSimple computadores;
 
-}
-/** Constructor con RAM distinta por computador. */
+    public Cluster(int numComputadores, int ramPorComputador, int duracionCicloMs) {
+        this(ramIgualParaTodos(numComputadores, ramPorComputador), duracionCicloMs);
+    }
+
+    /** Constructor con RAM distinta por computador. */
     public Cluster(int[] ramsPorComputador, int duracionCicloMs) {
         this.computadores = new ListaSimple();
         this.gestorBuffers = new GestorBuffers();
-        this.reloj = new RelojGlobal(duracionCicloMs, ramsPorComputador.length);
+        this.reloj = new RelojGlobal(duracionCicloMs);
 
         for (int i = 0; i < ramsPorComputador.length; i++) {
             Computador c = new Computador(i + 1, ramsPorComputador[i],
                                           new FCFS(), gestorBuffers);
+            c.getNucleo().setCluster(this);   // C-2 fix
             computadores.insertFinale(c);
             reloj.suscribir(c);
         }
@@ -49,14 +50,23 @@ public class Cluster {
         return (Computador) computadores.getValue(i);
     }
 
+    /** Devuelve el núcleo del computador con el id dado (C-2 fix). */
+    public Nucleo getNucleoDe(int idComputador) {
+        for (int i = 0; i < computadores.getSize(); i++) {
+            Computador c = (Computador) computadores.getValue(i);
+            if (c.getId() == idComputador) return c.getNucleo();
+        }
+        return null;
+    }
+
     public RelojGlobal getReloj() { return reloj; }
     public GestorBuffers getGestorBuffers() { return gestorBuffers; }
 
-   
     // ---------- Control ----------
-    
-     public void agregarComputador(Computador c) {
-        computadores.insertFinale(c);   // ← ya no desborda
+
+    public void agregarComputador(Computador c) {
+        c.getNucleo().setCluster(this);   // C-2 fix
+        computadores.insertFinale(c);
         reloj.suscribir(c);
     }
 
