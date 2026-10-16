@@ -10,6 +10,7 @@ import planificacionSO.EDF;
 import planificacionSO.PrioridadApropiativa;
 import planificacionSO.PoliticaPlanificacion;
 import losEnums.TipoProceso;
+import hardware.Computador;
 
 /**
  *
@@ -19,15 +20,20 @@ public class main {
 
      public static void main(String[] args) throws InterruptedException {
 
-        System.out.println("===========================================");
+       System.out.println("===========================================");
         System.out.println("  AvilaOS - Demostracion Semanas 3 y 4");
         System.out.println("===========================================\n");
 
         probarCuatroPoliticas();
         probarClusterDosComputadores();
         probarProductorConsumidorLocal();
-        probarDeadlineEnSemaforo();       // BUG 1 y 2
-        probarBufferRemoto();             // BUG 3
+        probarDeadlineEnSemaforo();
+        probarBufferRemoto();
+        probarIOBound();
+        probarC1();
+        probarC2();
+        probarC3();
+        probarM4();
 
         System.out.println("\n=== FIN DE LA DEMOSTRACION ===");
     }
@@ -160,7 +166,7 @@ public class main {
     }
 
     // -----------------------------------------------------------------
-    // 4) BUG 1 y 2: deadline que mata estando bloqueado en semaforo
+    // 4) Deadline mata a un proceso bloqueado en semaforo
     // -----------------------------------------------------------------
     private static void probarDeadlineEnSemaforo() {
         System.out.println(">>> TEST 4: deadline mata a un proceso bloqueado en semaforo\n");
@@ -169,17 +175,15 @@ public class main {
         cluster.getComputador(0).setPolitica(new RoundRobin(2));
 
         GestorBuffers gb = cluster.getGestorBuffers();
-        Buffer b1 = gb.crearBuffer(2, 1);   // buffer chico, cap 2
+        Buffer b1 = gb.crearBuffer(2, 1);
         System.out.println("Buffer creado: " + b1);
 
-        // Consumidor con deadline corto: se va a bloquear en llenos (buffer vacio)
         PCB cons = new PCB("CONS_MORIR", TipoProceso.CONSUMIDOR, PCB.PRIORIDAD_ALTA,
-                           128, 3, 100, 1);   // ← deadline = 3
+                           128, 3, 100, 1);
         cons.setBufferAsociado(b1.getId());
         cons.setCiclosPorElemento(1);
         cons.setElementosRestantes(5);
 
-        // Productor lento: no produce hasta el ciclo 10
         PCB prod = new PCB("PROD_LENTO", TipoProceso.PRODUCTOR, PCB.PRIORIDAD_BAJA,
                            128, 100, 100, 1);
         prod.setBufferAsociado(b1.getId());
@@ -207,7 +211,7 @@ public class main {
     }
 
     // -----------------------------------------------------------------
-    // 5) BUG 3: buffer remoto con latencia de red
+    // 5) Buffer remoto con latencia de red
     // -----------------------------------------------------------------
     private static void probarBufferRemoto() {
         System.out.println(">>> TEST 5: buffer remoto (el buffer vive en C2, el proceso en C1)\n");
@@ -217,12 +221,11 @@ public class main {
         cluster.getComputador(1).setPolitica(new RoundRobin(2));
 
         GestorBuffers gb = cluster.getGestorBuffers();
-        Buffer bRemoto = gb.crearBuffer(4, 2);   // ← anfitrion = C2
+        Buffer bRemoto = gb.crearBuffer(4, 2);
         System.out.println("Buffer creado: " + bRemoto);
 
-        // Proceso en C1 accede a buffer de C2: debe bloquearse 3 ciclos por RED
         PCB prod = new PCB("PROD_REMOTO", TipoProceso.PRODUCTOR, PCB.PRIORIDAD_ALTA,
-                           128, 100, 100, 1);   // ← computador = 1
+                           128, 100, 100, 1);
         prod.setBufferAsociado(bRemoto.getId());
         prod.setCiclosPorElemento(1);
         prod.setElementosRestantes(3);
@@ -245,6 +248,175 @@ public class main {
 
         System.out.println("\n-- Terminados:");
         cluster.getComputador(0).getNucleo().getTerminados().imprimir();
+        System.out.println();
+    }
+
+    // -----------------------------------------------------------------
+    // 6) I/O bound se bloquea por E/S (C-4)
+    // -----------------------------------------------------------------
+    private static void probarIOBound() {
+        System.out.println(">>> TEST 6: I/O bound se bloquea por E/S\n");
+
+        Cluster cluster = new Cluster(1, 4096, 0);
+        cluster.getComputador(0).setPolitica(new FCFS());
+
+        PCB p = new PCB("IO1", TipoProceso.IO_BOUND, PCB.PRIORIDAD_MEDIA,
+                        128, 100, 50, 1);
+        p.setCiclosPorElemento(4);
+        p.setCiclosParaSatisfacer(3);
+
+        cluster.getComputador(0).getNucleo().admitir(p);
+
+        for (int i = 1; i <= 20; i++) {
+            cluster.getComputador(0).getNucleo().tic(i);
+            System.out.println("Ciclo " + i
+                    + " | Estado=" + p.getEstado()
+                    + " | motivo=" + p.getMotivoBloqueo()
+                    + " | contador=" + p.getContadorCiclos()
+                    + " | E/S restante=" + p.getCiclosParaSatisfacer());
+        }
+        System.out.println();
+    }
+
+    // -----------------------------------------------------------------
+    // C-1: deadline se descuenta UNA vez por ciclo
+    // -----------------------------------------------------------------
+    private static void probarC1() {
+        System.out.println(">>> TEST C-1: deadline se descuenta 1 vez por ciclo (2 computadores)\n");
+
+        Cluster cluster = new Cluster(2, 4096, 0);
+        GestorBuffers gb = cluster.getGestorBuffers();
+        Buffer b1 = gb.crearBuffer(4, 1);
+
+        PCB cons = new PCB("CONS_C1", TipoProceso.CONSUMIDOR, PCB.PRIORIDAD_ALTA,
+                           128, 100, 100, 1);
+        cons.setBufferAsociado(b1.getId());
+        cons.setCiclosPorElemento(1);
+        cons.setElementosRestantes(5);
+
+        cluster.getComputador(0).getNucleo().admitir(cons);
+
+        System.out.println("Deadline inicial = 100");
+        System.out.println("Si el fix funciona, baja de 1 en 1. Si no, baja de 2 en 2.\n");
+
+        for (int i = 1; i <= 6; i++) {
+            cluster.getComputador(0).getNucleo().tic(i);
+            cluster.getComputador(1).getNucleo().tic(i);
+            System.out.println("Ciclo " + i + " | deadline=" + cons.getDeadline());
+        }
+        System.out.println();
+    }
+
+    // -----------------------------------------------------------------
+    // C-2: proceso de C2 no se muda a C1
+    // -----------------------------------------------------------------
+    private static void probarC2() {
+        System.out.println(">>> TEST C-2: proceso de C2 NO aparece en cola de C1\n");
+
+        Cluster cluster = new Cluster(2, 4096, 0);
+        GestorBuffers gb = cluster.getGestorBuffers();
+        Buffer b1 = gb.crearBuffer(4, 1);
+
+        PCB prod = new PCB("PROD_C1", TipoProceso.PRODUCTOR, PCB.PRIORIDAD_ALTA,
+                           128, 100, 100, 1);
+        prod.setBufferAsociado(b1.getId());
+        prod.setCiclosPorElemento(1);
+        prod.setElementosRestantes(3);
+
+        PCB cons = new PCB("CONS_C2", TipoProceso.CONSUMIDOR, PCB.PRIORIDAD_ALTA,
+                           128, 100, 100, 2);
+        cons.setBufferAsociado(b1.getId());
+        cons.setCiclosPorElemento(1);
+        cons.setElementosRestantes(3);
+
+        cluster.getComputador(0).getNucleo().admitir(prod);
+        cluster.getComputador(1).getNucleo().admitir(cons);
+
+        for (int i = 1; i <= 15; i++) {
+            cluster.getComputador(0).getNucleo().tic(i);
+            cluster.getComputador(1).getNucleo().tic(i);
+
+            int enC1 = cluster.getComputador(0).getNucleo().getColaListos().getTamano();
+            int enC2 = cluster.getComputador(1).getNucleo().getColaListos().getTamano();
+            System.out.println("Ciclo " + i
+                    + " | colaListos C1=" + enC1
+                    + " | colaListos C2=" + enC2
+                    + " | PC del cons=" + cons.getComputador());
+        }
+        System.out.println();
+    }
+
+    // -----------------------------------------------------------------
+    // C-3: modo SISTEMA durante operaciones de buffer
+    // -----------------------------------------------------------------
+       private static void probarC3() {
+        System.out.println(">>> TEST C-3: contador de instrucciones en modo SISTEMA\n");
+
+        Cluster cluster = new Cluster(1, 4096, 0);
+        GestorBuffers gb = cluster.getGestorBuffers();
+        Buffer b1 = gb.crearBuffer(4, 1);
+
+        PCB prod = new PCB("PROD", TipoProceso.PRODUCTOR, PCB.PRIORIDAD_ALTA,
+                           128, 100, 100, 1);
+        prod.setBufferAsociado(b1.getId());
+        prod.setCiclosPorElemento(1);
+        prod.setElementosRestantes(3);
+
+        cluster.getComputador(0).getNucleo().admitir(prod);
+
+        System.out.println("Cada produccion debe incrementar el contador SISTEMA.");
+        System.out.println("Se espera: 1 por cada elemento producido.\n");
+
+        for (int i = 1; i <= 6; i++) {
+            cluster.getComputador(0).getNucleo().tic(i);
+            System.out.println("Ciclo " + i
+                    + " | elem=" + b1.getElementos()
+                    + " | instrSistema=" + cluster.getComputador(0).getCpu().getInstruccionesSistema()
+                    + " | estadoProd=" + prod.getEstado());
+        }
+        System.out.println();
+    }
+           private static void probarM4() {
+        System.out.println(">>> TEST M-4: agregar computador en caliente\n");
+
+        // Arrancar con 2 computadores
+        Cluster cluster = new Cluster(2, 2048, 0);
+        cluster.getComputador(0).setPolitica(new FCFS());
+        cluster.getComputador(1).setPolitica(new FCFS());
+
+        System.out.println("Cluster inicial: " + cluster.getCantidad() + " computadores");
+        System.out.println("Reloj suscritos: " + cluster.getReloj().getCantidad());
+
+        // Agregar un TERCER computador en caliente
+        Computador c3 = new Computador(3, 2048, new FCFS(),
+                                       cluster.getGestorBuffers());
+        cluster.agregarComputador(c3);
+
+        System.out.println("Despues de agregar: " + cluster.getCantidad() + " computadores");
+        System.out.println("Reloj suscritos: " + cluster.getReloj().getCantidad());
+        System.out.println();
+
+        // Meter un proceso SOLO en el computador 3
+        PCB p = new PCB("NUEVO", TipoProceso.CPU_BOUND, PCB.PRIORIDAD_MEDIA,
+                        256, 30, 3, 3);
+        cluster.getComputador(2).getNucleo().admitir(p);
+
+        System.out.println("Proceso en C3. Si el reloj lo notifica, se ejecutara.");
+        System.out.println("Si M-4 no esta arreglado, C3 nunca recibe tic y el proceso se queda quieto.\n");
+
+        for (int i = 1; i <= 10; i++) {
+            cluster.getComputador(0).getNucleo().tic(i);
+            cluster.getComputador(1).getNucleo().tic(i);
+            cluster.getComputador(2).getNucleo().tic(i);   // ← el nuevo
+
+            System.out.println("Ciclo " + i
+                    + " | CPU C3=" + (cluster.getComputador(2).getCpu().getProcesoActual() == null
+                        ? "(libre)"
+                        : cluster.getComputador(2).getCpu().getProcesoActual())
+                    + " | PC=" + p.getPc()
+                    + " | restante=" + p.getRestante()
+                    + " | estado=" + p.getEstado());
+        }
         System.out.println();
     }
     }

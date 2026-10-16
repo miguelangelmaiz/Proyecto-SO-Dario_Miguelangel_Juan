@@ -15,6 +15,8 @@ public class CPU {
  private PCB procesoActual;
     private ModoEjecucion modo;
     private int ciclosOcupados;
+    private int instruccionesSistema = 0;
+    private int instruccionesUsuario = 0;
 
     public CPU() {
         this.procesoActual = null;
@@ -36,13 +38,16 @@ public class CPU {
     
     public int getCiclosOcupados() { 
         return ciclosOcupados; }
-    
+    public int getInstruccionesSistema() { return instruccionesSistema; }
     public void setCiclosOcupados(int ciclosOcupados) { 
         this.ciclosOcupados = ciclosOcupados; }
 
     public boolean estaLibre() { return procesoActual == null; }
 
-    public void entrarModoSistema() { this.modo = ModoEjecucion.SISTEMA; }
+    public void entrarModoSistema() {
+    this.modo = ModoEjecucion.SISTEMA;
+    this.instruccionesSistema++;
+}
     public void salirModoSistema() { this.modo = ModoEjecucion.USUARIO; }
 
     public void cargar(PCB p) {
@@ -70,8 +75,13 @@ public class CPU {
      * la hace el Núcleo para poder interceptar semWait/semSignal/buffer.
      */
     public void tic(int ciclo) {
-        if (procesoActual == null) return;
-        ciclosOcupados++;
+    if (procesoActual == null) return;
+    ciclosOcupados++;
+    if (modo == ModoEjecucion.SISTEMA) {
+        instruccionesSistema++;
+    } else {
+        instruccionesUsuario++;
     }
+}
 
 }
