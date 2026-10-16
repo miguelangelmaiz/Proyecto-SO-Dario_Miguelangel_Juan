@@ -1,5 +1,6 @@
 
 package sistemaOperativo;
+
 import estructuraDeDatos.Cola;
 import losEnums.EstadoProceso;
 import losEnums.MotivoBloqueo;
@@ -22,23 +23,19 @@ public class Semaforo {
     public String getNombre() { return nombre; }
     public Cola getBloqueados() { return bloqueados; }
 
-    /**
-     * Si el valor queda negativo, el proceso se bloquea en la cola de ESTE
-     * semáforo y libera la CPU.
-     */
     public void semWait(PCB p, Nucleo k, MotivoBloqueo motivo) {
         valor--;
         if (valor < 0) {
             p.setEstado(EstadoProceso.BLOQUEADO);
             p.setMotivoBloqueo(motivo);
             bloqueados.encolar(p);
-            k.getCpu().liberar();   // el proceso sale de la CPU
+            k.getCpu().liberar();
         }
     }
 
     /**
-     * Si había alguien esperando (valor <= 0), despierta a UNO y lo devuelve
-     * a la cola de listos de su núcleo.
+     * C-2 fix: el proceso despertado vuelve a SU propio núcleo,
+     * no al del proceso que hizo la señal.
      */
     public void semSignal(Nucleo k) {
         valor++;
@@ -47,7 +44,13 @@ public class Semaforo {
             if (p != null) {
                 p.setEstado(EstadoProceso.LISTO);
                 p.setMotivoBloqueo(null);
-                k.getColaListos().encolar(p);
+
+                Nucleo destino = null;
+                if (k.getCluster() != null) {
+                    destino = k.getCluster().getNucleoDe(p.getComputador());
+                }
+                if (destino == null) destino = k;   // fallback
+                destino.getColaListos().encolar(p);
             }
         }
     }

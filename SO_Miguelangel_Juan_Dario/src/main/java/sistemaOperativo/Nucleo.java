@@ -1,5 +1,6 @@
 
 package sistemaOperativo;
+
 import estructuraDeDatos.Cola;
 import losEnums.EstadoProceso;
 import losEnums.MotivoBloqueo;
@@ -20,16 +21,15 @@ public class Nucleo {
     private PoliticaPlanificacion politica;
     private final GestorBuffers gestorBuffers;
 
-    // Las cuatro colas del sistema
+    // C-2 fix: para devolver procesos a su propio núcleo
+    private Cluster cluster;
+
     private final Cola colaNuevos;
     private final Cola colaListos;
     private final Cola colaBloqueados;
     private final Cola terminados;
 
-    // Cuántos ciclos lleva el proceso actual en CPU (para Round Robin)
     private int ciclosEnCpu = 0;
-
-    // Latencia de red configurable (en ciclos)
     private int latenciaRed = 3;
 
     public Nucleo(int idComputador, CPU cpu, MemoriaPrincipal ram,
@@ -47,27 +47,21 @@ public class Nucleo {
 
     // ---------- Getters y Setters ----------
     public int getIdComputador() { return idComputador; }
-
     public Cola getColaNuevos()     { return colaNuevos; }
     public Cola getColaListos()     { return colaListos; }
     public Cola getColaBloqueados() { return colaBloqueados; }
     public Cola getTerminados()     { return terminados; }
-
     public CPU getCpu() { return cpu; }
     public MemoriaPrincipal getRam() { return ram; }
-
     public PoliticaPlanificacion getPolitica() { return politica; }
-    public void setPolitica(PoliticaPlanificacion politica) {
-        this.politica = politica;
-    }
-
+    public void setPolitica(PoliticaPlanificacion politica) { this.politica = politica; }
     public GestorBuffers getGestorBuffers() { return gestorBuffers; }
-
+    public Cluster getCluster() { return cluster; }
+    public void setCluster(Cluster cluster) { this.cluster = cluster; }
     public int getLatenciaRed() { return latenciaRed; }
     public void setLatenciaRed(int latenciaRed) { this.latenciaRed = latenciaRed; }
 
-    // ---------- API del sistema ----------
-
+    // ---------- API ----------
     public void admitir(PCB p) {
         p.setEstado(EstadoProceso.NUEVO);
         colaNuevos.encolar(p);
@@ -87,30 +81,27 @@ public class Nucleo {
         colaListos.encolar(p);
     }
 
-    // ---------- EL TIC, con los 6 pasos ----------
-
+    // ---------- EL TIC ----------
     public void tic(int ciclo) {
-        vencerPlazos(ciclo);           // 1
-        despertarBloqueados();         // 2
-        admitirSiHayMemoria();         // 3
-        planificar(ciclo);             // 4
-        ejecutarInstruccion(ciclo);    // 5
+        vencerPlazos(ciclo);
+        despertarBloqueados();
+        admitirSiHayMemoria();
+        planificar(ciclo);
+        ejecutarInstruccion(ciclo);
 
         if (!cpu.estaLibre()) ciclosEnCpu++;
         else ciclosEnCpu = 0;
 
-        cerrarCiclo(ciclo);            // 6
+        cerrarCiclo(ciclo);
     }
 
-    // ---------- Paso 1: vencer plazos ----------
-
+    // ---------- Paso 1 ----------
     private void vencerPlazos(int ciclo) {
         vencerEnCola(colaNuevos, ciclo);
         vencerEnCola(colaListos, ciclo);
         vencerEnCola(colaBloqueados, ciclo);
         vencerEnSemaforos(ciclo);
 
-        // El de la CPU también baja su deadline
         PCB enCpu = cpu.getProcesoActual();
         if (enCpu != null) {
             enCpu.setDeadline(enCpu.getDeadline() - 1);
@@ -154,11 +145,22 @@ public class Nucleo {
         }
     }
 
+    /**
+     * C-1 fix: solo procesa los PCBs de ESTE computador.
+     * Los ajenos se reencolan sin tocarlos.
+     */
     private void vencerEnSemaforo(Semaforo s, int ciclo) {
         int n = s.getBloqueados().getTamano();
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) s.getBloqueados().desencolar();
+
+            if (p.getComputador() != this.idComputador) {
+                s.getBloqueados().encolar(p);
+                continue;
+            }
+
             p.setDeadline(p.getDeadline() - 1);
+            p.setCiclosBloqueado(p.getCiclosBloqueado() + 1);
 
             if (p.getDeadline() <= 0) {
                 ram.liberar(p.getMemoria());
@@ -171,12 +173,12 @@ public class Nucleo {
         }
     }
 
-    // ---------- Paso 2: despertar bloqueados por E/S o RED ----------
-
+    // ---------- Paso 2 ----------
     private void despertarBloqueados() {
         int n = colaBloqueados.getTamano();
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaBloqueados.desencolar();
+            p.setCiclosBloqueado(p.getCiclosBloqueado() + 1);
 
             if (p.getMotivoBloqueo() == MotivoBloqueo.E_S
                     || p.getMotivoBloqueo() == MotivoBloqueo.RED) {
@@ -194,8 +196,7 @@ public class Nucleo {
         }
     }
 
-    // ---------- Paso 3: admitir de la cola de nuevos ----------
-
+    // ---------- Paso 3 ----------
     private void admitirSiHayMemoria() {
         PCB p = (PCB) colaNuevos.verFrente();
         while (p != null && ram.hayEspacio(p.getMemoria())) {
@@ -207,10 +208,8 @@ public class Nucleo {
         }
     }
 
-    // ---------- Paso 4: planificar ----------
-
+    // ---------- Paso 4 ----------
     private void planificar(int ciclo) {
-
         if (!cpu.estaLibre()) {
             PCB enCpu = cpu.getProcesoActual();
             boolean desalojar = false;
@@ -245,8 +244,7 @@ public class Nucleo {
         }
     }
 
-    // ---------- Paso 5: ejecutar UNA instrucción ----------
-
+    // ---------- Paso 5 ----------
     private void ejecutarInstruccion(int ciclo) {
         PCB p = cpu.getProcesoActual();
         if (p == null) return;
@@ -254,11 +252,15 @@ public class Nucleo {
         if (p.getTipo() == TipoProceso.PRODUCTOR
                 || p.getTipo() == TipoProceso.CONSUMIDOR) {
             ejecutarProductorConsumidor(p);
+        } else if (p.getTipo() == TipoProceso.IO_BOUND) {
+            ejecutarIOBound(p);   // C-4 fix
         } else {
             p.ejecutarInstruccion();
+            
         }
     }
 
+    /** C-3 fix: modo SISTEMA mientras opera el buffer. */
     private void ejecutarProductorConsumidor(PCB p) {
         p.setContadorCiclos(p.getContadorCiclos() + 1);
 
@@ -276,8 +278,6 @@ public class Nucleo {
             return;
         }
 
-                // Latencia de red para buffer remoto.
-        // Solo se paga UNA VEZ por operación, no cada ciclo.
         boolean esRemoto = (p.getComputador() != b.getAnfitrion());
         if (esRemoto && !p.isLatenciaPagada()) {
             p.setLatenciaPagada(true);
@@ -286,18 +286,19 @@ public class Nucleo {
             cpu.liberar();
             return;
         }
-        // Si ya pagó latencia (o es local), puede operar
-        p.setMotivoBloqueo(null);
-        p.setLatenciaPagada(false);
 
+        // C-3 fix
+        cpu.entrarModoSistema();
         boolean exito;
         if (p.getTipo() == TipoProceso.PRODUCTOR) {
             exito = b.producir(p, this);
         } else {
             exito = b.consumir(p, this);
         }
+        cpu.salirModoSistema();
 
         if (exito) {
+            p.setLatenciaPagada(false);
             p.setContadorCiclos(0);
             p.setElementosRestantes(p.getElementosRestantes() - 1);
             p.setPc(p.getPc() + 1);
@@ -308,8 +309,26 @@ public class Nucleo {
         }
     }
 
-    // ---------- Paso 6: cerrar el ciclo ----------
+    /** C-4 fix: I/O bound se bloquea cada N ciclos pidiendo E/S. */
+    private void ejecutarIOBound(PCB p) {
+        // Defaults si no se configuraron: cada 5 ciclos pide E/S de 3
+        int cadaN = (p.getCiclosPorElemento() > 0) ? p.getCiclosPorElemento() : 5;
+        int duracion = (p.getCiclosParaSatisfacer() > 0) ? p.getCiclosParaSatisfacer() : 3;
 
+        p.setContadorCiclos(p.getContadorCiclos() + 1);
+
+        if (p.getContadorCiclos() >= cadaN) {
+            p.setContadorCiclos(0);
+            p.setCiclosParaSatisfacer(duracion);
+            bloquear(p, MotivoBloqueo.E_S);
+            cpu.liberar();
+            return;
+        }
+
+        p.ejecutarInstruccion();
+    }
+
+    // ---------- Paso 6 ----------
     private void cerrarCiclo(int ciclo) {
         PCB p = cpu.getProcesoActual();
         if (p == null) return;
