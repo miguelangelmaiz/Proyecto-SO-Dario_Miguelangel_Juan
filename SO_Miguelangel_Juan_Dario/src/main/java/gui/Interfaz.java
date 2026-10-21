@@ -10,102 +10,110 @@ package gui;
  */
 
 import estructuraDeDatos.Cola;
-import estructuraDeDatos.ColaPrioridad;
-import estructuraDeDatos.Criterio;
-import estructuraDeDatos.ListaSimple;
 import estructuraDeDatos.Nodo;
-import estructuraDeDatos.Pila;
-import hardware.CPU;
-import hardware.ComponenteReloj;
 import hardware.Computador;
-import hardware.RelojGlobal;
-import planificacionSO.EDF;
-import planificacionSO.FCFS;
-import planificacionSO.PoliticaPlanificacion;
-import planificacionSO.PrioridadApropiativa;
-import planificacionSO.RoundRobin;
-import sistemaOperativo.Buffer;
-import sistemaOperativo.Cluster;
-import sistemaOperativo.GestorBuffers;
-import sistemaOperativo.Nucleo;
+import planificacionSO.*;
 import sistemaOperativo.PCB;
-import sistemaOperativo.Semaforo;
+import losEnums.TipoProceso;
+import sistemaOperativo.Cluster;
+
 public class Interfaz extends javax.swing.JFrame {
 
-    public sistemaOperativo.Cluster cluster;
+     public sistemaOperativo.Cluster cluster;
 
-    /**
-     * Creates new form Interfaz
-     */
     public Interfaz() {
         initComponents();
-    jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
-    // 1. CREAR EL CLUSTER (2 computadores, 2048 KB RAM, 500 ms por ciclo)
-    cluster = new sistemaOperativo.Cluster(2, 2048, 500);
-    // ARREGLO VISUAL DE LAS BARRAS DE RAM
-    jProgressBar1.setMaximum(2048); 
-    jProgressBar1.setStringPainted(true); // Para que muestre el texto
-    jProgressBar1.setString("RAM: 0 / 2048");
-
-    jProgressBar2.setMaximum(2048);
-    jProgressBar2.setStringPainted(true);
-    jProgressBar2.setString("RAM: 0 / 2048");
-
-    // 2. CONFIGURAR EL SPINNER DE VELOCIDAD
-    jSpinner1.setModel(new javax.swing.SpinnerNumberModel(500, 50, 5000, 50));
-    jSpinner1.addChangeListener((e) -> {
-        if (cluster != null) {
-            int ms = (int) jSpinner1.getValue();
-            cluster.getReloj().setDuracionCicloMs(ms);
-            jLabel2.setText("Velocidad (ms): " + ms);
-        }
-    });
-
-    // 3. EL TIMER QUE ACTUALIZA LA PANTALLA
-javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
-    if (cluster == null) return;
-
-    // Ciclo Global
-    jLabel1.setText("Ciclo Global: " + cluster.getReloj().getCiclo());
-
-    // Computador 1
-    sistemaOperativo.PCB p1 = cluster.getComputador(0).getCpu().getProcesoActual();
-    
-    // Guardamos la memoria usada en una variable para no repetir código
-    int ramUsada1 = cluster.getComputador(0).getRam().getUsada();
-    
-    if (p1 != null) {
-        jLabel3.setText("CPU: " + p1.getNombre()); 
-        jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline());
-        jLabel5.setText("Modo: " + cluster.getComputador(0).getCpu().getModo().toString());
-    } else {
-        jLabel3.setText("CPU: Libre");
-        jLabel4.setText("PC: 0 / Deadline: 0");
-        jLabel5.setText("Modo: Usuario");
-    }
-    
-    // Actualizamos la barra SIEMPRE (esté libre u ocupada)
-    jProgressBar1.setValue(ramUsada1);
-    jProgressBar1.setString("RAM: " + ramUsada1 + " / 2048");
-
-    // Colas del Computador 1
-    jTextArea1.setText("Nuevos: " + cluster.getComputador(0).getNucleo().getColaNuevos().getTamano() +
-                       "\nListos: " + cluster.getComputador(0).getNucleo().getColaListos().getTamano() +
-                       "\nBloqueados: " + cluster.getComputador(0).getNucleo().getColaBloqueados().getTamano() +
-                       "\nTerminados: " + cluster.getComputador(0).getNucleo().getTerminados().getTamano());
-                       
-    // (Opcional: Hacer lo mismo para Computador 2 con jProgressBar2)
-});
-    
-    timer.start();
+        jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
+        // 1. CREAR EL CLUSTER
+        cluster = new sistemaOperativo.Cluster(2, 2048, 500);
+        
+        // ARREGLO VISUAL DE LAS BARRAS DE RAM
+        jProgressBar1.setMaximum(2048); 
+        jProgressBar1.setStringPainted(true);
+        jProgressBar1.setString("RAM: 0 / 2048");
+
+        jProgressBar2.setMaximum(2048);
+        jProgressBar2.setStringPainted(true);
+        jProgressBar2.setString("RAM: 0 / 2048");
+
+        // 2. CONFIGURAR EL SPINNER DE VELOCIDAD
+        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(500, 50, 5000, 50));
+        jSpinner1.addChangeListener((e) -> {
+            if (cluster != null) {
+                int ms = (int) jSpinner1.getValue();
+                cluster.getReloj().setDuracionCicloMs(ms);
+                jLabel2.setText("Velocidad (ms): " + ms);
+            }
+        });
+
+        // 3. EL TIMER QUE ACTUALIZA LA PANTALLA
+        javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
+            if (cluster == null) return;
+
+            jLabel1.setText("Ciclo Global: " + cluster.getReloj().getCiclo());
+
+            // --- COMPUTADOR 1 ---
+            PCB p1 = cluster.getComputador(0).getCpu().getProcesoActual();
+            int ramUsada1 = cluster.getComputador(0).getRam().getUsada();
+            
+            if (p1 != null) {
+                jLabel3.setText("CPU: " + p1.getNombre()); 
+                jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline());
+                jLabel5.setText("Modo: " + cluster.getComputador(0).getCpu().getModo().toString());
+            } else {
+                jLabel3.setText("CPU: Libre");
+                jLabel4.setText("PC: 0 / Deadline: 0");
+                jLabel5.setText("Modo: Usuario");
+            }
+            
+            jProgressBar1.setValue(ramUsada1);
+            jProgressBar1.setString("RAM: " + ramUsada1 + " / 2048");
+
+            jTextArea1.setText("Nuevos: " + colaToString(cluster.getComputador(0).getNucleo().getColaNuevos()) +
+                               "\nListos: " + colaToString(cluster.getComputador(0).getNucleo().getColaListos()) +
+                               "\nBloqueados: " + colaToString(cluster.getComputador(0).getNucleo().getColaBloqueados()) +
+                               "\nTerminados: " + colaToString(cluster.getComputador(0).getNucleo().getTerminados()));
+
+            // --- COMPUTADOR 2 ---
+            PCB p2 = cluster.getComputador(1).getCpu().getProcesoActual();
+            int ramUsada2 = cluster.getComputador(1).getRam().getUsada();
+            
+            if (p2 != null) {
+                jLabel6.setText("CPU: " + p2.getNombre()); 
+                jLabel7.setText("PC: " + p2.getPc() + " / Deadline: " + p2.getDeadline());
+                jLabel8.setText("Modo: " + cluster.getComputador(1).getCpu().getModo().toString());
+            } else {
+                jLabel6.setText("CPU: Libre");
+                jLabel7.setText("PC: 0 / Deadline: 0");
+                jLabel8.setText("Modo: Usuario");
+            }
+            
+            jProgressBar2.setValue(ramUsada2);
+            jProgressBar2.setString("RAM: " + ramUsada2 + " / 2048");
+
+            jTextArea2.setText("Nuevos: " + colaToString(cluster.getComputador(1).getNucleo().getColaNuevos()) +
+                               "\nListos: " + colaToString(cluster.getComputador(1).getNucleo().getColaListos()) +
+                               "\nBloqueados: " + colaToString(cluster.getComputador(1).getNucleo().getColaBloqueados()) +
+                               "\nTerminados: " + colaToString(cluster.getComputador(1).getNucleo().getTerminados()));
+        });
+    
+        timer.start();
+    }
+    
+    private String colaToString(Cola cola) {
+        if (cola == null || cola.estaVacia()) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        Nodo aux = cola.getCabeza();
+        while (aux != null) {
+            PCB p = (PCB) aux.getDato();
+            sb.append(p.getNombre()).append(" ");
+            aux = aux.getpNext();
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -144,6 +152,8 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
         jLabel12 = new javax.swing.JLabel();
         spnInstrucciones = new javax.swing.JSpinner();
         jButton3 = new javax.swing.JButton();
+        jLabel13 = new javax.swing.JLabel();
+        cbxTipoProceso = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -240,7 +250,7 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
         jTextArea2.setEnabled(false);
         jScrollPane3.setViewportView(jTextArea2);
 
-        panelComp2.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 210, 130, -1));
+        panelComp2.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 210, 160, 130));
 
         jPanel2.add(panelComp2);
 
@@ -251,10 +261,10 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
         crearProceso.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 50, -1, -1));
 
         jLabel10.setText("Memoria: ");
-        crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 110, -1, -1));
+        crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
 
         jLabel11.setText("Instrucciones: ");
-        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
+        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
 
         txtNombre.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -262,12 +272,12 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
             }
         });
         crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, 100, -1));
-        crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 110, -1, -1));
-        crearProceso.add(spnDeadline, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 180, -1, -1));
+        crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 160, 100, -1));
+        crearProceso.add(spnDeadline, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 210, 90, -1));
 
         jLabel12.setText("Deadline: ");
-        crearProceso.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, -1, -1));
-        crearProceso.add(spnInstrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 230, -1, -1));
+        crearProceso.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 210, -1, -1));
+        crearProceso.add(spnInstrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 260, 100, -1));
 
         jButton3.setText("Crear Proceso");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
@@ -275,7 +285,18 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
                 jButton3ActionPerformed(evt);
             }
         });
-        crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 280, -1, -1));
+        crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 340, -1, -1));
+
+        jLabel13.setText("Tipo de proceso:");
+        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 110, -1, -1));
+
+        cbxTipoProceso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CPU_BOUND", "IO_BOUND", "PRODUCTOR", "CONSUMIDOR" }));
+        cbxTipoProceso.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxTipoProcesoActionPerformed(evt);
+            }
+        });
+        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 110, -1, -1));
 
         jPanel2.add(crearProceso);
 
@@ -299,101 +320,116 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
        if(cluster != null){
-       cluster.iniciar();
-       jLabel2.setText("Velocidad (ms): " + jSpinner1.getValue());
-       jButton1.setEnabled(false); // Deshabilitar INICIAR
-       jButton2.setEnabled(true);  // Habilitar PAUSAR
-   }
-       // TODO add your handling code here:
+           cluster.iniciar();
+           jLabel2.setText("Velocidad (ms): " + jSpinner1.getValue());
+           jButton1.setEnabled(false);
+           jButton2.setEnabled(true);
+       }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-         if (cluster != null) {
-        cluster.detener();
-        jButton1.setEnabled(true);  // Habilitar INICIAR
-        jButton2.setEnabled(false); // Deshabilitar PAUSAR
-    }// TODO add your handling code here:
+        if (cluster != null) {
+            cluster.detener();
+            jButton1.setEnabled(true);
+            jButton2.setEnabled(false);
+        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // TODO add your handling code here:
+        if (cluster == null) return;
+        String seleccion = (String) jComboBox1.getSelectedItem();
+        PoliticaPlanificacion nuevaPolitica = null;
+        
+        switch (seleccion) {
+            case "FCFS": nuevaPolitica = new FCFS(); break;
+            case "Round Robin": nuevaPolitica = new RoundRobin(3); break; 
+            case "EDF": nuevaPolitica = new EDF(); break;
+            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
+        }
+        
+        if (nuevaPolitica != null) {
+            cluster.getComputador(0).setPolitica(nuevaPolitica);
+        }
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-        // TODO add your handling code here:
+        if (cluster == null) return;
+        String seleccion = (String) jComboBox2.getSelectedItem();
+        PoliticaPlanificacion nuevaPolitica = null;
+        
+        switch (seleccion) {
+            case "FCFS": nuevaPolitica = new FCFS(); break;
+            case "Round Robin": nuevaPolitica = new RoundRobin(3); break; 
+            case "EDF": nuevaPolitica = new EDF(); break;
+            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
+        }
+        
+        if (nuevaPolitica != null) {
+            cluster.getComputador(1).setPolitica(nuevaPolitica);
+        } 
     }//GEN-LAST:event_jComboBox2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-          try {
-        String nombre = txtNombre.getText(); 
-        int mem = (int) spnMemoria.getValue();
-        int dead = (int) spnDeadline.getValue();
-        int inst = (int) spnInstrucciones.getValue();
+        try {
+            String nombre = txtNombre.getText(); 
+            int mem = (int) spnMemoria.getValue();
+            int dead = (int) spnDeadline.getValue();
+            int inst = (int) spnInstrucciones.getValue();
 
-        if (nombre.trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
-            return;
+            if (nombre.trim().isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
+                return;
+            }
+
+            // Leemos del ComboBox que acabas de agregar visualmente
+            String tipoStr = (String) cbxTipoProceso.getSelectedItem();
+            TipoProceso tipo = TipoProceso.valueOf(tipoStr);
+
+            // Creamos el proceso
+            sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, mem, dead, inst, 1);
+            
+            // Configuramos parámetros específicos según el tipo
+            if (tipo == TipoProceso.IO_BOUND) {
+                p.setCiclosPorElemento(3); 
+                p.setCiclosParaSatisfacer(2); 
+            } else if (tipo == TipoProceso.PRODUCTOR || tipo == TipoProceso.CONSUMIDOR) {
+                if (cluster.getGestorBuffers().getCantidad() == 0) {
+                    cluster.getGestorBuffers().crearBuffer(5, 1); 
+                }
+                p.setBufferAsociado(1);
+                p.setCiclosPorElemento(3);
+                p.setElementosRestantes(inst); 
+            }
+            
+            // Admitimos el proceso en el Computador 1
+            cluster.getComputador(0).getNucleo().admitir(p);
+            
+            javax.swing.JOptionPane.showMessageDialog(this, tipoStr + " " + nombre + " creado!");
+            txtNombre.setText("");
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
-
-        // FORZAMOS QUE SEA I/O BOUND PARA PROBAR EL BLOQUEO
-        sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, losEnums.TipoProceso.IO_BOUND, 2, mem, dead, inst, 1);
-        
-        // Le decimos que pida E/S cada 3 ciclos y dure 2 ciclos
-        p.setCiclosPorElemento(3); 
-        p.setCiclosParaSatisfacer(2); 
-
-        cluster.getComputador(0).getNucleo().admitir(p);
-        
-        javax.swing.JOptionPane.showMessageDialog(this, "Proceso I/O " + nombre + " creado!");
-        txtNombre.setText("");
-        
-    } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-    }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtNombreActionPerformed
 
+    private void cbxTipoProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTipoProcesoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxTipoProcesoActionPerformed
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Interfaz.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Interfaz.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Interfaz.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Interfaz.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-  
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Interfaz().setVisible(true);
-            }
-        });
+        java.awt.EventQueue.invokeLater(() -> new Interfaz().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane Simulación;
+    private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -404,6 +440,7 @@ javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
