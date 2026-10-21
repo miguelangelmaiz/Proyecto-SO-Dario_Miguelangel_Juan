@@ -1,10 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 
-
-package EDD;
+package estructuraDeDatos;
 
 /**
  *
@@ -153,7 +148,24 @@ public class Cola {
         return false;
     }
     
-    
+   /**
+ * Devuelve el "mejor" elemento según un criterio, sin extraerlo.
+ * Lo usan EDF y Prioridades para decidir a quién elegir.
+ */
+public Object verMejor(Criterio criterio) {
+    if (estaVacia()) {
+        return null;
+    }
+    Nodo actual = cabeza;
+    Object mejor = actual.getDato();
+    while (actual != null) {
+        if (criterio.mejor(actual.getDato(), mejor)) {
+            mejor = actual.getDato();
+        }
+        actual = actual.getpNext();
+    }
+    return mejor;
+} 
     
 
     
