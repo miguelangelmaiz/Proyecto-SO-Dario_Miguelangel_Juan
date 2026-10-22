@@ -70,10 +70,10 @@ public class Interfaz extends javax.swing.JFrame {
             jProgressBar1.setValue(ramUsada1);
             jProgressBar1.setString("RAM: " + ramUsada1 + " / 2048");
 
-            jTextArea1.setText("Nuevos: " + colaToString(cluster.getComputador(0).getNucleo().getColaNuevos()) +
-                               "\nListos: " + colaToString(cluster.getComputador(0).getNucleo().getColaListos()) +
-                               "\nBloqueados: " + colaToString(cluster.getComputador(0).getNucleo().getColaBloqueados()) +
-                               "\nTerminados: " + colaToString(cluster.getComputador(0).getNucleo().getTerminados()));
+            jTextArea1.setText("Nuevos: " + cluster.getComputador(0).getNucleo().getColaNuevos().getNombresProcesos() +
+                   "\nListos: " + cluster.getComputador(0).getNucleo().getColaListos().getNombresProcesos() +
+                   "\nBloqueados: " + cluster.getComputador(0).getNucleo().getColaBloqueados().getNombresProcesos() +
+                   "\nTerminados: " + cluster.getComputador(0).getNucleo().getTerminados().getNombresProcesos());
 
             // --- COMPUTADOR 2 ---
             PCB p2 = cluster.getComputador(1).getCpu().getProcesoActual();
@@ -92,27 +92,16 @@ public class Interfaz extends javax.swing.JFrame {
             jProgressBar2.setValue(ramUsada2);
             jProgressBar2.setString("RAM: " + ramUsada2 + " / 2048");
 
-            jTextArea2.setText("Nuevos: " + colaToString(cluster.getComputador(1).getNucleo().getColaNuevos()) +
-                               "\nListos: " + colaToString(cluster.getComputador(1).getNucleo().getColaListos()) +
-                               "\nBloqueados: " + colaToString(cluster.getComputador(1).getNucleo().getColaBloqueados()) +
-                               "\nTerminados: " + colaToString(cluster.getComputador(1).getNucleo().getTerminados()));
+            jTextArea2.setText("Nuevos: " + cluster.getComputador(1).getNucleo().getColaNuevos().getNombresProcesos() +
+                   "\nListos: " + cluster.getComputador(1).getNucleo().getColaListos().getNombresProcesos() +
+                   "\nBloqueados: " + cluster.getComputador(1).getNucleo().getColaBloqueados().getNombresProcesos() +
+                   "\nTerminados: " + cluster.getComputador(1).getNucleo().getTerminados().getNombresProcesos());
         });
     
         timer.start();
     }
     
-    private String colaToString(Cola cola) {
-        if (cola == null || cola.estaVacia()) return "[]";
-        StringBuilder sb = new StringBuilder("[");
-        Nodo aux = cola.getCabeza();
-        while (aux != null) {
-            PCB p = (PCB) aux.getDato();
-            sb.append(p.getNombre()).append(" ");
-            aux = aux.getpNext();
-        }
-        sb.append("]");
-        return sb.toString();
-    }
+    
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -222,7 +211,7 @@ public class Interfaz extends javax.swing.JFrame {
         jTextArea1.setEnabled(false);
         jScrollPane2.setViewportView(jTextArea1);
 
-        panelComp1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 210, 160, 130));
+        panelComp1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 210, 210, 180));
 
         jPanel2.add(panelComp1);
 
@@ -256,7 +245,7 @@ public class Interfaz extends javax.swing.JFrame {
         jTextArea2.setEnabled(false);
         jScrollPane3.setViewportView(jTextArea2);
 
-        panelComp2.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 210, 160, 130));
+        panelComp2.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 210, 200, 180));
 
         jPanel2.add(panelComp2);
 
@@ -438,6 +427,10 @@ public class Interfaz extends javax.swing.JFrame {
 
         // 5. Creamos el proceso y lo mandamos al Núcleo del computador elegido
         sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
+        if (tipo == losEnums.TipoProceso.IO_BOUND) {
+    p.setCiclosPorElemento(3);    // Pide E/S cada 3 ciclos
+    p.setCiclosParaSatisfacer(2); // La E/S dura 2 ciclos
+}
         cluster.getComputador(indiceComp).getNucleo().admitir(p);
         
         // 6. Mostramos mensaje de éxito y limpiamos
@@ -458,41 +451,7 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_cbxTipoProcesoActionPerformed
 
     private void OpComputadoraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpComputadoraActionPerformed
-         try {
         
-        String nombre = txtNombre.getText(); 
-        int memoria = (int) spnMemoria.getValue();
-        int deadline = (int) spnDeadline.getValue();
-        int instrucciones = (int) spnInstrucciones.getValue();
-
-        // Funcion para validar que no esta vacio
-        if (nombre.trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
-            return;
-        }
-
-        // 3. Determinamos el Tipo de Proceso según el ComboBox
-        losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
-        if (cbxTipoProceso.getSelectedItem().toString().equals("IO_BOUND")) {
-            tipo = losEnums.TipoProceso.IO_BOUND;
-        }
-
-        // 4. Determinamos a qué computador va según el ComboBox OpComputadora
-        // El índice 0 es Computador 1, el índice 1 es Computador 2
-        int indiceComp = OpComputadora.getSelectedIndex(); 
-        int idComp = indiceComp + 1; // El ID es 1 o 2
-
-        // 5. Creamos el proceso y lo mandamos al Núcleo del computador elegido
-        sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
-        cluster.getComputador(indiceComp).getNucleo().admitir(p);
-        
-        // 6. Mostramos mensaje de éxito y limpiamos
-        javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
-        txtNombre.setText("");
-        
-    } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-    }// TODO add your handling code here:
     }//GEN-LAST:event_OpComputadoraActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
