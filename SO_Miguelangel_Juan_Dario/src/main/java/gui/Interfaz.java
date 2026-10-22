@@ -154,6 +154,10 @@ public class Interfaz extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jLabel13 = new javax.swing.JLabel();
         cbxTipoProceso = new javax.swing.JComboBox<>();
+        OpComputadora = new javax.swing.JComboBox<>();
+        jLabel14 = new javax.swing.JLabel();
+        jButton4 = new javax.swing.JButton();
+        acBuffer = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -169,6 +173,7 @@ public class Interfaz extends javax.swing.JFrame {
         jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 50, -1, -1));
 
         jButton1.setText("INICIAR");
+        jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -177,6 +182,7 @@ public class Interfaz extends javax.swing.JFrame {
         jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 50, -1, -1));
 
         jButton2.setText("PAUSAR");
+        jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
@@ -263,8 +269,8 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel10.setText("Memoria: ");
         crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
 
-        jLabel11.setText("Instrucciones: ");
-        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
+        jLabel11.setText("Computadora:");
+        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, -1, -1));
 
         txtNombre.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -272,14 +278,21 @@ public class Interfaz extends javax.swing.JFrame {
             }
         });
         crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, 100, -1));
+
+        spnMemoria.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 160, 100, -1));
+
+        spnDeadline.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         crearProceso.add(spnDeadline, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 210, 90, -1));
 
         jLabel12.setText("Deadline: ");
         crearProceso.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 210, -1, -1));
+
+        spnInstrucciones.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         crearProceso.add(spnInstrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 260, 100, -1));
 
         jButton3.setText("Crear Proceso");
+        jButton3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton3ActionPerformed(evt);
@@ -291,6 +304,7 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 110, -1, -1));
 
         cbxTipoProceso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CPU_BOUND", "IO_BOUND", "PRODUCTOR", "CONSUMIDOR" }));
+        cbxTipoProceso.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cbxTipoProceso.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cbxTipoProcesoActionPerformed(evt);
@@ -298,11 +312,39 @@ public class Interfaz extends javax.swing.JFrame {
         });
         crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 110, -1, -1));
 
+        OpComputadora.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computadora 1", "Computadora 2" }));
+        OpComputadora.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        OpComputadora.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                OpComputadoraActionPerformed(evt);
+            }
+        });
+        crearProceso.add(OpComputadora, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 300, -1, -1));
+
+        jLabel14.setText("Instrucciones: ");
+        crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
+
         jPanel2.add(crearProceso);
 
         Simulación.addTab("Simulación", jPanel2);
 
         jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 960, 440));
+
+        jButton4.setText("SIMULACION");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 60, -1, -1));
+
+        acBuffer.setText("BUFFER");
+        acBuffer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                acBufferActionPerformed(evt);
+            }
+        });
+        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 10, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -370,46 +412,41 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_jComboBox2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        try {
-            String nombre = txtNombre.getText(); 
-            int mem = (int) spnMemoria.getValue();
-            int dead = (int) spnDeadline.getValue();
-            int inst = (int) spnInstrucciones.getValue();
+         try {
+        // 1. Atrapamos los datos con TUS nombres de variables
+        String nombre = txtNombre.getText(); 
+        int memoria = (int) spnMemoria.getValue();
+        int deadline = (int) spnDeadline.getValue();
+        int instrucciones = (int) spnInstrucciones.getValue();
 
-            if (nombre.trim().isEmpty()) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
-                return;
-            }
-
-            // Leemos del ComboBox que acabas de agregar visualmente
-            String tipoStr = (String) cbxTipoProceso.getSelectedItem();
-            TipoProceso tipo = TipoProceso.valueOf(tipoStr);
-
-            // Creamos el proceso
-            sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, mem, dead, inst, 1);
-            
-            // Configuramos parámetros específicos según el tipo
-            if (tipo == TipoProceso.IO_BOUND) {
-                p.setCiclosPorElemento(3); 
-                p.setCiclosParaSatisfacer(2); 
-            } else if (tipo == TipoProceso.PRODUCTOR || tipo == TipoProceso.CONSUMIDOR) {
-                if (cluster.getGestorBuffers().getCantidad() == 0) {
-                    cluster.getGestorBuffers().crearBuffer(5, 1); 
-                }
-                p.setBufferAsociado(1);
-                p.setCiclosPorElemento(3);
-                p.setElementosRestantes(inst); 
-            }
-            
-            // Admitimos el proceso en el Computador 1
-            cluster.getComputador(0).getNucleo().admitir(p);
-            
-            javax.swing.JOptionPane.showMessageDialog(this, tipoStr + " " + nombre + " creado!");
-            txtNombre.setText("");
-            
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        // 2. Validamos que no esté vacío
+        if (nombre.trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
+            return;
         }
+
+        // 3. Determinamos el Tipo de Proceso según el ComboBox
+        losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
+        if (cbxTipoProceso.getSelectedItem().toString().equals("IO_BOUND")) {
+            tipo = losEnums.TipoProceso.IO_BOUND;
+        }
+
+        // 4. Determinamos a qué computador va según el ComboBox OpComputadora
+        // El índice 0 es Computador 1, el índice 1 es Computador 2
+        int indiceComp = OpComputadora.getSelectedIndex(); 
+        int idComp = indiceComp + 1; // El ID es 1 o 2
+
+        // 5. Creamos el proceso y lo mandamos al Núcleo del computador elegido
+        sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
+        cluster.getComputador(indiceComp).getNucleo().admitir(p);
+        
+        // 6. Mostramos mensaje de éxito y limpiamos
+        javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
+        txtNombre.setText("");
+        
+    } catch (Exception e) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
@@ -420,6 +457,54 @@ public class Interfaz extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_cbxTipoProcesoActionPerformed
 
+    private void OpComputadoraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpComputadoraActionPerformed
+         try {
+        
+        String nombre = txtNombre.getText(); 
+        int memoria = (int) spnMemoria.getValue();
+        int deadline = (int) spnDeadline.getValue();
+        int instrucciones = (int) spnInstrucciones.getValue();
+
+        // Funcion para validar que no esta vacio
+        if (nombre.trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
+            return;
+        }
+
+        // 3. Determinamos el Tipo de Proceso según el ComboBox
+        losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
+        if (cbxTipoProceso.getSelectedItem().toString().equals("IO_BOUND")) {
+            tipo = losEnums.TipoProceso.IO_BOUND;
+        }
+
+        // 4. Determinamos a qué computador va según el ComboBox OpComputadora
+        // El índice 0 es Computador 1, el índice 1 es Computador 2
+        int indiceComp = OpComputadora.getSelectedIndex(); 
+        int idComp = indiceComp + 1; // El ID es 1 o 2
+
+        // 5. Creamos el proceso y lo mandamos al Núcleo del computador elegido
+        sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
+        cluster.getComputador(indiceComp).getNucleo().admitir(p);
+        
+        // 6. Mostramos mensaje de éxito y limpiamos
+        javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
+        txtNombre.setText("");
+        
+    } catch (Exception e) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }// TODO add your handling code here:
+    }//GEN-LAST:event_OpComputadoraActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void acBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acBufferActionPerformed
+ventanaBuffer vb = new ventanaBuffer();
+vb.cluster = this.cluster; // Le pasas el mismo clúster
+vb.setVisible(true);       // La muestras        // TODO add your handling code here:
+    }//GEN-LAST:event_acBufferActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -428,12 +513,15 @@ public class Interfaz extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> OpComputadora;
     private javax.swing.JTabbedPane Simulación;
+    private javax.swing.JButton acBuffer;
     private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
@@ -441,6 +529,7 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
