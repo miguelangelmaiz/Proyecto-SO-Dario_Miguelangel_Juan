@@ -341,4 +341,18 @@ public class Nucleo {
             admitirSiHayMemoria();
         }
     }
+        public double getTiempoRespuestaPromedio() {
+        int cantidad = terminados.getTamano();
+        if (cantidad == 0) return 0.0;
+        
+        double suma = 0;
+        estructuraDeDatos.Nodo actual = terminados.getCabeza();
+        while (actual != null) {
+            PCB p = (PCB) actual.getDato();
+            suma += (p.getCicloFin() - p.getCicloLlegada());
+            actual = actual.getpNext();
+        }
+        return suma / cantidad;
+    }
+    
 }

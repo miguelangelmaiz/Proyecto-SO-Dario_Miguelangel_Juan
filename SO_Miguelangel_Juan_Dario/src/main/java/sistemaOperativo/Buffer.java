@@ -68,6 +68,7 @@ public class Buffer {
 
         // 3) añado y salgo
         elementos++;
+        totalProducidos++;
         mutex.semSignal(k);
         llenos.semSignal(k);
         return true;
@@ -93,6 +94,7 @@ public class Buffer {
         }
 
         elementos--;
+        totalConsumidos++;
         mutex.semSignal(k);
         vacios.semSignal(k);
         return true;
