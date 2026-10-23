@@ -27,7 +27,7 @@ public class Interfaz extends javax.swing.JFrame {
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         
-        jButton2.setEnabled(false); 
+         
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
         // 1. CREAR EL CLUSTER
@@ -452,6 +452,12 @@ public class Interfaz extends javax.swing.JFrame {
                 p.setCiclosPorElemento(3);    
                 p.setCiclosParaSatisfacer(2); 
             }
+            // NUEVO: Si es PRODUCTOR o CONSUMIDOR, asignarle el buffer
+            if (tipo == losEnums.TipoProceso.PRODUCTOR || tipo == losEnums.TipoProceso.CONSUMIDOR) {
+                p.setBufferAsociado(1);       // Usará el Buffer #1
+                p.setCiclosPorElemento(3);    // Producirá/Consumirá un elemento cada 3 ciclos
+                p.setElementosRestantes(5);   // Va a producir/consumir 5 elementos en total
+                }
             
             // 7. Lo mandamos al Núcleo
             cluster.getComputador(indiceComp).getNucleo().admitir(p);

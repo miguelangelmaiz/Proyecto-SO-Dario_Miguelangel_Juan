@@ -20,72 +20,76 @@ public sistemaOperativo.Cluster cluster;
             
           javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
              if (cluster == null) return;
+                  estructuraDeDatos.ListaSimple lista = cluster.getGestorBuffers().getLista();
+    StringBuilder texto = new StringBuilder();
+    
+    int totalProd = 0;
+    int totalCons = 0;
 
-            try {
-                estructuraDeDatos.ListaSimple lista = cluster.getGestorBuffers().getLista();
-                StringBuilder texto = new StringBuilder();
-                
-                // 1. Declaramos las variables AQUÍ para que se reinicien cada 100ms
-                int totalProd = 0;
-                int totalCons = 0;
-
-                if (lista.getSize() == 0) {
-                    texto.append("No hay buffers creados aún.");
-                    barraBuffer.setValue(0);
-                } else {
-                    for (int i = 0; i < lista.getSize(); i++) {
-                        sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
-                        
-                        texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
-                        texto.append("Capacidad: ").append(b.getCapacidad()).append(" | Elementos: ").append(b.getElementos()).append("\n");
-                        
-                        // Semáforos (Asumiendo que tu clase Semaforo tiene getValor())
-                        texto.append("Semáforos -> Mutex: ").append(b.getMutex().getValor())
-                             .append(" | Vacíos: ").append(b.getVacios().getValor())
-                             .append(" | Llenos: ").append(b.getLlenos().getValor()).append("\n");
-                        texto.append("--------------------------------------------------\n");
-                        
-                        // 2. Sumamos AQUÍ DENTRO del for, usando el objeto 'b'
-                        totalProd += b.getTotalProducidos();
-                        totalCons += b.getTotalConsumidos();
-                        
-                        if (i == 0) {
-                            barraBuffer.setMaximum(b.getCapacidad());
-                            barraBuffer.setValue(b.getElementos());
-                            barraBuffer.setString(b.getElementos() + " / " + b.getCapacidad());
-                            barraBuffer.setStringPainted(true);
-                        }
-                    }
-                     
-                }
-                txtEstadoBuffer.setText(texto.toString());
-
-                // Actualizar los Labels de las métricas (que estaban en 0)
-                int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
-                int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
-                int totalTerminados = terminadosC1 + terminadosC2;
-                int cicloActual = cluster.getReloj().getCiclo();
-                
-                if (cicloActual > 0) {
-                    double throughput = (double) totalTerminados / cicloActual;
-                    jLabel8.setText("Throughput: " + String.format("%.2f", throughput));
-                }
-                
-                // Textos de prueba para que no se vean vacíos
-                jLabel6.setText("Elementos Producido: " + (cicloActual * 2));
-                jLabel5.setText("Elementos Consumido: " + (cicloActual));
-                jLabel4.setText("Tiempo Respuesta Promedio: " + (cicloActual / 2));
-                jLabel7.setText("Tasa Plazos Cumplidos: 100%");
-
-            } catch (Exception ex) {
-                // Si hay un error al leer las listas porque el Reloj las está modificando al mismo tiempo, 
-                // lo atrapamos aquí para que la ventana no se cierre de golpe.
-                System.out.println("Esperando datos del buffer...");
+    if (lista.getSize() == 0) {
+        texto.append("No hay buffers creados aún.");
+        barraBuffer.setValue(0);
+    } else {
+        for (int i = 0; i < lista.getSize(); i++) {
+            sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
+            
+            texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
+            texto.append("Capacidad: ").append(b.getCapacidad()).append(" | Elementos: ").append(b.getElementos()).append("\n");
+            texto.append("Semáforos -> Mutex: ").append(b.getMutex().getValor())
+                 .append(" | Vacíos: ").append(b.getVacios().getValor())
+                 .append(" | Llenos: ").append(b.getLlenos().getValor()).append("\n");
+            texto.append("--------------------------------------------------\n");
+            
+            // Sumamos los elementos reales
+            totalProd += b.getTotalProducidos();
+            totalCons += b.getTotalConsumidos();
+            
+            if (i == 0) {
+                barraBuffer.setMaximum(b.getCapacidad());
+                barraBuffer.setValue(b.getElementos());
+                barraBuffer.setString(b.getElementos() + " / " + b.getCapacidad());
+                barraBuffer.setStringPainted(true);
             }
+        }
+    }
+    txtEstadoBuffer.setText(texto.toString());
+
+    // Actualizar los Labels de las métricas con los datos REALES
+    int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
+    int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
+    int totalTerminados = terminadosC1 + terminadosC2;
+    int cicloActual = cluster.getReloj().getCiclo();
+    
+    if (cicloActual > 0) {
+        double throughput = (double) totalTerminados / cicloActual;
+        jLabel8.setText("Throughput: " + String.format("%.2f", throughput));
+    }
+    
+    jLabel6.setText("Elementos Producido: " + totalProd);
+    jLabel5.setText("Elementos Consumido: " + totalCons);
+    
+    // Estas quedan como placeholder (las puedes dejar así)
+        // Calcular tiempo de respuesta real de ambos computadores
+    double tr1 = cluster.getComputador(0).getNucleo().getTiempoRespuestaPromedio();
+    double tr2 = cluster.getComputador(1).getNucleo().getTiempoRespuestaPromedio();
+    double promedioReal = 0;
+    int pcsConDatos = 0;
+
+    if (cluster.getComputador(0).getNucleo().getTerminados().getTamano() > 0) { promedioReal += tr1; pcsConDatos++; }
+    if (cluster.getComputador(1).getNucleo().getTerminados().getTamano() > 0) { promedioReal += tr2; pcsConDatos++; }
+
+    if (pcsConDatos > 0) {
+        jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", promedioReal / pcsConDatos));
+    } else {
+        jLabel4.setText("Tiempo Respuesta Promedio: 0");
+    }
+    
+    // Dejamos el de plazos así por ahora
+    jLabel7.setText("Tasa Plazos Cumplidos: 100%");
+});
+timer.start();
+
             
-            
-        });
-        timer.start();
         
         
     }
