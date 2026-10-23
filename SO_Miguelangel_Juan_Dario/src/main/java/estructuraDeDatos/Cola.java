@@ -1,6 +1,6 @@
 
 package estructuraDeDatos;
-
+import java.util.concurrent.Semaphore;
 /**
  *
  * @author Miguel
@@ -9,8 +9,11 @@ public class Cola {
     
     
     private Nodo cabeza;
-    private Nodo cola;   // el "tail"
+    private Nodo cola;
     private int tamano;
+    
+    // EL CANDADO: Solo un hilo puede entrar a la vez
+    private final Semaphore mutex = new Semaphore(1);
 
     public Cola() {
         this.cabeza = null;
@@ -19,153 +22,197 @@ public class Cola {
     }
 
     // ---------- Getters y Setters ----------
-    public Nodo getCabeza() {
-        return cabeza;
-    }
-
-    public void setCabeza(Nodo cabeza) {
-        this.cabeza = cabeza;
-    }
-
-    public Nodo getCola() {
-        return cola;
-    }
-
-    public void setCola(Nodo cola) {
-        this.cola = cola;
-    }
+    public Nodo getCabeza() { return cabeza; }
+    public void setCabeza(Nodo cabeza) { this.cabeza = cabeza; }
+    public Nodo getCola() { return cola; }
+    public void setCola(Nodo cola) { this.cola = cola; }
 
     public int getTamano() {
-        return tamano;
+        try {
+            mutex.acquire();
+            return tamano;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return 0;
+        } finally {
+            mutex.release();
+        }
     }
 
-    public void setTamano(int tamano) {
-        this.tamano = tamano;
-    }
+    // ---------- Operaciones básicas protegidas ----------
 
-    // ---------- Operaciones básicas ----------
-
-    /** Devuelve el primer elemento sin extraerlo. */
     public Object verFrente() {
-        if (estaVacia()) {
+        try {
+            mutex.acquire();
+            if (cabeza == null) return null;
+            return cabeza.getDato();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return null;
+        } finally {
+            mutex.release();
         }
-        return cabeza.getDato();
     }
 
-    /** Inserta al final de la cola. */
     public void encolar(Object elemento) {
-        Nodo nuevo = new Nodo(elemento);
-        if (estaVacia()) {
-            setCabeza(nuevo);
-            setCola(nuevo);
-        } else {
-            getCola().setpNext(nuevo);
-            setCola(nuevo);
+        try {
+            mutex.acquire();
+            Nodo nuevo = new Nodo(elemento);
+            if (cabeza == null) {
+                cabeza = nuevo;
+                cola = nuevo;
+            } else {
+                cola.setpNext(nuevo);
+                cola = nuevo;
+            }
+            tamano++;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            mutex.release();
         }
-        tamano++;
-        // System.out.println("Elemento agregado a la cola: " + elemento);
     }
 
-    /** Extrae y devuelve el primer elemento. */
     public Object desencolar() {
-        if (estaVacia()) {
-            // System.out.println("[ERROR] Se intentó extraer de una cola vacía.");
+        try {
+            mutex.acquire();
+            if (cabeza == null) return null;
+            
+            Object elemento = cabeza.getDato();
+            cabeza = cabeza.getpNext();
+            if (cabeza == null) {
+                cola = null;
+            }
+            tamano--;
+            return elemento;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return null;
+        } finally {
+            mutex.release();
         }
-        Object elemento = cabeza.getDato();
-        cabeza = cabeza.getpNext();
-        if (cabeza == null) {
-            cola = null; // si la cola quedó vacía, tail también
-        }
-        tamano--;
-        // System.out.println("Elemento eliminado de la cola: " + elemento);
-        return elemento;
     }
 
     public boolean estaVacia() {
-        return cabeza == null;
-    }
-
-    /** Imprime la cola en consola (útil para depurar). */
-    public void imprimir() {
-        Nodo puntero = cabeza;
-        while (puntero != null) {
-            System.out.print("[ " + puntero.getDato() + " ] -> ");
-            puntero = puntero.getpNext();
+        try {
+            mutex.acquire();
+            return cabeza == null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return true;
+        } finally {
+            mutex.release();
         }
-        System.out.println("NULL");
     }
 
-    /**
-     * Elimina de la cola el elemento que sea "igual" al objetivo.
-     * Usa equals() del objeto. Sirve cuando un proceso sale de la cola
-     * de listos para pasar a ejecución, o cuando se cancela.
-     */
     public void eliminar(Object objetivo) {
-        if (estaVacia()) {
-            // System.out.println("[ERROR] Intento de eliminar de una cola vacía.");
-            return;
-        }
+        try {
+            mutex.acquire();
+            if (cabeza == null) return;
 
-        Nodo actual = cabeza;
-        Nodo anterior = null;
+            Nodo actual = cabeza;
+            Nodo anterior = null;
 
-        while (actual != null) {
-            if (actual.getDato().equals(objetivo)) {
-                if (anterior == null) {
-                    // Es el primer nodo
-                    cabeza = actual.getpNext();
-                    if (cabeza == null) {
-                        cola = null;
+            while (actual != null) {
+                if (actual.getDato().equals(objetivo)) {
+                    if (anterior == null) {
+                        cabeza = actual.getpNext();
+                        if (cabeza == null) cola = null;
+                    } else {
+                        anterior.setpNext(actual.getpNext());
+                        if (actual.getpNext() == null) cola = anterior;
                     }
-                } else {
-                    anterior.setpNext(actual.getpNext());
-                    if (actual.getpNext() == null) {
-                        cola = anterior;
-                    }
+                    tamano--;
+                    return;
                 }
-                tamano--;
-                // System.out.println("[INFO] Elemento eliminado de la cola: " + objetivo);
-                return;
+                anterior = actual;
+                actual = actual.getpNext();
             }
-            anterior = actual;
-            actual = actual.getpNext();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            mutex.release();
         }
-
-        // System.out.println("[ERROR] Elemento no encontrado en la cola.");
     }
 
-    /** Devuelve true si la cola contiene ese elemento. */
     public boolean contiene(Object objetivo) {
-        Nodo actual = cabeza;
-        while (actual != null) {
-            if (actual.getDato().equals(objetivo)) {
-                return true;
+        try {
+            mutex.acquire();
+            Nodo actual = cabeza;
+            while (actual != null) {
+                if (actual.getDato().equals(objetivo)) return true;
+                actual = actual.getpNext();
             }
-            actual = actual.getpNext();
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } finally {
+            mutex.release();
         }
-        return false;
     }
     
-   /**
- * Devuelve el "mejor" elemento según un criterio, sin extraerlo.
- * Lo usan EDF y Prioridades para decidir a quién elegir.
- */
-public Object verMejor(Criterio criterio) {
-    if (estaVacia()) {
-        return null;
-    }
-    Nodo actual = cabeza;
-    Object mejor = actual.getDato();
-    while (actual != null) {
-        if (criterio.mejor(actual.getDato(), mejor)) {
-            mejor = actual.getDato();
+    public Object verMejor(Criterio criterio) {
+        try {
+            mutex.acquire();
+            if (cabeza == null) return null;
+            Nodo actual = cabeza;
+            Object mejor = actual.getDato();
+            while (actual != null) {
+                if (criterio.mejor(actual.getDato(), mejor)) {
+                    mejor = actual.getDato();
+                }
+                actual = actual.getpNext();
+            }
+            return mejor;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } finally {
+            mutex.release();
         }
-        actual = actual.getpNext();
     }
-    return mejor;
-} 
+
+    /** 
+     * MÉTODO NUEVO PARA LA GUI: Devuelve los nombres de los procesos 
+     * de forma segura sin que el hilo de Swing choque con el Reloj.
+     */
+    public String getNombresProcesos() {
+        try {
+            mutex.acquire();
+            if (cabeza == null) return "[]";
+            StringBuilder sb = new StringBuilder("[");
+            Nodo aux = cabeza;
+            while (aux != null) {
+                sb.append(aux.getDato().toString().split("\\[")[0]); // Saca "P1-Nombre"
+                sb.append(" ");
+                aux = aux.getpNext();
+            }
+            sb.append("]");
+            return sb.toString();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "[]";
+        } finally {
+            mutex.release();
+        }
+    }
+
+    public void imprimir() {
+        try {
+            mutex.acquire();
+            Nodo puntero = cabeza;
+            while (puntero != null) {
+                System.out.print("[ " + puntero.getDato() + " ] -> ");
+                puntero = puntero.getpNext();
+            }
+            System.out.println("NULL");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            mutex.release();
+        }
+    }
     
 
     
