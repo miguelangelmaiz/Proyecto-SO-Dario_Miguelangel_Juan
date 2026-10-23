@@ -8,6 +8,20 @@ import losEnums.MotivoBloqueo;
  * @author Miguel
  */
 public class Buffer {
+
+    /**
+     * @return the totalProducidos
+     */
+    public int getTotalProducidos() {
+        return totalProducidos;
+    }
+
+    /**
+     * @return the totalConsumidos
+     */
+    public int getTotalConsumidos() {
+        return totalConsumidos;
+    }
      private final int id;
     private final int capacidad;
     private final int anfitrion;      // id del computador dueño
@@ -59,6 +73,12 @@ public class Buffer {
         return true;
     }
 
+    // Los buffer en la interfaz
+    private int totalProducidos = 0;
+    private int totalConsumidos = 0;
+    
+    
+// + sus getters y sumarle 1 en los métodos producir() y consumir().
     /**
      * Intenta consumir. Devuelve true si se extrajo el elemento.
      */

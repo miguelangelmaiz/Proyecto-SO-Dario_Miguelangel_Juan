@@ -23,6 +23,11 @@ public class Interfaz extends javax.swing.JFrame {
 
     public Interfaz() {
         initComponents();
+        spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
+        spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+        spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+        
+        jButton2.setEnabled(false); 
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
         // 1. CREAR EL CLUSTER
@@ -402,44 +407,62 @@ public class Interfaz extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
          try {
-        // 1. Atrapamos los datos con TUS nombres de variables
-        String nombre = txtNombre.getText(); 
-        int memoria = (int) spnMemoria.getValue();
-        int deadline = (int) spnDeadline.getValue();
-        int instrucciones = (int) spnInstrucciones.getValue();
+            // 1. Atrapamos los datos
+            String nombre = txtNombre.getText(); 
+            int memoria = (int) spnMemoria.getValue();
+            int deadline = (int) spnDeadline.getValue();
+            int instrucciones = (int) spnInstrucciones.getValue();
 
-        // 2. Validamos que no esté vacío
-        if (nombre.trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
-            return;
+            // 2. Validamos que el nombre no esté vacío
+            if (nombre.trim().isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
+                return;
+            }
+
+            // 3. VALIDACIÓN: Evitar valores negativos o cero
+            if (memoria <= 0 || deadline <= 0 || instrucciones <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Error: La memoria, el deadline y las instrucciones deben ser mayores a 0.",
+                    "Valores Inválidos", 
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                return; // Detiene la creación del proceso
+            }
+
+            // 4. Determinamos el Tipo de Proceso (Ahora atrapa los 4 tipos)
+            losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
+            String tipoSeleccionado = cbxTipoProceso.getSelectedItem().toString();
+            
+            if (tipoSeleccionado.equals("IO_BOUND")) {
+                tipo = losEnums.TipoProceso.IO_BOUND;
+            } else if (tipoSeleccionado.equals("PRODUCTOR")) {
+                tipo = losEnums.TipoProceso.PRODUCTOR;
+            } else if (tipoSeleccionado.equals("CONSUMIDOR")) {
+                tipo = losEnums.TipoProceso.CONSUMIDOR;
+            }
+
+            // 5. Determinamos a qué computador va
+            int indiceComp = OpComputadora.getSelectedIndex(); 
+            int idComp = indiceComp + 1; 
+
+            // 6. Creamos el proceso
+            sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
+            
+            // Si es IO_BOUND, le configuramos la E/S
+            if (tipo == losEnums.TipoProceso.IO_BOUND) {
+                p.setCiclosPorElemento(3);    
+                p.setCiclosParaSatisfacer(2); 
+            }
+            
+            // 7. Lo mandamos al Núcleo
+            cluster.getComputador(indiceComp).getNucleo().admitir(p);
+            
+            // 8. Mostramos mensaje de éxito y limpiamos
+            javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
+            txtNombre.setText("");
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
-
-        // 3. Determinamos el Tipo de Proceso según el ComboBox
-        losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
-        if (cbxTipoProceso.getSelectedItem().toString().equals("IO_BOUND")) {
-            tipo = losEnums.TipoProceso.IO_BOUND;
-        }
-
-        // 4. Determinamos a qué computador va según el ComboBox OpComputadora
-        // El índice 0 es Computador 1, el índice 1 es Computador 2
-        int indiceComp = OpComputadora.getSelectedIndex(); 
-        int idComp = indiceComp + 1; // El ID es 1 o 2
-
-        // 5. Creamos el proceso y lo mandamos al Núcleo del computador elegido
-        sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
-        if (tipo == losEnums.TipoProceso.IO_BOUND) {
-    p.setCiclosPorElemento(3);    // Pide E/S cada 3 ciclos
-    p.setCiclosParaSatisfacer(2); // La E/S dura 2 ciclos
-}
-        cluster.getComputador(indiceComp).getNucleo().admitir(p);
-        
-        // 6. Mostramos mensaje de éxito y limpiamos
-        javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
-        txtNombre.setText("");
-        
-    } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-    }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
@@ -464,12 +487,7 @@ vb.cluster = this.cluster; // Le pasas el mismo clúster
 vb.setVisible(true);       // La muestras        // TODO add your handling code here:
     }//GEN-LAST:event_acBufferActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(() -> new Interfaz().setVisible(true));
-    }
+   
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> OpComputadora;
