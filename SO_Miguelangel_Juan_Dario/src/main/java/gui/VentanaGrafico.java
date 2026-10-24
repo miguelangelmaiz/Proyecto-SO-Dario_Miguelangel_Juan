@@ -45,6 +45,8 @@ public class VentanaGrafico extends javax.swing.JFrame {
         javax.swing.Timer timer = new javax.swing.Timer(500, (e) -> {
             if (cluster == null) return;
             
+           if (!cluster.getReloj().isCorriendo()) return; 
+            
             tiempo++; 
             int cicloActual = cluster.getReloj().getCiclo();
             

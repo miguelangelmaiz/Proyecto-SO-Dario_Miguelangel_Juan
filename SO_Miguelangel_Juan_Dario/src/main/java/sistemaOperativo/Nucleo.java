@@ -248,6 +248,9 @@ public class Nucleo {
     private void ejecutarInstruccion(int ciclo) {
         PCB p = cpu.getProcesoActual();
         if (p == null) return;
+        
+         // --- LÍNEA NUEVA PARA QUE EL GRÁFICO FUNCIONE ---
+        cpu.setCiclosOcupados(cpu.getCiclosOcupados() + 1);
 
         if (p.getTipo() == TipoProceso.PRODUCTOR
                 || p.getTipo() == TipoProceso.CONSUMIDOR) {

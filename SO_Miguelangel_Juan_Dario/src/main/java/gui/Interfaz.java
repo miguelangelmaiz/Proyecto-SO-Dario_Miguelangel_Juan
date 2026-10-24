@@ -148,6 +148,8 @@ public class Interfaz extends javax.swing.JFrame {
         cbxTipoProceso = new javax.swing.JComboBox<>();
         OpComputadora = new javax.swing.JComboBox<>();
         jLabel14 = new javax.swing.JLabel();
+        cbxPrioridad = new javax.swing.JComboBox<>();
+        jLabel15 = new javax.swing.JLabel();
         btnGrafico = new javax.swing.JButton();
         acBuffer = new javax.swing.JButton();
 
@@ -256,7 +258,7 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel9.setText("Nombre del Proceso:");
-        crearProceso.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 50, -1, -1));
+        crearProceso.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, -1, -1));
 
         jLabel10.setText("Memoria: ");
         crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
@@ -269,7 +271,7 @@ public class Interfaz extends javax.swing.JFrame {
                 txtNombreActionPerformed(evt);
             }
         });
-        crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, 100, -1));
+        crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 30, 100, -1));
 
         spnMemoria.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 160, 100, -1));
@@ -293,7 +295,7 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 340, -1, -1));
 
         jLabel13.setText("Tipo de proceso:");
-        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 110, -1, -1));
+        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, -1));
 
         cbxTipoProceso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CPU_BOUND", "IO_BOUND", "PRODUCTOR", "CONSUMIDOR" }));
         cbxTipoProceso.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -302,7 +304,7 @@ public class Interfaz extends javax.swing.JFrame {
                 cbxTipoProcesoActionPerformed(evt);
             }
         });
-        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 110, -1, -1));
+        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, -1, -1));
 
         OpComputadora.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computadora 1", "Computadora 2" }));
         OpComputadora.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -315,6 +317,17 @@ public class Interfaz extends javax.swing.JFrame {
 
         jLabel14.setText("Instrucciones: ");
         crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
+
+        cbxPrioridad.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ALTA", "MEDIA", "BAJA" }));
+        cbxPrioridad.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxPrioridadActionPerformed(evt);
+            }
+        });
+        crearProceso.add(cbxPrioridad, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 120, 120, 30));
+
+        jLabel15.setText("Prioridad:");
+        crearProceso.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
 
         jPanel2.add(crearProceso);
 
@@ -443,7 +456,18 @@ public class Interfaz extends javax.swing.JFrame {
             int idComp = indiceComp + 1; 
 
             // 6. Creamos el proceso
-            sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
+            // Leer la prioridad seleccionada en el nuevo combo
+int prioridad = 2; // Media por defecto
+String prioStr = cbxPrioridad.getSelectedItem().toString();
+if (prioStr.equals("ALTA")) {
+    prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; // que es 3
+} else if (prioStr.equals("BAJA")) {
+    prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; // que es 1
+}
+
+// Crear el proceso con la prioridad elegida
+sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, prioridad, memoria, deadline, instrucciones, idComp);
+            
             
             // Si es IO_BOUND, le configuramos la E/S
             if (tipo == losEnums.TipoProceso.IO_BOUND) {
@@ -494,6 +518,10 @@ vb.cluster = this.cluster; // Le pasas el mismo clúster
 vb.setVisible(true);       // La muestras        // TODO add your handling code here:
     }//GEN-LAST:event_acBufferActionPerformed
 
+    private void cbxPrioridadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPrioridadActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxPrioridadActionPerformed
+
    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -501,6 +529,7 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JTabbedPane Simulación;
     private javax.swing.JButton acBuffer;
     private javax.swing.JButton btnGrafico;
+    private javax.swing.JComboBox<String> cbxPrioridad;
     private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;
     private javax.swing.JButton jButton1;
@@ -514,6 +543,7 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
