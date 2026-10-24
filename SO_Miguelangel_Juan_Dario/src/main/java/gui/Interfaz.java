@@ -19,6 +19,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import sistemaOperativo.configuracion;
 
+
 public class Interfaz extends javax.swing.JFrame {
 
      public sistemaOperativo.Cluster cluster;
@@ -556,23 +557,39 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
 
     private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
          try {
-            // 1. Creamos el objeto con los datos actuales
+       // 1. Creamos el objeto con los datos actuales (¡Ojo con la C mayúscula!)
             sistemaOperativo.configuracion config = new sistemaOperativo.configuracion();
-            config.numComputadores = 2; // O cluster.getCantidad()
+            config.numComputadores = 2;
             config.ramPorComputador = 2048;
-            config.duracionCicloMs = (int) jSpinner1.getValue(); // Tu spinner de velocidad
-            config.latenciaRed = 3; // O cluster.getComputador(0).getNucleo().getLatenciaRed()
+            config.duracionCicloMs = (int) jSpinner1.getValue();
+            config.latenciaRed = 3;
 
-            
-             // Creamos un arreglo del tamaño de la cola
-            int cantProcesos = cluster.getComputador(0).getNucleo().getColaNuevos().getTamano();
-            config.procesosIniciales = new sistemaOperativo.PCB[cantProcesos];
-            
-            // 2. Lo pasamos a JSON usando Gson
-            Gson gson = new Gson();
-            FileWriter writer = new FileWriter("configuracion.json");
+            // 2. Todo con minúscula
+            config.procesosIniciales = new sistemaOperativo.configuracion.ProcesoDTO[1];
+            sistemaOperativo.configuracion.ProcesoDTO pDto = new sistemaOperativo.configuracion.ProcesoDTO();
+            pDto.nombre = "ProcesoGuardado";
+            pDto.tipo = "CPU_BOUND";
+            pDto.prioridad = 2;
+            pDto.memoria = 256;
+            pDto.deadline = 50;
+            pDto.instrucciones = 10;
+            pDto.computador = 1;
+            config.procesosIniciales[0] = pDto;
+
+            // 3. Todo con minúscula
+            config.buffersIniciales = new sistemaOperativo.configuracion.BufferDTO[1];
+            sistemaOperativo.configuracion.BufferDTO bDto = new sistemaOperativo.configuracion.BufferDTO();
+            bDto.capacidad = 5;
+            bDto.anfitrion = 1;
+            config.buffersIniciales[0] = bDto;
+
+            // 4. Guardamos
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.io.FileWriter writer = new java.io.FileWriter("configuracion.json");
             gson.toJson(config, writer);
             writer.close();
+
+
 
             javax.swing.JOptionPane.showMessageDialog(this, "Configuración guardada en configuracion.json");
         } catch (Exception e) {
@@ -582,27 +599,39 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
           try {
-            // 1. Leemos el archivo JSON
-            Gson gson = new Gson();
-            FileReader reader = new FileReader("configuracion.json");
+             // 1. Leemos el archivo JSON
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.io.FileReader reader = new java.io.FileReader("configuracion.json");
+            
+            // Lo convertimos de vuelta a la clase (con 'c' minúscula)
             sistemaOperativo.configuracion config = gson.fromJson(reader, sistemaOperativo.configuracion.class);
             reader.close();
 
-            // 2. Aplicamos los datos a la simulación
+            // 2. Aplicamos la velocidad
             jSpinner1.setValue(config.duracionCicloMs);
-            // (Aquí podrías recrear el clúster si el JSON tuviera otros computadores)
-             // 2. Reconstruimos los procesos
-            if (config.procesosIniciales != null) {
-                for (sistemaOperativo.PCB p : config.procesosIniciales) {
-                    // Como el JSON borra el ID estático, le asignamos un computador y lo admitimos
-                    cluster.getComputador(0).getNucleo().admitir(p);
+            
+            // 3. Reconstruimos los Buffers
+            if (config.buffersIniciales != null) {
+                for (sistemaOperativo.configuracion.BufferDTO bDto : config.buffersIniciales) {
+                    cluster.getGestorBuffers().crearBuffer(bDto.capacidad, bDto.anfitrion);
                 }
             }
 
-            // 3. Reconstruimos los buffers
-            if (config.buffersIniciales != null) {
-                for (sistemaOperativo.Buffer b : config.buffersIniciales) {
-                    cluster.getGestorBuffers().crearBuffer(b.getCapacidad(), b.getAnfitrion());
+            // 4. Reconstruimos los Procesos
+            if (config.procesosIniciales != null) {
+                for (sistemaOperativo.configuracion.ProcesoDTO pDto : config.procesosIniciales) {
+                    
+                    // Convertimos el String ("CPU_BOUND") al Enum real
+                    losEnums.TipoProceso tipo = losEnums.TipoProceso.valueOf(pDto.tipo);
+                    
+                    // Creamos el PCB con los datos guardados
+                    sistemaOperativo.PCB nuevoP = new sistemaOperativo.PCB(
+                        pDto.nombre, tipo, pDto.prioridad, pDto.memoria, 
+                        pDto.deadline, pDto.instrucciones, pDto.computador
+                    );
+                    
+                    // Lo metemos al Núcleo del computador correspondiente (índice 0 o 1)
+                    cluster.getComputador(pDto.computador - 1).getNucleo().admitir(nuevoP);
                 }
             }
             javax.swing.JOptionPane.showMessageDialog(this, "Configuración cargada. Velocidad: " + config.duracionCicloMs);
