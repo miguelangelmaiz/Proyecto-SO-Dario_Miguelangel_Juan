@@ -10,6 +10,9 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
+import java.awt.Color;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+
 
 public class VentanaGrafico extends javax.swing.JFrame {
 
@@ -26,34 +29,44 @@ public class VentanaGrafico extends javax.swing.JFrame {
     public VentanaGrafico() {
         initComponents();
         
-        datos = new DefaultCategoryDataset();
+         datos = new DefaultCategoryDataset();
         
         JFreeChart grafico = ChartFactory.createLineChart(
                 "Utilización del Procesador", 
-                "Tiempo (Ciclos)", 
+                "Tiempo", 
                 "Ciclos Ocupados", 
                 datos,
                 PlotOrientation.VERTICAL,
                 true, true, false
         );
 
+        // Modificaciones al Gráfico
+        org.jfree.chart.plot.CategoryPlot plot = grafico.getCategoryPlot();
+        org.jfree.chart.axis.CategoryAxis ejeX = plot.getDomainAxis();
+        ejeX.setLowerMargin(0.0); 
+        ejeX.setUpperMargin(0.0); 
+        ejeX.setTickLabelsVisible(true);
+        ejeX.setTickMarksVisible(true);
+        ejeX.setAxisLineVisible(true);
+        
+
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.RED);  
+        renderer.setSeriesPaint(1, Color.BLUE); 
+
         ChartPanel panel = new ChartPanel(grafico);
         panel.setBounds(10, 10, 780, 450); 
         this.getContentPane().add(panel);
 
-        // --- TIMER PARA ACTUALIZAR EL GRÁFICO ---
+        // Timer para actualizar
         javax.swing.Timer timer = new javax.swing.Timer(500, (e) -> {
             if (cluster == null) return;
-            
-           if (!cluster.getReloj().isCorriendo()) return; 
-            
             tiempo++; 
             int cicloActual = cluster.getReloj().getCiclo();
             
             if (cicloActual > 0) {
                 int usoC1 = cluster.getComputador(0).getCpu().getCiclosOcupados();
                 int usoC2 = cluster.getComputador(1).getCpu().getCiclosOcupados();
-                
                 datos.addValue(usoC1, "Computador 1", String.valueOf(tiempo));
                 datos.addValue(usoC2, "Computador 2", String.valueOf(tiempo));
             }
@@ -80,22 +93,26 @@ public class VentanaGrafico extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 632, Short.MAX_VALUE)
+            .addGap(0, 951, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 412, Short.MAX_VALUE)
+            .addGap(0, 545, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         pack();

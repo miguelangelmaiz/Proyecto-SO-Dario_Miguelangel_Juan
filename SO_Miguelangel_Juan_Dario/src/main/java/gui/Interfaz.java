@@ -14,6 +14,10 @@ import sistemaOperativo.PCB;
 import losEnums.TipoProceso;
 import sistemaOperativo.Cluster;
 import gui.VentanaGrafico;
+import com.google.gson.Gson;
+import java.io.FileReader;
+import java.io.FileWriter;
+import sistemaOperativo.configuracion;
 
 public class Interfaz extends javax.swing.JFrame {
 
@@ -63,12 +67,22 @@ public class Interfaz extends javax.swing.JFrame {
             if (p1 != null) {
                 jLabel3.setText("CPU: " + p1.getNombre()); 
                 jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline());
-                jLabel5.setText("Modo: " + cluster.getComputador(0).getCpu().getModo().toString());
+                String modoActual = cluster.getComputador(0).getCpu().getModo().toString();
+                jLabel5.setText("Modo: " + modoActual);
+                // Si es SISTEMA, se pinta de ROJO. Si es USUARIO, se pinta de NEGRO.
+                if (modoActual.equals("SISTEMA")) {
+                    jLabel5.setForeground(java.awt.Color.RED);
+                } else {
+                    jLabel5.setForeground(java.awt.Color.BLACK);
+                }
+                
             } else {
                 jLabel3.setText("CPU: Libre");
                 jLabel4.setText("PC: 0 / Deadline: 0");
                 jLabel5.setText("Modo: Usuario");
+                jLabel5.setForeground(java.awt.Color.BLACK); // Volver a negro si está libre
             }
+           
             
             jProgressBar1.setValue(ramUsada1);
             jProgressBar1.setString("RAM: " + ramUsada1 + " / 2048");
@@ -152,6 +166,8 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel15 = new javax.swing.JLabel();
         btnGrafico = new javax.swing.JButton();
         acBuffer = new javax.swing.JButton();
+        guardarJson = new javax.swing.JButton();
+        cargarJson = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -163,8 +179,8 @@ public class Interfaz extends javax.swing.JFrame {
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel2.setText("Velocidad (ms): 0");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 50, -1, -1));
-        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 50, -1, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 50, -1, -1));
+        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 50, -1, -1));
 
         jButton1.setText("INICIAR");
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -173,7 +189,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 50, -1, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 50, -1, -1));
 
         jButton2.setText("PAUSAR");
         jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -182,7 +198,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton2ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 50, -1, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 50, -1, -1));
 
         jPanel2.setLayout(new java.awt.GridLayout(1, 0));
 
@@ -341,7 +357,7 @@ public class Interfaz extends javax.swing.JFrame {
                 btnGraficoActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 60, -1, -1));
+        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 50, -1, -1));
 
         acBuffer.setText("BUFFER");
         acBuffer.addActionListener(new java.awt.event.ActionListener() {
@@ -349,7 +365,23 @@ public class Interfaz extends javax.swing.JFrame {
                 acBufferActionPerformed(evt);
             }
         });
-        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 10, -1, -1));
+        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 50, -1, -1));
+
+        guardarJson.setText("GuardarJson");
+        guardarJson.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                guardarJsonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(guardarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 50, -1, -1));
+
+        cargarJson.setText("CargarJson");
+        cargarJson.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cargarJsonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(cargarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 10, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -522,6 +554,63 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
         // TODO add your handling code here:
     }//GEN-LAST:event_cbxPrioridadActionPerformed
 
+    private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
+         try {
+            // 1. Creamos el objeto con los datos actuales
+            sistemaOperativo.configuracion config = new sistemaOperativo.configuracion();
+            config.numComputadores = 2; // O cluster.getCantidad()
+            config.ramPorComputador = 2048;
+            config.duracionCicloMs = (int) jSpinner1.getValue(); // Tu spinner de velocidad
+            config.latenciaRed = 3; // O cluster.getComputador(0).getNucleo().getLatenciaRed()
+
+            
+             // Creamos un arreglo del tamaño de la cola
+            int cantProcesos = cluster.getComputador(0).getNucleo().getColaNuevos().getTamano();
+            config.procesosIniciales = new sistemaOperativo.PCB[cantProcesos];
+            
+            // 2. Lo pasamos a JSON usando Gson
+            Gson gson = new Gson();
+            FileWriter writer = new FileWriter("configuracion.json");
+            gson.toJson(config, writer);
+            writer.close();
+
+            javax.swing.JOptionPane.showMessageDialog(this, "Configuración guardada en configuracion.json");
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage());
+        } // TODO add your handling code here:
+    }//GEN-LAST:event_guardarJsonActionPerformed
+
+    private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
+          try {
+            // 1. Leemos el archivo JSON
+            Gson gson = new Gson();
+            FileReader reader = new FileReader("configuracion.json");
+            sistemaOperativo.configuracion config = gson.fromJson(reader, sistemaOperativo.configuracion.class);
+            reader.close();
+
+            // 2. Aplicamos los datos a la simulación
+            jSpinner1.setValue(config.duracionCicloMs);
+            // (Aquí podrías recrear el clúster si el JSON tuviera otros computadores)
+             // 2. Reconstruimos los procesos
+            if (config.procesosIniciales != null) {
+                for (sistemaOperativo.PCB p : config.procesosIniciales) {
+                    // Como el JSON borra el ID estático, le asignamos un computador y lo admitimos
+                    cluster.getComputador(0).getNucleo().admitir(p);
+                }
+            }
+
+            // 3. Reconstruimos los buffers
+            if (config.buffersIniciales != null) {
+                for (sistemaOperativo.Buffer b : config.buffersIniciales) {
+                    cluster.getGestorBuffers().crearBuffer(b.getCapacidad(), b.getAnfitrion());
+                }
+            }
+            javax.swing.JOptionPane.showMessageDialog(this, "Configuración cargada. Velocidad: " + config.duracionCicloMs);
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar el archivo (¿Ya lo guardaste?): " + e.getMessage());
+        } // TODO add your handling code here:
+    }//GEN-LAST:event_cargarJsonActionPerformed
+
    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -529,9 +618,11 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JTabbedPane Simulación;
     private javax.swing.JButton acBuffer;
     private javax.swing.JButton btnGrafico;
+    private javax.swing.JButton cargarJson;
     private javax.swing.JComboBox<String> cbxPrioridad;
     private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;
+    private javax.swing.JButton guardarJson;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;

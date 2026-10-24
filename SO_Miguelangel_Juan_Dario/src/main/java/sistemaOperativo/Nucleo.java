@@ -292,7 +292,8 @@ public class Nucleo {
 
         // C-3 fix
         cpu.entrarModoSistema();
-        boolean exito;
+        boolean exito = b.producir(p, this);
+cpu.salirModoSistema();
         if (p.getTipo() == TipoProceso.PRODUCTOR) {
             exito = b.producir(p, this);
         } else {
