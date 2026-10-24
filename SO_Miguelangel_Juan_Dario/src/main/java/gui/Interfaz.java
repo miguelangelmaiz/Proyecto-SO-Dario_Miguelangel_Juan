@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+
 package gui;
 
 /**
@@ -16,6 +13,7 @@ import planificacionSO.*;
 import sistemaOperativo.PCB;
 import losEnums.TipoProceso;
 import sistemaOperativo.Cluster;
+import gui.VentanaGrafico;
 
 public class Interfaz extends javax.swing.JFrame {
 
@@ -150,7 +148,7 @@ public class Interfaz extends javax.swing.JFrame {
         cbxTipoProceso = new javax.swing.JComboBox<>();
         OpComputadora = new javax.swing.JComboBox<>();
         jLabel14 = new javax.swing.JLabel();
-        jButton4 = new javax.swing.JButton();
+        btnGrafico = new javax.swing.JButton();
         acBuffer = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -324,13 +322,13 @@ public class Interfaz extends javax.swing.JFrame {
 
         jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 960, 440));
 
-        jButton4.setText("SIMULACION");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        btnGrafico.setText("GRAFICOS");
+        btnGrafico.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                btnGraficoActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 60, -1, -1));
+        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 60, -1, -1));
 
         acBuffer.setText("BUFFER");
         acBuffer.addActionListener(new java.awt.event.ActionListener() {
@@ -483,9 +481,12 @@ public class Interfaz extends javax.swing.JFrame {
         
     }//GEN-LAST:event_OpComputadoraActionPerformed
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton4ActionPerformed
+    private void btnGraficoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGraficoActionPerformed
+
+        VentanaGrafico vg = new VentanaGrafico();
+        vg.cluster = this.cluster;        
+        vg.setVisible(true);   // TODO add your handling code here:
+    }//GEN-LAST:event_btnGraficoActionPerformed
 
     private void acBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acBufferActionPerformed
 ventanaBuffer vb = new ventanaBuffer();
@@ -499,12 +500,12 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JComboBox<String> OpComputadora;
     private javax.swing.JTabbedPane Simulación;
     private javax.swing.JButton acBuffer;
+    private javax.swing.JButton btnGrafico;
     private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
