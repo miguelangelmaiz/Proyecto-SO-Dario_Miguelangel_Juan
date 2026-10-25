@@ -114,7 +114,13 @@ public class Interfaz extends javax.swing.JFrame {
                    "\nListos: " + cluster.getComputador(1).getNucleo().getColaListos().getNombresProcesos() +
                    "\nBloqueados: " + cluster.getComputador(1).getNucleo().getColaBloqueados().getNombresProcesos() +
                    "\nTerminados: " + cluster.getComputador(1).getNucleo().getTerminados().getNombresProcesos());
+        
+        txtLog.setText(cluster.getLogEventos());
+            if (cluster.getReloj().isCorriendo()) {
+                txtLog.setCaretPosition(txtLog.getDocument().getLength());
+            }
         });
+        
     
         timer.start();
     }
@@ -169,6 +175,9 @@ public class Interfaz extends javax.swing.JFrame {
         acBuffer = new javax.swing.JButton();
         guardarJson = new javax.swing.JButton();
         cargarJson = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtLog = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -176,12 +185,12 @@ public class Interfaz extends javax.swing.JFrame {
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel1.setText("Ciclo Global: 0");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 40, 170, 30));
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, 170, 30));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel2.setText("Velocidad (ms): 0");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 50, -1, -1));
-        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 50, -1, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 50, -1, -1));
+        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 30, -1, -1));
 
         jButton1.setText("INICIAR");
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -190,7 +199,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 50, -1, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 30, -1, -1));
 
         jButton2.setText("PAUSAR");
         jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -199,7 +208,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton2ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 50, -1, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 30, -1, -1));
 
         jPanel2.setLayout(new java.awt.GridLayout(1, 0));
 
@@ -350,7 +359,7 @@ public class Interfaz extends javax.swing.JFrame {
 
         Simulación.addTab("Simulación", jPanel2);
 
-        jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 960, 440));
+        jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, 960, 430));
 
         btnGrafico.setText("GRAFICOS");
         btnGrafico.addActionListener(new java.awt.event.ActionListener() {
@@ -358,7 +367,7 @@ public class Interfaz extends javax.swing.JFrame {
                 btnGraficoActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 50, -1, -1));
+        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 30, -1, -1));
 
         acBuffer.setText("BUFFER");
         acBuffer.addActionListener(new java.awt.event.ActionListener() {
@@ -366,7 +375,7 @@ public class Interfaz extends javax.swing.JFrame {
                 acBufferActionPerformed(evt);
             }
         });
-        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 50, -1, -1));
+        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 30, -1, -1));
 
         guardarJson.setText("GuardarJson");
         guardarJson.addActionListener(new java.awt.event.ActionListener() {
@@ -374,7 +383,7 @@ public class Interfaz extends javax.swing.JFrame {
                 guardarJsonActionPerformed(evt);
             }
         });
-        jPanel1.add(guardarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 50, -1, -1));
+        jPanel1.add(guardarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 70, -1, -1));
 
         cargarJson.setText("CargarJson");
         cargarJson.addActionListener(new java.awt.event.ActionListener() {
@@ -382,7 +391,15 @@ public class Interfaz extends javax.swing.JFrame {
                 cargarJsonActionPerformed(evt);
             }
         });
-        jPanel1.add(cargarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 10, -1, -1));
+        jPanel1.add(cargarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 70, -1, -1));
+
+        txtLog.setColumns(20);
+        txtLog.setRows(5);
+        jScrollPane1.setViewportView(txtLog);
+
+        jScrollPane4.setViewportView(jScrollPane1);
+
+        jPanel1.add(jScrollPane4, new org.netbeans.lib.awtextra.AbsoluteConstraints(650, 10, 320, 120));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -556,41 +573,31 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     }//GEN-LAST:event_cbxPrioridadActionPerformed
 
     private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
-         try {
-           sistemaOperativo.configuracion config = new sistemaOperativo.configuracion();
-            config.numComputadores = 2;
-            config.ramPorComputador = 2048;
+          try {
+            sistemaOperativo.configuracion config = new sistemaOperativo.configuracion();
+            
             config.duracionCicloMs = (int) jSpinner1.getValue();
             config.latenciaRed = 3;
 
-            // --- 1. GUARDAR PROCESOS REALES (de la cola de Nuevos del Comp 1) ---
-            int cantProcesos = cluster.getComputador(0).getNucleo().getColaNuevos().getTamano();
-            config.procesosIniciales = new sistemaOperativo.configuracion.ProcesoDTO[cantProcesos];
+            sistemaOperativo.configuracion.ProcesoDTO pDto = new sistemaOperativo.configuracion.ProcesoDTO();
+            pDto.nombre = txtNombre.getText().isEmpty() ? "Proceso_Ejemplo" : txtNombre.getText();
+            pDto.tipo = cbxTipoProceso.getSelectedItem().toString();
+            pDto.memoria = (int) spnMemoria.getValue();
+            pDto.deadline = (int) spnDeadline.getValue();
+            pDto.instrucciones = (int) spnInstrucciones.getValue();
+            pDto.computador = OpComputadora.getSelectedIndex() + 1;
 
-            for (int i = 0; i < cantProcesos; i++) {
-                // Sacamos el proceso de la cola
-                sistemaOperativo.PCB p = (sistemaOperativo.PCB) cluster.getComputador(0).getNucleo().getColaNuevos().desencolar();
-                
-                // Lo pasamos al DTO
-                sistemaOperativo.configuracion.ProcesoDTO pDto = new sistemaOperativo.configuracion.ProcesoDTO();
-                pDto.nombre = p.getNombre();
-                pDto.tipo = p.getTipo().toString();
-                pDto.prioridad = p.getPrioridad();
-                pDto.memoria = p.getMemoria();
-                pDto.deadline = p.getDeadline();
-                pDto.instrucciones = p.getRestante();
-                pDto.computador = 1;
-                
-                config.procesosIniciales[i] = pDto;
-                
-                // ¡IMPORTANTE! Lo volvemos a meter a la cola para que la simulación no pierda datos
-                cluster.getComputador(0).getNucleo().getColaNuevos().encolar(p);
-            }
+            String prioStr = cbxPrioridad.getSelectedItem().toString();
+            if (prioStr.equals("ALTA")) pDto.prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA;
+            else if (prioStr.equals("BAJA")) pDto.prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA;
+            else pDto.prioridad = sistemaOperativo.PCB.PRIORIDAD_MEDIA;
 
-            // --- 2. GUARDAR BUFFERS REALES ---
+            config.procesosIniciales = new sistemaOperativo.configuracion.ProcesoDTO[1];
+            config.procesosIniciales[0] = pDto;
+
+            // Guardar buffers
             estructuraDeDatos.ListaSimple listaBuffers = cluster.getGestorBuffers().getLista();
             config.buffersIniciales = new sistemaOperativo.configuracion.BufferDTO[listaBuffers.getSize()];
-            
             for (int i = 0; i < listaBuffers.getSize(); i++) {
                 sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) listaBuffers.getValue(i);
                 sistemaOperativo.configuracion.BufferDTO bDto = new sistemaOperativo.configuracion.BufferDTO();
@@ -599,63 +606,74 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
                 config.buffersIniciales[i] = bDto;
             }
 
-            // 3. Escribimos el archivo
-            com.google.gson.Gson gson = new com.google.gson.Gson();
-            java.io.FileWriter writer = new java.io.FileWriter("configuracion.json");
-            gson.toJson(config, writer);
-            writer.close();
+            // --- VENTANA PARA ELEGIR EL ARCHIVO ---
+            javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+            fileChooser.setDialogTitle("Guardar Escenario");
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
+            
+            // Si el usuario elige una ruta y le da a Guardar
+            if (fileChooser.showSaveDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
+                java.io.File archivo = fileChooser.getSelectedFile();
+                
+                // Asegurarnos de que termine en .json
+                if (!archivo.getName().toLowerCase().endsWith(".json")) {
+                    archivo = new java.io.File(archivo.getParentFile(), archivo.getName() + ".json");
+                }
 
+                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                java.io.FileWriter writer = new java.io.FileWriter(archivo);
+                gson.toJson(config, writer);
+                writer.close();
 
-
-            javax.swing.JOptionPane.showMessageDialog(this, "Configuración guardada en configuracion.json");
+                javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario guardado exitosamente en:\n" + archivo.getAbsolutePath());
+            }
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage());
         } // TODO add your handling code here:
     }//GEN-LAST:event_guardarJsonActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
-          try {
-            // 1. Leemos el archivo JSON
-            com.google.gson.Gson gson = new com.google.gson.Gson();
-            java.io.FileReader reader = new java.io.FileReader("configuracion.json");
-            
-            // Nota: Usamos sistemaOperativo.configuracion con 'c' minúscula
-            sistemaOperativo.configuracion config = gson.fromJson(reader, sistemaOperativo.configuracion.class);
-            reader.close();
+        try {
+            // --- VENTANA PARA ELEGIR EL ARCHIVO A CARGAR ---
+            javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+            fileChooser.setDialogTitle("Cargar Escenario");
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
 
-            // 2. Aplicamos la velocidad
-            jSpinner1.setValue(config.duracionCicloMs);
+            if (fileChooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
+                java.io.File archivo = fileChooser.getSelectedFile();
 
-            // 3. Reconstruimos los Buffers (Desde el DTO)
-            if (config.buffersIniciales != null) {
-                for (sistemaOperativo.configuracion.BufferDTO bDto : config.buffersIniciales) {
-                    // Usamos los datos del DTO para crear el Buffer real
-                    cluster.getGestorBuffers().crearBuffer(bDto.capacidad, bDto.anfitrion);
+                com.google.gson.Gson gson = new com.google.gson.Gson();
+                java.io.FileReader reader = new java.io.FileReader(archivo);
+                sistemaOperativo.configuracion config = gson.fromJson(reader, sistemaOperativo.configuracion.class);
+                reader.close();
+
+                if (config == null) return;
+
+                // Aplicar la velocidad al sistema
+                jSpinner1.setValue(config.duracionCicloMs);
+
+                // Rellenar los campos de la interfaz con el proceso guardado
+                if (config.procesosIniciales != null && config.procesosIniciales.length > 0) {
+                    sistemaOperativo.configuracion.ProcesoDTO pDto = config.procesosIniciales[0];
+                    
+                    txtNombre.setText(pDto.nombre);
+                    spnMemoria.setValue(pDto.memoria);
+                    spnDeadline.setValue(pDto.deadline);
+                    spnInstrucciones.setValue(pDto.instrucciones);
+                    OpComputadora.setSelectedIndex(pDto.computador - 1);
+                    cbxTipoProceso.setSelectedItem(pDto.tipo);
+                    
+                    if (pDto.prioridad == sistemaOperativo.PCB.PRIORIDAD_ALTA) cbxPrioridad.setSelectedItem("ALTA");
+                    else if (pDto.prioridad == sistemaOperativo.PCB.PRIORIDAD_BAJA) cbxPrioridad.setSelectedItem("BAJA");
+                    else cbxPrioridad.setSelectedItem("MEDIA");
+
+                    javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado!\nRevisa los datos y presiona 'Crear Proceso'.");
                 }
             }
-
-            // 4. Reconstruimos los Procesos (Desde el DTO)
-            if (config.procesosIniciales != null) {
-                for (sistemaOperativo.configuracion.ProcesoDTO pDto : config.procesosIniciales) {
-                    
-                    // Convertimos el String del JSON ("CPU_BOUND") al Enum real
-                    losEnums.TipoProceso tipo = losEnums.TipoProceso.valueOf(pDto.tipo);
-                    
-                    // ¡AQUÍ CREAMOS EL PCB REAL USANDO LOS DATOS DEL DTO!
-                    sistemaOperativo.PCB nuevoP = new sistemaOperativo.PCB(
-                        pDto.nombre, tipo, pDto.prioridad, pDto.memoria, 
-                        pDto.deadline, pDto.instrucciones, pDto.computador
-                    );
-                    
-                    // Lo metemos al Núcleo
-                    cluster.getComputador(pDto.computador - 1).getNucleo().admitir(nuevoP);
-                }
-            }
-
-            javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado con éxito desde el JSON!");
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar el archivo (¿Ya lo guardaste?): " + e.getMessage());
-        } // TODO add your handling code here:
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar el archivo: " + e.getMessage());
+        } 
+         // TODO add your handling code here:
     }//GEN-LAST:event_cargarJsonActionPerformed
 
    
@@ -694,8 +712,10 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JPanel jPanel2;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JProgressBar jProgressBar2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jTextArea2;
@@ -704,6 +724,7 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JSpinner spnDeadline;
     private javax.swing.JSpinner spnInstrucciones;
     private javax.swing.JSpinner spnMemoria;
+    private javax.swing.JTextArea txtLog;
     private javax.swing.JTextField txtNombre;
     // End of variables declaration//GEN-END:variables
 

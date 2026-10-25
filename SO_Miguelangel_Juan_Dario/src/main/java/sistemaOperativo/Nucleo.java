@@ -72,6 +72,7 @@ public class Nucleo {
         p.setMotivoBloqueo(motivo);
         colaListos.eliminar(p);
         colaBloqueados.encolar(p);
+        if (cluster != null) cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": Proceso " + p.getNombre() + " BLOQUEADO por " + motivo);
     }
 
     public void despertar(PCB p) {
@@ -204,6 +205,7 @@ public class Nucleo {
             ram.asignar(p.getMemoria());
             p.setEstado(EstadoProceso.LISTO);
             colaListos.encolar(p);
+            if (cluster != null) cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": Proceso " + p.getNombre() + " admitido en Comp " + idComputador);
             p = (PCB) colaNuevos.verFrente();
         }
     }
@@ -291,26 +293,14 @@ public class Nucleo {
         }
 
         // C-3 fix
-        cpu.entrarModoSistema();
-        boolean exito = b.producir(p, this);
-cpu.salirModoSistema();
+         cpu.entrarModoSistema();
+        boolean exito;
         if (p.getTipo() == TipoProceso.PRODUCTOR) {
             exito = b.producir(p, this);
         } else {
             exito = b.consumir(p, this);
         }
         cpu.salirModoSistema();
-
-        if (exito) {
-            p.setLatenciaPagada(false);
-            p.setContadorCiclos(0);
-            p.setElementosRestantes(p.getElementosRestantes() - 1);
-            p.setPc(p.getPc() + 1);
-            p.setMar(p.getMar() + 1);
-            if (p.getElementosRestantes() <= 0) {
-                p.setEstado(EstadoProceso.TERMINADO);
-            }
-        }
     }
 
     /** C-4 fix: I/O bound se bloquea cada N ciclos pidiendo E/S. */
@@ -342,6 +332,7 @@ cpu.salirModoSistema();
             cpu.liberar();
             ram.liberar(p.getMemoria());
             terminados.encolar(p);
+            if (cluster != null) cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + p.getNombre() + " TERMINADO en Comp " + idComputador);
             admitirSiHayMemoria();
         }
     }

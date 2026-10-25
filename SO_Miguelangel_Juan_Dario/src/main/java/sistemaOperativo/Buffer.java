@@ -69,6 +69,10 @@ public class Buffer {
         // 3) añado y salgo
         elementos++;
         totalProducidos++;
+        if (k.getCluster() != null) {
+            k.getCluster().registrarEvento("Ciclo " + k.getCluster().getReloj().getCiclo() + ": Proceso " + p.toString() + " PRODUJO en Buffer " + id);
+        }
+        
         mutex.semSignal(k);
         llenos.semSignal(k);
         return true;
@@ -95,6 +99,10 @@ public class Buffer {
 
         elementos--;
         totalConsumidos++;
+        if (k.getCluster() != null) {
+            k.getCluster().registrarEvento("Ciclo " + k.getCluster().getReloj().getCiclo() + ": Proceso " + p.toString() + " CONSUMIÓ de Buffer " + id);
+        }
+        
         mutex.semSignal(k);
         vacios.semSignal(k);
         return true;
