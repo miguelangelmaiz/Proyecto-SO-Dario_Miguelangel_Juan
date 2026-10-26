@@ -1,6 +1,7 @@
 
 package gui;
 import sistemaOperativo.Cluster;
+import estructuraDeDatos.Cola;
 /**
  *
  * @author jmmor
@@ -20,6 +21,8 @@ public sistemaOperativo.Cluster cluster;
                   estructuraDeDatos.ListaSimple lista = cluster.getGestorBuffers().getLista();
     StringBuilder texto = new StringBuilder();
     
+    
+    
     int totalProd = 0;
     int totalCons = 0;
 
@@ -30,11 +33,19 @@ public sistemaOperativo.Cluster cluster;
         for (int i = 0; i < lista.getSize(); i++) {
             sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
             
-            texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
+             texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
             texto.append("Capacidad: ").append(b.getCapacidad()).append(" | Elementos: ").append(b.getElementos()).append("\n");
+            
+            // 1. Imprimir semáforos
             texto.append("Semáforos -> Mutex: ").append(b.getMutex().getValor())
                  .append(" | Vacíos: ").append(b.getVacios().getValor())
                  .append(" | Llenos: ").append(b.getLlenos().getValor()).append("\n");
+                 
+            // 2. Imprimir procesos bloqueados (Usando el método de la Cola)
+            texto.append("   * En Vacíos: ").append(b.getVacios().getBloqueados().getNombresProcesos()).append("\n");
+            texto.append("   * En Llenos: ").append(b.getLlenos().getBloqueados().getNombresProcesos()).append("\n");
+            texto.append("   * En Mutex: ").append(b.getMutex().getBloqueados().getNombresProcesos()).append("\n");
+            
             texto.append("--------------------------------------------------\n");
             
             // Sumamos los elementos reales

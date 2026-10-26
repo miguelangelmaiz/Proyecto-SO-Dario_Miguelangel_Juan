@@ -21,6 +21,8 @@ import sistemaOperativo.configuracion;
 
 
 public class Interfaz extends javax.swing.JFrame {
+     private int terminadosAnterioresC1 = 0;
+    private int terminadosAnterioresC2 = 0;
 
      public sistemaOperativo.Cluster cluster;
 
@@ -99,7 +101,7 @@ public class Interfaz extends javax.swing.JFrame {
             
             if (p2 != null) {
                 jLabel6.setText("CPU: " + p2.getNombre()); 
-                jLabel7.setText("PC: " + p2.getPc() + " / Deadline: " + p2.getDeadline());
+                 jLabel7.setText("PC: " + p2.getPc() + " / Dead: " + p2.getDeadline() + " / Prio: " + p2.getPrioridad());
                 jLabel8.setText("Modo: " + cluster.getComputador(1).getCpu().getModo().toString());
             } else {
                 jLabel6.setText("CPU: Libre");
@@ -121,7 +123,27 @@ public class Interfaz extends javax.swing.JFrame {
             }
         });
         
-    
+      // --- DETECTA PROCESOS TERMINADOS PARA EL LOG ---
+            int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
+            int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
+            int cicloActual = cluster.getReloj().getCiclo();
+
+            // Si aumentó la cantidad de terminados en C1
+            if (terminadosC1 > terminadosAnterioresC1) {
+                txtLog.append("[Ciclo " + cicloActual + "] Comp 1: proceso terminado.\n");
+                terminadosAnterioresC1 = terminadosC1;
+            }
+            
+            // Si aumentó la cantidad de terminados en C2
+            if (terminadosC2 > terminadosAnterioresC2) {
+                txtLog.append("[Ciclo " + cicloActual + "] Comp 2: proceso terminado.\n");
+                terminadosAnterioresC2 = terminadosC2;
+            }
+
+            // Autoscroll para que el texto baje solo
+            if (cluster.getReloj().isCorriendo()) {
+                txtLog.setCaretPosition(txtLog.getDocument().getLength());
+            }
         timer.start();
     }
     
@@ -218,17 +240,17 @@ public class Interfaz extends javax.swing.JFrame {
         panelComp1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel3.setText("CPU: Libre");
-        panelComp1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, -1, -1));
+        panelComp1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, -1, -1));
 
-        jLabel4.setText("PC: 0 / Deadline: 0");
-        panelComp1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, 140, -1));
+        jLabel4.setText("PC: 0 / Deadline: 0 ");
+        panelComp1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 250, 20));
 
         jLabel5.setText("Modo: Usuario");
         panelComp1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
 
         jProgressBar1.setString("RAM: 0 /KB: 2048");
         jProgressBar1.setStringPainted(true);
-        panelComp1.add(jProgressBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 90, 170, 30));
+        panelComp1.add(jProgressBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 70, 170, 30));
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {
@@ -236,7 +258,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jComboBox1ActionPerformed(evt);
             }
         });
-        panelComp1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 160, 110, -1));
+        panelComp1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 130, 110, -1));
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -252,17 +274,17 @@ public class Interfaz extends javax.swing.JFrame {
         panelComp2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel6.setText("CPU: Libre");
-        panelComp2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, -1, -1));
+        panelComp2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, -1, -1));
 
         jLabel7.setText("PC: 0 / Deadline: 0");
-        panelComp2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, 150, -1));
+        panelComp2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 220, 20));
 
         jLabel8.setText("Modo: Usuario");
         panelComp2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
 
         jProgressBar2.setString("RAM: 0 /KB: 2048");
         jProgressBar2.setStringPainted(true);
-        panelComp2.add(jProgressBar2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 80, 180, 30));
+        panelComp2.add(jProgressBar2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 60, 180, 30));
 
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
         jComboBox2.addActionListener(new java.awt.event.ActionListener() {
@@ -270,7 +292,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jComboBox2ActionPerformed(evt);
             }
         });
-        panelComp2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 160, 110, -1));
+        panelComp2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 120, 110, -1));
 
         jTextArea2.setColumns(20);
         jTextArea2.setRows(5);
@@ -359,6 +381,12 @@ public class Interfaz extends javax.swing.JFrame {
 
         jLabel16.setText("Quantum: ");
         crearProceso.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
+
+        spnQuantum.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnQuantumStateChanged(evt);
+            }
+        });
         crearProceso.add(spnQuantum, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 120, 90, -1));
 
         jPanel2.add(crearProceso);
@@ -457,21 +485,7 @@ public class Interfaz extends javax.swing.JFrame {
             cluster.getComputador(0).setPolitica(nuevaPolitica);
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
-
-    private void spnQuantumStateChanged(javax.swing.event.ChangeEvent evt) {                                      
-        // Si actualmente está seleccionado Round Robin, actualiza la política al instante
-        if (cluster != null) {
-            int q = (int) spnQuantum.getValue();
-            
-            if (jComboBox1.getSelectedItem().toString().equals("Round Robin")) {
-                cluster.getComputador(0).setPolitica(new RoundRobin(q));
-            }
-            if (jComboBox2.getSelectedItem().toString().equals("Round Robin")) {
-                cluster.getComputador(1).setPolitica(new RoundRobin(q));
-            }
-        }
-    } 
-    
+   
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
          if (cluster == null) return;
         String seleccion = (String) jComboBox2.getSelectedItem();
@@ -725,6 +739,22 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
         } 
          // TODO add your handling code here:
     }//GEN-LAST:event_cargarJsonActionPerformed
+
+    private void spnQuantumStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnQuantumStateChanged
+      if (cluster == null) return;
+        int q = (int) spnQuantum.getValue();
+        
+        // Actualiza el Computador 1 si está en Round Robin
+        if (jComboBox1.getSelectedItem().toString().equals("Round Robin")) {
+            cluster.getComputador(0).setPolitica(new planificacionSO.RoundRobin(q));
+        }
+        // Actualiza el Computador 2 si está en Round Robin
+        if (jComboBox2.getSelectedItem().toString().equals("Round Robin")) {
+            cluster.getComputador(1).setPolitica(new planificacionSO.RoundRobin(q));
+            
+            
+        }   // TODO add your handling code here:
+    }//GEN-LAST:event_spnQuantumStateChanged
 
    
 

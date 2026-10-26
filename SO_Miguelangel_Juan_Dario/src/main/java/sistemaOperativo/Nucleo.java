@@ -112,6 +112,7 @@ public class Nucleo {
                 enCpu.setEstado(EstadoProceso.TERMINADO);
                 enCpu.setCicloFin(ciclo);
                 terminados.encolar(enCpu);
+                if (cluster != null) cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + enCpu.getNombre() + " TERMINADO por Deadline en Comp " + idComputador);
             }
         }
     }
@@ -130,6 +131,7 @@ public class Nucleo {
                 p.setEstado(EstadoProceso.TERMINADO);
                 p.setCicloFin(ciclo);
                 terminados.encolar(p);
+                 if (cluster != null) cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + p.getNombre() + " TERMINADO por Deadline en espera (Comp " + idComputador + ")");
             } else {
                 c.encolar(p);
             }
