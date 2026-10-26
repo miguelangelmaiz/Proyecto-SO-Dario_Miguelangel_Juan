@@ -248,6 +248,9 @@ public class Nucleo {
     private void ejecutarInstruccion(int ciclo) {
         PCB p = cpu.getProcesoActual();
         if (p == null) return;
+        
+         // --- LÍNEA NUEVA PARA QUE EL GRÁFICO FUNCIONE ---
+        cpu.setCiclosOcupados(cpu.getCiclosOcupados() + 1);
 
         if (p.getTipo() == TipoProceso.PRODUCTOR
                 || p.getTipo() == TipoProceso.CONSUMIDOR) {
@@ -289,7 +292,8 @@ public class Nucleo {
 
         // C-3 fix
         cpu.entrarModoSistema();
-        boolean exito;
+        boolean exito = b.producir(p, this);
+cpu.salirModoSistema();
         if (p.getTipo() == TipoProceso.PRODUCTOR) {
             exito = b.producir(p, this);
         } else {
@@ -341,4 +345,18 @@ public class Nucleo {
             admitirSiHayMemoria();
         }
     }
+        public double getTiempoRespuestaPromedio() {
+        int cantidad = terminados.getTamano();
+        if (cantidad == 0) return 0.0;
+        
+        double suma = 0;
+        estructuraDeDatos.Nodo actual = terminados.getCabeza();
+        while (actual != null) {
+            PCB p = (PCB) actual.getDato();
+            suma += (p.getCicloFin() - p.getCicloLlegada());
+            actual = actual.getpNext();
+        }
+        return suma / cantidad;
+    }
+    
 }

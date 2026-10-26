@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+
 package gui;
 
 /**
@@ -16,6 +13,12 @@ import planificacionSO.*;
 import sistemaOperativo.PCB;
 import losEnums.TipoProceso;
 import sistemaOperativo.Cluster;
+import gui.VentanaGrafico;
+import com.google.gson.Gson;
+import java.io.FileReader;
+import java.io.FileWriter;
+import sistemaOperativo.configuracion;
+
 
 public class Interfaz extends javax.swing.JFrame {
 
@@ -23,6 +26,11 @@ public class Interfaz extends javax.swing.JFrame {
 
     public Interfaz() {
         initComponents();
+        spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
+        spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+        spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+        
+         
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
         // 1. CREAR EL CLUSTER
@@ -60,12 +68,22 @@ public class Interfaz extends javax.swing.JFrame {
             if (p1 != null) {
                 jLabel3.setText("CPU: " + p1.getNombre()); 
                 jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline());
-                jLabel5.setText("Modo: " + cluster.getComputador(0).getCpu().getModo().toString());
+                String modoActual = cluster.getComputador(0).getCpu().getModo().toString();
+                jLabel5.setText("Modo: " + modoActual);
+                // Si es SISTEMA, se pinta de ROJO. Si es USUARIO, se pinta de NEGRO.
+                if (modoActual.equals("SISTEMA")) {
+                    jLabel5.setForeground(java.awt.Color.RED);
+                } else {
+                    jLabel5.setForeground(java.awt.Color.BLACK);
+                }
+                
             } else {
                 jLabel3.setText("CPU: Libre");
                 jLabel4.setText("PC: 0 / Deadline: 0");
                 jLabel5.setText("Modo: Usuario");
+                jLabel5.setForeground(java.awt.Color.BLACK); // Volver a negro si está libre
             }
+           
             
             jProgressBar1.setValue(ramUsada1);
             jProgressBar1.setString("RAM: " + ramUsada1 + " / 2048");
@@ -145,8 +163,12 @@ public class Interfaz extends javax.swing.JFrame {
         cbxTipoProceso = new javax.swing.JComboBox<>();
         OpComputadora = new javax.swing.JComboBox<>();
         jLabel14 = new javax.swing.JLabel();
-        jButton4 = new javax.swing.JButton();
+        cbxPrioridad = new javax.swing.JComboBox<>();
+        jLabel15 = new javax.swing.JLabel();
+        btnGrafico = new javax.swing.JButton();
         acBuffer = new javax.swing.JButton();
+        guardarJson = new javax.swing.JButton();
+        cargarJson = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -158,8 +180,8 @@ public class Interfaz extends javax.swing.JFrame {
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel2.setText("Velocidad (ms): 0");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 50, -1, -1));
-        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 50, -1, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 50, -1, -1));
+        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 50, -1, -1));
 
         jButton1.setText("INICIAR");
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -168,7 +190,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 50, -1, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 50, -1, -1));
 
         jButton2.setText("PAUSAR");
         jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -177,7 +199,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton2ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 50, -1, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 50, -1, -1));
 
         jPanel2.setLayout(new java.awt.GridLayout(1, 0));
 
@@ -253,7 +275,7 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel9.setText("Nombre del Proceso:");
-        crearProceso.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 50, -1, -1));
+        crearProceso.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, -1, -1));
 
         jLabel10.setText("Memoria: ");
         crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
@@ -266,7 +288,7 @@ public class Interfaz extends javax.swing.JFrame {
                 txtNombreActionPerformed(evt);
             }
         });
-        crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, 100, -1));
+        crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 30, 100, -1));
 
         spnMemoria.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 160, 100, -1));
@@ -290,7 +312,7 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 340, -1, -1));
 
         jLabel13.setText("Tipo de proceso:");
-        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 110, -1, -1));
+        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, -1));
 
         cbxTipoProceso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CPU_BOUND", "IO_BOUND", "PRODUCTOR", "CONSUMIDOR" }));
         cbxTipoProceso.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -299,7 +321,7 @@ public class Interfaz extends javax.swing.JFrame {
                 cbxTipoProcesoActionPerformed(evt);
             }
         });
-        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 110, -1, -1));
+        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, -1, -1));
 
         OpComputadora.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computadora 1", "Computadora 2" }));
         OpComputadora.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -313,19 +335,30 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel14.setText("Instrucciones: ");
         crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
 
+        cbxPrioridad.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ALTA", "MEDIA", "BAJA" }));
+        cbxPrioridad.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxPrioridadActionPerformed(evt);
+            }
+        });
+        crearProceso.add(cbxPrioridad, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 120, 120, 30));
+
+        jLabel15.setText("Prioridad:");
+        crearProceso.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
+
         jPanel2.add(crearProceso);
 
         Simulación.addTab("Simulación", jPanel2);
 
         jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 960, 440));
 
-        jButton4.setText("SIMULACION");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        btnGrafico.setText("GRAFICOS");
+        btnGrafico.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                btnGraficoActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 60, -1, -1));
+        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 50, -1, -1));
 
         acBuffer.setText("BUFFER");
         acBuffer.addActionListener(new java.awt.event.ActionListener() {
@@ -333,7 +366,23 @@ public class Interfaz extends javax.swing.JFrame {
                 acBufferActionPerformed(evt);
             }
         });
-        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 10, -1, -1));
+        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 50, -1, -1));
+
+        guardarJson.setText("GuardarJson");
+        guardarJson.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                guardarJsonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(guardarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 50, -1, -1));
+
+        cargarJson.setText("CargarJson");
+        cargarJson.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cargarJsonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(cargarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 10, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -402,44 +451,79 @@ public class Interfaz extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
          try {
-        // 1. Atrapamos los datos con TUS nombres de variables
-        String nombre = txtNombre.getText(); 
-        int memoria = (int) spnMemoria.getValue();
-        int deadline = (int) spnDeadline.getValue();
-        int instrucciones = (int) spnInstrucciones.getValue();
+            // 1. Atrapamos los datos
+            String nombre = txtNombre.getText(); 
+            int memoria = (int) spnMemoria.getValue();
+            int deadline = (int) spnDeadline.getValue();
+            int instrucciones = (int) spnInstrucciones.getValue();
 
-        // 2. Validamos que no esté vacío
-        if (nombre.trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
-            return;
-        }
+            // 2. Validamos que el nombre no esté vacío
+            if (nombre.trim().isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
+                return;
+            }
 
-        // 3. Determinamos el Tipo de Proceso según el ComboBox
-        losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
-        if (cbxTipoProceso.getSelectedItem().toString().equals("IO_BOUND")) {
-            tipo = losEnums.TipoProceso.IO_BOUND;
-        }
+            // 3. VALIDACIÓN: Evitar valores negativos o cero
+            if (memoria <= 0 || deadline <= 0 || instrucciones <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Error: La memoria, el deadline y las instrucciones deben ser mayores a 0.",
+                    "Valores Inválidos", 
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                return; // Detiene la creación del proceso
+            }
 
-        // 4. Determinamos a qué computador va según el ComboBox OpComputadora
-        // El índice 0 es Computador 1, el índice 1 es Computador 2
-        int indiceComp = OpComputadora.getSelectedIndex(); 
-        int idComp = indiceComp + 1; // El ID es 1 o 2
+            // 4. Determinamos el Tipo de Proceso (Ahora atrapa los 4 tipos)
+            losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
+            String tipoSeleccionado = cbxTipoProceso.getSelectedItem().toString();
+            
+            if (tipoSeleccionado.equals("IO_BOUND")) {
+                tipo = losEnums.TipoProceso.IO_BOUND;
+            } else if (tipoSeleccionado.equals("PRODUCTOR")) {
+                tipo = losEnums.TipoProceso.PRODUCTOR;
+            } else if (tipoSeleccionado.equals("CONSUMIDOR")) {
+                tipo = losEnums.TipoProceso.CONSUMIDOR;
+            }
 
-        // 5. Creamos el proceso y lo mandamos al Núcleo del computador elegido
-        sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, 2, memoria, deadline, instrucciones, idComp);
-        if (tipo == losEnums.TipoProceso.IO_BOUND) {
-    p.setCiclosPorElemento(3);    // Pide E/S cada 3 ciclos
-    p.setCiclosParaSatisfacer(2); // La E/S dura 2 ciclos
+            // 5. Determinamos a qué computador va
+            int indiceComp = OpComputadora.getSelectedIndex(); 
+            int idComp = indiceComp + 1; 
+
+            // 6. Creamos el proceso
+            // Leer la prioridad seleccionada en el nuevo combo
+int prioridad = 2; // Media por defecto
+String prioStr = cbxPrioridad.getSelectedItem().toString();
+if (prioStr.equals("ALTA")) {
+    prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; // que es 3
+} else if (prioStr.equals("BAJA")) {
+    prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; // que es 1
 }
-        cluster.getComputador(indiceComp).getNucleo().admitir(p);
-        
-        // 6. Mostramos mensaje de éxito y limpiamos
-        javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
-        txtNombre.setText("");
-        
-    } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-    }
+
+// Crear el proceso con la prioridad elegida
+sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, prioridad, memoria, deadline, instrucciones, idComp);
+            
+            
+            // Si es IO_BOUND, le configuramos la E/S
+            if (tipo == losEnums.TipoProceso.IO_BOUND) {
+                p.setCiclosPorElemento(3);    
+                p.setCiclosParaSatisfacer(2); 
+            }
+            // NUEVO: Si es PRODUCTOR o CONSUMIDOR, asignarle el buffer
+            if (tipo == losEnums.TipoProceso.PRODUCTOR || tipo == losEnums.TipoProceso.CONSUMIDOR) {
+                p.setBufferAsociado(1);       // Usará el Buffer #1
+                p.setCiclosPorElemento(3);    // Producirá/Consumirá un elemento cada 3 ciclos
+                p.setElementosRestantes(5);   // Va a producir/consumir 5 elementos en total
+                }
+            
+            // 7. Lo mandamos al Núcleo
+            cluster.getComputador(indiceComp).getNucleo().admitir(p);
+            
+            // 8. Mostramos mensaje de éxito y limpiamos
+            javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
+            txtNombre.setText("");
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
@@ -454,9 +538,12 @@ public class Interfaz extends javax.swing.JFrame {
         
     }//GEN-LAST:event_OpComputadoraActionPerformed
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton4ActionPerformed
+    private void btnGraficoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGraficoActionPerformed
+
+        VentanaGrafico vg = new VentanaGrafico();
+        vg.cluster = this.cluster;        
+        vg.setVisible(true);   // TODO add your handling code here:
+    }//GEN-LAST:event_btnGraficoActionPerformed
 
     private void acBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acBufferActionPerformed
 ventanaBuffer vb = new ventanaBuffer();
@@ -464,23 +551,110 @@ vb.cluster = this.cluster; // Le pasas el mismo clúster
 vb.setVisible(true);       // La muestras        // TODO add your handling code here:
     }//GEN-LAST:event_acBufferActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(() -> new Interfaz().setVisible(true));
-    }
+    private void cbxPrioridadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPrioridadActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxPrioridadActionPerformed
+
+    private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
+         try {
+       // 1. Creamos el objeto con los datos actuales (¡Ojo con la C mayúscula!)
+            sistemaOperativo.configuracion config = new sistemaOperativo.configuracion();
+            config.numComputadores = 2;
+            config.ramPorComputador = 2048;
+            config.duracionCicloMs = (int) jSpinner1.getValue();
+            config.latenciaRed = 3;
+
+            // 2. Todo con minúscula
+            config.procesosIniciales = new sistemaOperativo.configuracion.ProcesoDTO[1];
+            sistemaOperativo.configuracion.ProcesoDTO pDto = new sistemaOperativo.configuracion.ProcesoDTO();
+            pDto.nombre = "ProcesoGuardado";
+            pDto.tipo = "CPU_BOUND";
+            pDto.prioridad = 2;
+            pDto.memoria = 256;
+            pDto.deadline = 50;
+            pDto.instrucciones = 10;
+            pDto.computador = 1;
+            config.procesosIniciales[0] = pDto;
+
+            // 3. Todo con minúscula
+            config.buffersIniciales = new sistemaOperativo.configuracion.BufferDTO[1];
+            sistemaOperativo.configuracion.BufferDTO bDto = new sistemaOperativo.configuracion.BufferDTO();
+            bDto.capacidad = 5;
+            bDto.anfitrion = 1;
+            config.buffersIniciales[0] = bDto;
+
+            // 4. Guardamos
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.io.FileWriter writer = new java.io.FileWriter("configuracion.json");
+            gson.toJson(config, writer);
+            writer.close();
+
+
+
+            javax.swing.JOptionPane.showMessageDialog(this, "Configuración guardada en configuracion.json");
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage());
+        } // TODO add your handling code here:
+    }//GEN-LAST:event_guardarJsonActionPerformed
+
+    private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
+          try {
+             // 1. Leemos el archivo JSON
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.io.FileReader reader = new java.io.FileReader("configuracion.json");
+            
+            // Lo convertimos de vuelta a la clase (con 'c' minúscula)
+            sistemaOperativo.configuracion config = gson.fromJson(reader, sistemaOperativo.configuracion.class);
+            reader.close();
+
+            // 2. Aplicamos la velocidad
+            jSpinner1.setValue(config.duracionCicloMs);
+            
+            // 3. Reconstruimos los Buffers
+            if (config.buffersIniciales != null) {
+                for (sistemaOperativo.configuracion.BufferDTO bDto : config.buffersIniciales) {
+                    cluster.getGestorBuffers().crearBuffer(bDto.capacidad, bDto.anfitrion);
+                }
+            }
+
+            // 4. Reconstruimos los Procesos
+            if (config.procesosIniciales != null) {
+                for (sistemaOperativo.configuracion.ProcesoDTO pDto : config.procesosIniciales) {
+                    
+                    // Convertimos el String ("CPU_BOUND") al Enum real
+                    losEnums.TipoProceso tipo = losEnums.TipoProceso.valueOf(pDto.tipo);
+                    
+                    // Creamos el PCB con los datos guardados
+                    sistemaOperativo.PCB nuevoP = new sistemaOperativo.PCB(
+                        pDto.nombre, tipo, pDto.prioridad, pDto.memoria, 
+                        pDto.deadline, pDto.instrucciones, pDto.computador
+                    );
+                    
+                    // Lo metemos al Núcleo del computador correspondiente (índice 0 o 1)
+                    cluster.getComputador(pDto.computador - 1).getNucleo().admitir(nuevoP);
+                }
+            }
+            javax.swing.JOptionPane.showMessageDialog(this, "Configuración cargada. Velocidad: " + config.duracionCicloMs);
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar el archivo (¿Ya lo guardaste?): " + e.getMessage());
+        } // TODO add your handling code here:
+    }//GEN-LAST:event_cargarJsonActionPerformed
+
+   
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> OpComputadora;
     private javax.swing.JTabbedPane Simulación;
     private javax.swing.JButton acBuffer;
+    private javax.swing.JButton btnGrafico;
+    private javax.swing.JButton cargarJson;
+    private javax.swing.JComboBox<String> cbxPrioridad;
     private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;
+    private javax.swing.JButton guardarJson;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
@@ -489,6 +663,7 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

@@ -12,6 +12,7 @@ import planificacionSO.PoliticaPlanificacion;
 import losEnums.TipoProceso;
 import hardware.Computador;
 import gui.Interfaz;
+import gui.ventanaBuffer;
 /**
  *
  * @author Miguel
