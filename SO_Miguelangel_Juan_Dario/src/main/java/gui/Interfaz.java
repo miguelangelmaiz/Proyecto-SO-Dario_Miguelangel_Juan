@@ -67,7 +67,7 @@ public class Interfaz extends javax.swing.JFrame {
             
             if (p1 != null) {
                 jLabel3.setText("CPU: " + p1.getNombre()); 
-                jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline());
+                jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline() + " / Prio: " + p1.getPrioridad());
                 String modoActual = cluster.getComputador(0).getCpu().getModo().toString();
                 jLabel5.setText("Modo: " + modoActual);
                 // Si es SISTEMA, se pinta de ROJO. Si es USUARIO, se pinta de NEGRO.
@@ -171,6 +171,8 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel14 = new javax.swing.JLabel();
         cbxPrioridad = new javax.swing.JComboBox<>();
         jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        spnQuantum = new javax.swing.JSpinner();
         btnGrafico = new javax.swing.JButton();
         acBuffer = new javax.swing.JButton();
         guardarJson = new javax.swing.JButton();
@@ -219,7 +221,7 @@ public class Interfaz extends javax.swing.JFrame {
         panelComp1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, -1, -1));
 
         jLabel4.setText("PC: 0 / Deadline: 0");
-        panelComp1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
+        panelComp1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, 140, -1));
 
         jLabel5.setText("Modo: Usuario");
         panelComp1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
@@ -234,7 +236,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jComboBox1ActionPerformed(evt);
             }
         });
-        panelComp1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 160, 110, -1));
+        panelComp1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 160, 110, -1));
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -253,7 +255,7 @@ public class Interfaz extends javax.swing.JFrame {
         panelComp2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, -1, -1));
 
         jLabel7.setText("PC: 0 / Deadline: 0");
-        panelComp2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
+        panelComp2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, 150, -1));
 
         jLabel8.setText("Modo: Usuario");
         panelComp2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
@@ -268,7 +270,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jComboBox2ActionPerformed(evt);
             }
         });
-        panelComp2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 160, 110, -1));
+        panelComp2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 160, 110, -1));
 
         jTextArea2.setColumns(20);
         jTextArea2.setRows(5);
@@ -287,10 +289,10 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, -1, -1));
 
         jLabel10.setText("Memoria: ");
-        crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
+        crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, -1, -1));
 
         jLabel11.setText("Computadora:");
-        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, -1, -1));
+        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 340, -1, -1));
 
         txtNombre.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -300,16 +302,16 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 30, 100, -1));
 
         spnMemoria.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 160, 100, -1));
+        crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 220, 100, -1));
 
         spnDeadline.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        crearProceso.add(spnDeadline, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 210, 90, -1));
+        crearProceso.add(spnDeadline, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 260, 90, -1));
 
         jLabel12.setText("Deadline: ");
-        crearProceso.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 210, -1, -1));
+        crearProceso.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
 
         spnInstrucciones.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        crearProceso.add(spnInstrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 260, 100, -1));
+        crearProceso.add(spnInstrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 300, 100, -1));
 
         jButton3.setText("Crear Proceso");
         jButton3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -318,10 +320,10 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton3ActionPerformed(evt);
             }
         });
-        crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 340, -1, -1));
+        crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 390, -1, -1));
 
         jLabel13.setText("Tipo de proceso:");
-        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, -1));
+        crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, -1, -1));
 
         cbxTipoProceso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CPU_BOUND", "IO_BOUND", "PRODUCTOR", "CONSUMIDOR" }));
         cbxTipoProceso.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -339,10 +341,10 @@ public class Interfaz extends javax.swing.JFrame {
                 OpComputadoraActionPerformed(evt);
             }
         });
-        crearProceso.add(OpComputadora, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 300, -1, -1));
+        crearProceso.add(OpComputadora, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 340, -1, -1));
 
         jLabel14.setText("Instrucciones: ");
-        crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
+        crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, -1, -1));
 
         cbxPrioridad.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ALTA", "MEDIA", "BAJA" }));
         cbxPrioridad.addActionListener(new java.awt.event.ActionListener() {
@@ -350,16 +352,20 @@ public class Interfaz extends javax.swing.JFrame {
                 cbxPrioridadActionPerformed(evt);
             }
         });
-        crearProceso.add(cbxPrioridad, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 120, 120, 30));
+        crearProceso.add(cbxPrioridad, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 170, 120, 30));
 
         jLabel15.setText("Prioridad:");
-        crearProceso.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
+        crearProceso.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, -1, -1));
+
+        jLabel16.setText("Quantum: ");
+        crearProceso.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
+        crearProceso.add(spnQuantum, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 120, 90, -1));
 
         jPanel2.add(crearProceso);
 
         Simulación.addTab("Simulación", jPanel2);
 
-        jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, 960, 430));
+        jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, 1020, 480));
 
         btnGrafico.setText("GRAFICOS");
         btnGrafico.addActionListener(new java.awt.event.ActionListener() {
@@ -409,7 +415,7 @@ public class Interfaz extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -433,13 +439,16 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        if (cluster == null) return;
+         if (cluster == null) return;
         String seleccion = (String) jComboBox1.getSelectedItem();
         PoliticaPlanificacion nuevaPolitica = null;
         
         switch (seleccion) {
             case "FCFS": nuevaPolitica = new FCFS(); break;
-            case "Round Robin": nuevaPolitica = new RoundRobin(3); break; 
+            case "Round Robin": 
+                int q = (int) spnQuantum.getValue(); 
+                nuevaPolitica = new RoundRobin(q); 
+                break; 
             case "EDF": nuevaPolitica = new EDF(); break;
             case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
         }
@@ -449,14 +458,32 @@ public class Interfaz extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
+    private void spnQuantumStateChanged(javax.swing.event.ChangeEvent evt) {                                      
+        // Si actualmente está seleccionado Round Robin, actualiza la política al instante
+        if (cluster != null) {
+            int q = (int) spnQuantum.getValue();
+            
+            if (jComboBox1.getSelectedItem().toString().equals("Round Robin")) {
+                cluster.getComputador(0).setPolitica(new RoundRobin(q));
+            }
+            if (jComboBox2.getSelectedItem().toString().equals("Round Robin")) {
+                cluster.getComputador(1).setPolitica(new RoundRobin(q));
+            }
+        }
+    } 
+    
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-        if (cluster == null) return;
+         if (cluster == null) return;
         String seleccion = (String) jComboBox2.getSelectedItem();
         PoliticaPlanificacion nuevaPolitica = null;
         
         switch (seleccion) {
             case "FCFS": nuevaPolitica = new FCFS(); break;
-            case "Round Robin": nuevaPolitica = new RoundRobin(3); break; 
+            case "Round Robin": 
+                // Leemos el quantum del Spinner
+                int q = (int) spnQuantum.getValue(); 
+                nuevaPolitica = new RoundRobin(q); 
+                break; 
             case "EDF": nuevaPolitica = new EDF(); break;
             case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
         }
@@ -507,13 +534,36 @@ public class Interfaz extends javax.swing.JFrame {
 
             // 6. Creamos el proceso
             // Leer la prioridad seleccionada en el nuevo combo
-int prioridad = 2; // Media por defecto
-String prioStr = cbxPrioridad.getSelectedItem().toString();
-if (prioStr.equals("ALTA")) {
-    prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; // que es 3
-} else if (prioStr.equals("BAJA")) {
-    prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; // que es 1
-}
+            int prioridad = 2; // Media por defecto
+            String prioStr = cbxPrioridad.getSelectedItem().toString();
+            if (prioStr.equals("ALTA")) {
+                prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; // que es 3
+            } else if (prioStr.equals("BAJA")) {
+                prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; // que es 1
+            }
+               // 7. SI ES PRODUCTOR O CONSUMIDOR, PREGUNTAMOS EL BUFFER
+            // =================================================================
+            if (tipo == losEnums.TipoProceso.PRODUCTOR || tipo == losEnums.TipoProceso.CONSUMIDOR) {
+                
+                // Opciones que aparecerán en el cuadro de diálogo
+                Object[] opcionesBuffer = {"Buffer 1", "Buffer 2"};
+                
+                int seleccion = javax.swing.JOptionPane.showOptionDialog(
+                        this,
+                        "¿A qué buffer deseas asignar este " + tipoSeleccionado + "?",
+                        "Seleccionar Buffer",
+                        javax.swing.JOptionPane.YES_NO_OPTION,
+                        javax.swing.JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        opcionesBuffer,
+                        opcionesBuffer[0]); // El botón por defecto es el Buffer 1
+                   // Si el usuario cierra la ventana o le da a la X, cancelamos la creación
+                if (seleccion == javax.swing.JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+                
+
+            }
 
 // Crear el proceso con la prioridad elegida
 sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, prioridad, memoria, deadline, instrucciones, idComp);
@@ -700,6 +750,7 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -724,6 +775,7 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JSpinner spnDeadline;
     private javax.swing.JSpinner spnInstrucciones;
     private javax.swing.JSpinner spnMemoria;
+    private javax.swing.JSpinner spnQuantum;
     private javax.swing.JTextArea txtLog;
     private javax.swing.JTextField txtNombre;
     // End of variables declaration//GEN-END:variables
