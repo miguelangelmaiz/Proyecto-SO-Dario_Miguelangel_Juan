@@ -30,6 +30,7 @@ public class Interfaz extends javax.swing.JFrame {
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+        spnQuantum.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
