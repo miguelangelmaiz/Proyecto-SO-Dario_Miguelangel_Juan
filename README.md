@@ -55,8 +55,16 @@ El proyecto está diseñado bajo un modelo de capas donde la capa superior conoc
 
 *   **Hilos Reales vs. Procesos Simulados:** El programa cuenta con 3 hilos reales de Java (Hilo Principal, Hilo del Reloj y EDT de Swing). Los procesos (`PCB`) **no son hilos de Java**, son objetos gestionados por el planificador propio. Esto garantiza que se evalúen las políticas del proyecto y no las del sistema operativo anfitrión.
 *   **Semáforos de Java:** Se implementó `java.util.concurrent.Semaphore` dentro de la clase `Cola` para garantizar la exclusión mutua. Esto evita colisiones (como `ConcurrentModificationException`) entre el hilo que actualiza el reloj y el hilo que pinta la interfaz gráfica.
-*   **Enlace de Cola:** Para permitir que un `PCB` se mueva libremente entre las colas de Nuevos, Listos y Bloqueados, el enlace (puntero siguiente) se maneja en el `Nodo`, dejando al `PCB` independiente de la estructura de la cola.
+*   **Enlace de Cola:** Para permitir que un `PCB` se mueva libremente entre las colas de Nuevos, Listos y Bloqueados, el enlace (puntero siguiente) se maneja en
+  el `Nodo`, dejando al `PCB` independiente de la estructura de la cola.
 *   **Prevención de Inanición:** En la admisión de memoria, si el primer proceso de la cola de nuevos no cabe en RAM, el sistema detiene el barrido. Esto evita que los procesos grandes mueran de inanición por procesos pequeños, priorizando la integridad de la memoria.
+  
+## 👥 Aporte cada integrante al proyecto
 
+* Juan Moreira: Primitivas, Hardware y enums
+* Miguelangel Maíz: Primitivas, SO y enums
+* Dario Fernandez: Semaforo y Buffers.
+* En conjunto: La interfaz Grafica de Usuario
+  
 ---
 *Desarrollado para la asignatura de Sistemas Operativos - Universidad Metropolitana.*
