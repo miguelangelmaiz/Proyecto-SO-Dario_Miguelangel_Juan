@@ -21,18 +21,17 @@ import sistemaOperativo.configuracion;
 
 
 public class Interfaz extends javax.swing.JFrame {
-     private int terminadosAnterioresC1 = 0;
-    private int terminadosAnterioresC2 = 0;
+     
 
      public sistemaOperativo.Cluster cluster;
 
     public Interfaz() {
-        initComponents();
+         initComponents();
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+        spnQuantum.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         
-         
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
         // 1. CREAR EL CLUSTER
@@ -72,7 +71,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jLabel4.setText("PC: " + p1.getPc() + " / Deadline: " + p1.getDeadline() + " / Prio: " + p1.getPrioridad());
                 String modoActual = cluster.getComputador(0).getCpu().getModo().toString();
                 jLabel5.setText("Modo: " + modoActual);
-                // Si es SISTEMA, se pinta de ROJO. Si es USUARIO, se pinta de NEGRO.
+                
                 if (modoActual.equals("SISTEMA")) {
                     jLabel5.setForeground(java.awt.Color.RED);
                 } else {
@@ -83,10 +82,9 @@ public class Interfaz extends javax.swing.JFrame {
                 jLabel3.setText("CPU: Libre");
                 jLabel4.setText("PC: 0 / Deadline: 0");
                 jLabel5.setText("Modo: Usuario");
-                jLabel5.setForeground(java.awt.Color.BLACK); // Volver a negro si está libre
+                jLabel5.setForeground(java.awt.Color.BLACK); 
             }
            
-            
             jProgressBar1.setValue(ramUsada1);
             jProgressBar1.setString("RAM: " + ramUsada1 + " / 2048");
 
@@ -101,7 +99,7 @@ public class Interfaz extends javax.swing.JFrame {
             
             if (p2 != null) {
                 jLabel6.setText("CPU: " + p2.getNombre()); 
-                 jLabel7.setText("PC: " + p2.getPc() + " / Dead: " + p2.getDeadline() + " / Prio: " + p2.getPrioridad());
+                jLabel7.setText("PC: " + p2.getPc() + " / Dead: " + p2.getDeadline() + " / Prio: " + p2.getPrioridad());
                 jLabel8.setText("Modo: " + cluster.getComputador(1).getCpu().getModo().toString());
             } else {
                 jLabel6.setText("CPU: Libre");
@@ -117,35 +115,16 @@ public class Interfaz extends javax.swing.JFrame {
                    "\nBloqueados: " + cluster.getComputador(1).getNucleo().getColaBloqueados().getNombresProcesos() +
                    "\nTerminados: " + cluster.getComputador(1).getNucleo().getTerminados().getNombresProcesos());
         
-        txtLog.setText(cluster.getLogEventos());
+            // --- ACTUALIZAR EL LOG DE EVENTOS ---
+            txtLog.setText(cluster.getLogEventos());
             if (cluster.getReloj().isCorriendo()) {
                 txtLog.setCaretPosition(txtLog.getDocument().getLength());
             }
-        });
+        }); // <---- AQUÍ CIERRA EL TIMER CORRECTAMENTE
         
-      // --- DETECTA PROCESOS TERMINADOS PARA EL LOG ---
-            int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
-            int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
-            int cicloActual = cluster.getReloj().getCiclo();
-
-            // Si aumentó la cantidad de terminados en C1
-            if (terminadosC1 > terminadosAnterioresC1) {
-                txtLog.append("[Ciclo " + cicloActual + "] Comp 1: proceso terminado.\n");
-                terminadosAnterioresC1 = terminadosC1;
-            }
-            
-            // Si aumentó la cantidad de terminados en C2
-            if (terminadosC2 > terminadosAnterioresC2) {
-                txtLog.append("[Ciclo " + cicloActual + "] Comp 2: proceso terminado.\n");
-                terminadosAnterioresC2 = terminadosC2;
-            }
-
-            // Autoscroll para que el texto baje solo
-            if (cluster.getReloj().isCorriendo()) {
-                txtLog.setCaretPosition(txtLog.getDocument().getLength());
-            }
-        timer.start();
+        timer.start(); // <---- ARRANCA EL TIMER UNA SOLA VEZ
     }
+    
     
     
 
@@ -527,10 +506,10 @@ public class Interfaz extends javax.swing.JFrame {
                     "Error: La memoria, el deadline y las instrucciones deben ser mayores a 0.",
                     "Valores Inválidos", 
                     javax.swing.JOptionPane.WARNING_MESSAGE);
-                return; // Detiene la creación del proceso
+                return; 
             }
 
-            // 4. Determinamos el Tipo de Proceso (Ahora atrapa los 4 tipos)
+            // 4. Determinamos el Tipo de Proceso
             losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
             String tipoSeleccionado = cbxTipoProceso.getSelectedItem().toString();
             
@@ -546,65 +525,102 @@ public class Interfaz extends javax.swing.JFrame {
             int indiceComp = OpComputadora.getSelectedIndex(); 
             int idComp = indiceComp + 1; 
 
-            // 6. Creamos el proceso
-            // Leer la prioridad seleccionada en el nuevo combo
+            // 6. Determinamos la Prioridad
             int prioridad = 2; // Media por defecto
             String prioStr = cbxPrioridad.getSelectedItem().toString();
             if (prioStr.equals("ALTA")) {
-                prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; // que es 3
+                prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; 
             } else if (prioStr.equals("BAJA")) {
-                prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; // que es 1
+                prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; 
             }
-               // 7. SI ES PRODUCTOR O CONSUMIDOR, PREGUNTAMOS EL BUFFER
-            // =================================================================
+
+            // 7. LÓGICA PARA SELECCIONAR EL BUFFER (FILTRADO POR COMPUTADORA)
+            int idBufferElegido = 1; // Por defecto si no es productor/consumidor
+            
             if (tipo == losEnums.TipoProceso.PRODUCTOR || tipo == losEnums.TipoProceso.CONSUMIDOR) {
+                estructuraDeDatos.ListaSimple listaBuffers = cluster.getGestorBuffers().getLista();
                 
-                // Opciones que aparecerán en el cuadro de diálogo
-                Object[] opcionesBuffer = {"Buffer 1", "Buffer 2"};
+                // 1. Primero contamos cuántos buffers pertenecen a ESTE computador
+                int contadorLocal = 0;
+                for (int i = 0; i < listaBuffers.getSize(); i++) {
+                    sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) listaBuffers.getValue(i);
+                    if (b.getAnfitrion() == idComp) { // Si el dueño del buffer es el computador elegido
+                        contadorLocal++;
+                    }
+                }
+
+                // Si no hay buffers locales, no podemos crear el productor/consumidor aquí
+                if (contadorLocal == 0) {
+                    javax.swing.JOptionPane.showMessageDialog(this, 
+                        "Error: No hay buffers creados en el Computador " + idComp + ".\n" +
+                        "Crea un buffer primero o cambia el proceso a otro computador.", 
+                        "Sin buffers locales", 
+                        javax.swing.JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // 2. Creamos el arreglo solo con los buffers locales
+                String[] opcionesBuffer = new String[contadorLocal];
+                int[] idsBuffersReales = new int[contadorLocal]; // Para guardar el ID real
                 
+                int j = 0;
+                for (int i = 0; i < listaBuffers.getSize(); i++) {
+                    sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) listaBuffers.getValue(i);
+                    if (b.getAnfitrion() == idComp) {
+                        opcionesBuffer[j] = "Buffer " + b.getId() + " (Local)";
+                        idsBuffersReales[j] = b.getId(); // Guardamos el ID para usarlo luego
+                        j++;
+                    }
+                }
+
+                // 3. Mostramos la ventana con las opciones filtradas
                 int seleccion = javax.swing.JOptionPane.showOptionDialog(
                         this,
-                        "¿A qué buffer deseas asignar este " + tipoSeleccionado + "?",
-                        "Seleccionar Buffer",
-                        javax.swing.JOptionPane.YES_NO_OPTION,
+                        "¿A qué buffer local del Computador " + idComp + " deseas asignar este " + tipoSeleccionado + "?",
+                        "Seleccionar Buffer Local",
+                        javax.swing.JOptionPane.DEFAULT_OPTION, 
                         javax.swing.JOptionPane.QUESTION_MESSAGE,
                         null,
                         opcionesBuffer,
-                        opcionesBuffer[0]); // El botón por defecto es el Buffer 1
-                   // Si el usuario cierra la ventana o le da a la X, cancelamos la creación
-                if (seleccion == javax.swing.JOptionPane.CLOSED_OPTION) {
-                    return;
-                }
-                
+                        opcionesBuffer[0]);
 
+                if (seleccion == -1) {
+                    return; // El usuario canceló
+                }
+
+                // 4. Obtenemos el ID real del buffer elegido usando el arreglo auxiliar
+                idBufferElegido = idsBuffersReales[seleccion];
             }
 
-// Crear el proceso con la prioridad elegida
-sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, prioridad, memoria, deadline, instrucciones, idComp);
+            // 8. Creamos el proceso
+            sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, prioridad, memoria, deadline, instrucciones, idComp);
             
-            
-            // Si es IO_BOUND, le configuramos la E/S
             if (tipo == losEnums.TipoProceso.IO_BOUND) {
                 p.setCiclosPorElemento(3);    
                 p.setCiclosParaSatisfacer(2); 
             }
-            // NUEVO: Si es PRODUCTOR o CONSUMIDOR, asignarle el buffer
-            if (tipo == losEnums.TipoProceso.PRODUCTOR || tipo == losEnums.TipoProceso.CONSUMIDOR) {
-                p.setBufferAsociado(1);       // Usará el Buffer #1
-                p.setCiclosPorElemento(3);    // Producirá/Consumirá un elemento cada 3 ciclos
-                p.setElementosRestantes(5);   // Va a producir/consumir 5 elementos en total
-                }
             
-            // 7. Lo mandamos al Núcleo
+            if (tipo == losEnums.TipoProceso.PRODUCTOR || tipo == losEnums.TipoProceso.CONSUMIDOR) {
+                p.setBufferAsociado(idBufferElegido); // Asigna el buffer que el usuario eligió
+                p.setCiclosPorElemento(3);    
+                p.setElementosRestantes(5);   
+            }
+            
+            // 9. Lo mandamos al Núcleo
             cluster.getComputador(indiceComp).getNucleo().admitir(p);
             
-            // 8. Mostramos mensaje de éxito y limpiamos
+            // 10. Mensaje de éxito
             javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado en el Computador " + idComp + "!");
             txtNombre.setText("");
             
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
+                
+
+            
+
+
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
