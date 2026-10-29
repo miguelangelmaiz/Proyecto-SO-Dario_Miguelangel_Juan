@@ -524,6 +524,19 @@ public class Interfaz extends javax.swing.JFrame {
             // 5. Determinamos a qué computador va
             int indiceComp = OpComputadora.getSelectedIndex(); 
             int idComp = indiceComp + 1; 
+            
+            // Validación la cual el proceso tiene más memoria que la del computador
+             int ramTotalComputador = cluster.getComputador(indiceComp).getRam().getTotal();
+             
+             if (memoria > ramTotalComputador) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Error: El proceso tiene " + memoria + " KB de memoria, pero el Computador " 
+                    + idComp + " solo tiene " + ramTotalComputador + " KB en total.\n" +
+                    "El proceso no sera admitido.",
+                    "Memoria Insuficiente", 
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+                return; // Detenemos la ejecución para que no se cree el proceso
+            }
 
             // 6. Determinamos la Prioridad
             int prioridad = 2; // Media por defecto
