@@ -43,6 +43,7 @@ Si deseas crear procesos de tipo `PRODUCTOR` o `CONSUMIDOR`, primero debes hacer
 
 El proyecto está diseñado bajo un modelo de capas donde la capa superior conoce a la inferior, pero nunca al revés.
 
+*   **`com.mycompany.so_miguelangel_juan_dario` (Ejecuta):** Clase `main`. El punto de entrada al programa.
 *   **`hardware` (Obedece):** Clases `Computador`, `CPU`, `MemoriaPrincipal` y `RelojGlobal`. No toman decisiones lógicas.
 *   **`sistemaOperativo` (Decide):** Clases `Cluster`, `Nucleo`, `PCB`, `Semaforo`, `Buffer` y `GestorBuffers`. Aquí vive el corazón lógico del simulador.
 *   **`planificacionSO` (Contratos):** Interfaz `PoliticaPlanificacion`, `Criterio` y sus implementaciones (FCFS, RoundRobin, EDF, PrioridadApropiativa).
