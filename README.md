@@ -61,10 +61,10 @@ El proyecto está diseñado bajo un modelo de capas donde la capa superior conoc
   
 ## 👥 Aporte cada integrante al proyecto
 
-* Juan Moreira: Primitivas, Hardware y enums
-* Miguelangel Maíz: Primitivas, SO y enums
-* Dario Fernandez: Semaforo y Buffers.
-* En conjunto: La interfaz Grafica de Usuario
+* **Juan Moreira:** Primitivas, Hardware y enums
+* **Miguelangel Maíz:** Primitivas, SO y enums
+* **Dario Fernandez:** Semaforo y Buffers.
+* **En conjunto:** La interfaz Grafica de Usuario
   
 ---
 *Desarrollado para la asignatura de Sistemas Operativos - Universidad Metropolitana.*
