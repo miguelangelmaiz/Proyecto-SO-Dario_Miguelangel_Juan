@@ -15,7 +15,7 @@ public sistemaOperativo.Cluster cluster;
         
         initComponents();
 
-            
+             Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
           javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
              if (cluster == null) return;
                   estructuraDeDatos.ListaSimple lista = cluster.getGestorBuffers().getLista();
@@ -61,7 +61,7 @@ public sistemaOperativo.Cluster cluster;
         }
     }
     txtEstadoBuffer.setText(texto.toString());
-     Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+    
 
     // Actualizar los Labels de las métricas con los datos REALES
     int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
