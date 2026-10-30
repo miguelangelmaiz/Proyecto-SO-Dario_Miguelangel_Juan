@@ -14,91 +14,120 @@ public sistemaOperativo.Cluster cluster;
     public ventanaBuffer() {
         
         initComponents();
+        Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
 
-             Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
-          javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
-             if (cluster == null) return;
-                  estructuraDeDatos.ListaSimple lista = cluster.getGestorBuffers().getLista();
-    StringBuilder texto = new StringBuilder();
-    
-    
-    
-    int totalProd = 0;
-    int totalCons = 0;
+        javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
+            if (cluster == null) return;
+            
+            estructuraDeDatos.ListaSimple lista = cluster.getGestorBuffers().getLista();
+            StringBuilder texto = new StringBuilder();
+            
+            int totalProd = 0;
+            int totalCons = 0;
 
-    if (lista.getSize() == 0) {
-        texto.append("No hay buffers creados aún.");
-        barraBuffer.setValue(0);
-    } else {
-        for (int i = 0; i < lista.getSize(); i++) {
-            sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
-            
-             texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
-            texto.append("Capacidad: ").append(b.getCapacidad()).append(" | Elementos: ").append(b.getElementos()).append("\n");
-            
-            // 1. Imprimir semáforos
-            texto.append("Semáforos -> Mutex: ").append(b.getMutex().getValor())
-                 .append(" | Vacíos: ").append(b.getVacios().getValor())
-                 .append(" | Llenos: ").append(b.getLlenos().getValor()).append("\n");
-                 
-            // 2. Imprimir procesos bloqueados (Usando el método de la Cola)
-            texto.append("   * En Vacíos: ").append(b.getVacios().getBloqueados().getNombresProcesos()).append("\n");
-            texto.append("   * En Llenos: ").append(b.getLlenos().getBloqueados().getNombresProcesos()).append("\n");
-            texto.append("   * En Mutex: ").append(b.getMutex().getBloqueados().getNombresProcesos()).append("\n");
-            
-            texto.append("--------------------------------------------------\n");
-            
-            // Sumamos los elementos reales
-            totalProd += b.getTotalProducidos();
-            totalCons += b.getTotalConsumidos();
-            
-            if (i == 0) {
-                barraBuffer.setMaximum(b.getCapacidad());
-                barraBuffer.setValue(b.getElementos());
-                barraBuffer.setString(b.getElementos() + " / " + b.getCapacidad());
-                barraBuffer.setStringPainted(true);
+            if (lista.getSize() == 0) {
+                texto.append("No hay buffers creados aún.");
+                barraBuffer.setValue(0);
+                cbxSelectorBuffer.removeAllItems();
+            } else {
+                // --- LÓGICA PARA LLENAR EL COMBOBOX DINÁMICAMENTE ---
+                if (cbxSelectorBuffer.getItemCount() != lista.getSize()) {
+                    cbxSelectorBuffer.removeAllItems();
+                    for (int i = 0; i < lista.getSize(); i++) {
+                        sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
+                        cbxSelectorBuffer.addItem("Buffer " + b.getId() + " (Comp " + b.getAnfitrion() + ")");
+                    }
+                    if (cbxSelectorBuffer.getItemCount() > 0) {
+                        cbxSelectorBuffer.setSelectedIndex(0); 
+                    }
+                }
+
+                // --- IMPRIMIR TODOS LOS BUFFERS EN EL TEXTO DE ABAJO ---
+                for (int i = 0; i < lista.getSize(); i++) {
+                    sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
+                    
+                    texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
+                    texto.append("Capacidad: ").append(b.getCapacidad()).append(" | Elementos: ").append(b.getElementos()).append("\n");
+                    
+                    texto.append("Semáforos -> Mutex: ").append(b.getMutex().getValor())
+                         .append(" | Vacíos: ").append(b.getVacios().getValor())
+                         .append(" | Llenos: ").append(b.getLlenos().getValor()).append("\n");
+                         
+                    texto.append("   * En Vacíos: ").append(b.getVacios().getBloqueados().getNombresProcesos()).append("\n");
+                    texto.append("   * En Llenos: ").append(b.getLlenos().getBloqueados().getNombresProcesos()).append("\n");
+                    texto.append("   * En Mutex: ").append(b.getMutex().getBloqueados().getNombresProcesos()).append("\n");
+                    
+                    texto.append("--------------------------------------------------\n");
+                    
+                    totalProd += b.getTotalProducidos();
+                    totalCons += b.getTotalConsumidos();
+                }
+
+                // --- ACTUALIZAR LA BARRA DE PROGRESO SEGÚN EL COMBOBOX ---
+                int indiceSeleccionado = cbxSelectorBuffer.getSelectedIndex();
+                if (indiceSeleccionado >= 0 && indiceSeleccionado < lista.getSize()) {
+                    sistemaOperativo.Buffer bSeleccionado = (sistemaOperativo.Buffer) lista.getValue(indiceSeleccionado);
+                    barraBuffer.setMaximum(bSeleccionado.getCapacidad());
+                    barraBuffer.setValue(bSeleccionado.getElementos());
+                    barraBuffer.setString(bSeleccionado.getElementos() + " / " + bSeleccionado.getCapacidad());
+                    barraBuffer.setStringPainted(true);
+                }
             }
-        }
-    }
-    txtEstadoBuffer.setText(texto.toString());
-    
+            txtEstadoBuffer.setText(texto.toString());
 
-    // Actualizar los Labels de las métricas con los datos REALES
-    int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
-    int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
-    int totalTerminados = terminadosC1 + terminadosC2;
-    int cicloActual = cluster.getReloj().getCiclo();
-    
-    if (cicloActual > 0) {
-        double throughput = (double) totalTerminados / cicloActual;
-        jLabel8.setText("Throughput: " + String.format("%.2f", throughput));
-    }
-    
-    jLabel6.setText("Elementos Producido: " + totalProd);
-    jLabel5.setText("Elementos Consumido: " + totalCons);
-    
-    // Estas quedan como placeholder (las puedes dejar así)
-        // Calcular tiempo de respuesta real de ambos computadores
-    double tr1 = cluster.getComputador(0).getNucleo().getTiempoRespuestaPromedio();
-    double tr2 = cluster.getComputador(1).getNucleo().getTiempoRespuestaPromedio();
-    double promedioReal = 0;
-    int pcsConDatos = 0;
-
-    if (cluster.getComputador(0).getNucleo().getTerminados().getTamano() > 0) { promedioReal += tr1; pcsConDatos++; }
-    if (cluster.getComputador(1).getNucleo().getTerminados().getTamano() > 0) { promedioReal += tr2; pcsConDatos++; }
-
-    if (pcsConDatos > 0) {
-        jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", promedioReal / pcsConDatos));
-    } else {
-        jLabel4.setText("Tiempo Respuesta Promedio: 0");
-    }
-    
-    // Dejamos el de plazos así por ahora
-    jLabel7.setText("Tasa Plazos Cumplidos: 100%");
-});
-timer.start();
-
+            // --- ACTUALIZAR LAS MÉTRICAS ---
+            int cicloActual = cluster.getReloj().getCiclo();
+            int indiceSeleccionado = cbxSelectorBuffer.getSelectedIndex();
             
+            if (indiceSeleccionado >= 0 && indiceSeleccionado < lista.getSize()) {
+                // CASO 1: Hay un buffer seleccionado. Mostramos métricas SOLO de su computador.
+                sistemaOperativo.Buffer bSeleccionado = (sistemaOperativo.Buffer) lista.getValue(indiceSeleccionado);
+                int idCompAnfitrion = bSeleccionado.getAnfitrion(); 
+                
+                int terminadosComp = cluster.getComputador(idCompAnfitrion - 1).getNucleo().getTerminados().getTamano();
+                
+                if (cicloActual > 0) {
+                    double throughputComp = (double) terminadosComp / cicloActual;
+                    jLabel8.setText("Throughput (C" + idCompAnfitrion + "): " + String.format("%.2f", throughputComp));
+                }
+                
+                jLabel6.setText("Producidos (C" + idCompAnfitrion + "): " + bSeleccionado.getTotalProducidos());
+                jLabel5.setText("Consumidos (C" + idCompAnfitrion + "): " + bSeleccionado.getTotalConsumidos());
+                
+                double tr = cluster.getComputador(idCompAnfitrion - 1).getNucleo().getTiempoRespuestaPromedio();
+                jLabel4.setText("Tiempo Respuesta (C" + idCompAnfitrion + "): " + String.format("%.2f", tr));
+                
+            } else {
+                // CASO 2: No hay selección. Mostramos los totales.
+                int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
+                int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
+                int totalTerminados = terminadosC1 + terminadosC2;
+                
+                if (cicloActual > 0) {
+                    double throughput = (double) totalTerminados / cicloActual;
+                    jLabel8.setText("Throughput Total: " + String.format("%.2f", throughput));
+                }
+                
+                jLabel6.setText("Total Producidos: " + totalProd);
+                jLabel5.setText("Total Consumidos: " + totalCons);
+                
+                double tr1 = cluster.getComputador(0).getNucleo().getTiempoRespuestaPromedio();
+                double tr2 = cluster.getComputador(1).getNucleo().getTiempoRespuestaPromedio();
+                double promedioReal = 0;
+                int pcsConDatos = 0;
+                if (terminadosC1 > 0) { promedioReal += tr1; pcsConDatos++; }
+                if (terminadosC2 > 0) { promedioReal += tr2; pcsConDatos++; }
+
+                if (pcsConDatos > 0) {
+                    jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", promedioReal / pcsConDatos));
+                } else {
+                    jLabel4.setText("Tiempo Respuesta Promedio: 0");
+                }
+            }
+            jLabel7.setText("Tasa Plazos Cumplidos: 100%");
+        });
+        
+        timer.start();
         
         
     }
@@ -127,6 +156,7 @@ timer.start();
         jLabel6 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
+        cbxSelectorBuffer = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -181,6 +211,13 @@ timer.start();
         jLabel7.setText("Tasa Plazos Cumplidos: 0%");
         jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 140, -1, -1));
 
+        cbxSelectorBuffer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxSelectorBufferActionPerformed(evt);
+            }
+        });
+        jPanel1.add(cbxSelectorBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 200, 110, 30));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -224,6 +261,10 @@ try {
         }   // TODO add your handling code here:
     }//GEN-LAST:event_crearBufferActionPerformed
 
+    private void cbxSelectorBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxSelectorBufferActionPerformed
+        
+    }//GEN-LAST:event_cbxSelectorBufferActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -233,6 +274,7 @@ try {
     private javax.swing.JSpinner Capacidad;
     private javax.swing.JComboBox<String> Host;
     private javax.swing.JProgressBar barraBuffer;
+    private javax.swing.JComboBox<String> cbxSelectorBuffer;
     private javax.swing.JButton crearBuffer;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
