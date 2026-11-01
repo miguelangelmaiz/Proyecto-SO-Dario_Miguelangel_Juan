@@ -30,6 +30,8 @@ public class Semaforo {
             p.setMotivoBloqueo(motivo);
             bloqueados.encolar(p);
             k.getCpu().liberar();
+            if (k.getCluster() != null) {
+                k.getCluster().registrarEvento("Ciclo " + k.getCluster().getReloj().getCiclo() + ": Proceso " + p.toString() + " BLOQUEADO en semáforo " + nombre);}
         }
     }
 
@@ -51,6 +53,11 @@ public class Semaforo {
                 }
                 if (destino == null) destino = k;   // fallback
                 destino.getColaListos().encolar(p);
+                if (k.getCluster() != null) {
+                    k.getCluster().registrarEvento("Ciclo " + k.getCluster().getReloj().getCiclo() + ": Proceso " + p.toString() + " DESPERTÓ de semáforo " + nombre);
+                }
+                
+                
             }
         }
     }

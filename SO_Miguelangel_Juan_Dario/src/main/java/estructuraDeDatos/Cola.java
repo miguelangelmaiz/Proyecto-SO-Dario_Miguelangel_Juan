@@ -178,18 +178,34 @@ public class Cola {
      * de forma segura sin que el hilo de Swing choque con el Reloj.
      */
     public String getNombresProcesos() {
-        try {
+          try {
             mutex.acquire();
             if (cabeza == null) return "[]";
+            
             StringBuilder sb = new StringBuilder("[");
             Nodo aux = cabeza;
+            
             while (aux != null) {
-                sb.append(aux.getDato().toString().split("\\[")[0]); // Saca "P1-Nombre"
-                sb.append(" ");
+
+                String nombreCompleto = aux.getDato().toString().split("\\[")[0]; 
+                sb.append(nombreCompleto);
+                
+                // 3. Si está bloqueado, le pegamos el motivo
+                sistemaOperativo.PCB p = (sistemaOperativo.PCB) aux.getDato();
+                if (p.getEstado() == losEnums.EstadoProceso.BLOQUEADO && p.getMotivoBloqueo() != null) {
+                    sb.append("(").append(p.getMotivoBloqueo().name()).append(")");
+                }
+                
+                // 4. Agregamos una coma si hay más procesos adelante
+                if (aux.getpNext() != null) {
+                    sb.append(", ");
+                }
+                
                 aux = aux.getpNext();
             }
             sb.append("]");
             return sb.toString();
+            
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return "[]";

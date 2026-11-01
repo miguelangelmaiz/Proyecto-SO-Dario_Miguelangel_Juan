@@ -1,1 +1,18 @@
-{"numComputadores":2,"ramPorComputador":2048,"duracionCicloMs":200,"latenciaRed":3,"procesosIniciales":[{"nombre":"ProcesoGuardado","tipo":"CPU_BOUND","prioridad":2,"memoria":256,"deadline":50,"instrucciones":10,"computador":1}],"buffersIniciales":[{"capacidad":5,"anfitrion":1}]}
+{
+  "numComputadores": 0,
+  "ramPorComputador": 0,
+  "duracionCicloMs": 500,
+  "latenciaRed": 3,
+  "procesosIniciales": [
+    {
+      "nombre": "Proceso_Ejemplo",
+      "tipo": "CPU_BOUND",
+      "prioridad": 3,
+      "memoria": 1,
+      "deadline": 1,
+      "instrucciones": 1,
+      "computador": 1
+    }
+  ],
+  "buffersIniciales": []
+}
