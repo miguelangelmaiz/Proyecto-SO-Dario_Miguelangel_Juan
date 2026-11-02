@@ -12,6 +12,7 @@ import planificacionSO.PoliticaPlanificacion;
 import losEnums.TipoProceso;
 import hardware.Computador;
 import gui.Interfaz;
+import gui.MenuInicial;
 import gui.ventanaBuffer;
 /**
  *
@@ -31,7 +32,8 @@ public class main {
         }
 
         java.awt.EventQueue.invokeLater(() -> {
-            new Interfaz().setVisible(true);
+            // Abrimos el MENÚ INICIAL, no la interfaz
+            new gui.MenuInicial().setVisible(true); 
         });
     }
 }

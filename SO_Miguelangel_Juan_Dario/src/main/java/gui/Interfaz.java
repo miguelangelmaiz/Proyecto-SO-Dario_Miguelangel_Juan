@@ -18,6 +18,7 @@ import com.google.gson.Gson;
 import java.io.FileReader;
 import java.io.FileWriter;
 import sistemaOperativo.configuracion;
+import gui.MenuInicial;
 
 
 public class Interfaz extends javax.swing.JFrame {
@@ -25,7 +26,7 @@ public class Interfaz extends javax.swing.JFrame {
 
      public sistemaOperativo.Cluster cluster;
 
-    public Interfaz() {
+    public Interfaz(int numComputadores) {
          initComponents();
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 5000, 1));
@@ -35,7 +36,38 @@ public class Interfaz extends javax.swing.JFrame {
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
         // 1. CREAR EL CLUSTER
-        cluster = new sistemaOperativo.Cluster(2, 2048, 500);
+        cluster = new sistemaOperativo.Cluster(numComputadores, 2048, 500);
+        
+        // Ocultar o mostrar según el número elegido
+        if (panelComp3 != null) {
+            panelComp3.setVisible(numComputadores >= 3);
+        }
+        if (panelComp4 != null) {
+            panelComp4.setVisible(numComputadores >= 4);
+        }
+        
+        // Agregar las opciones al ComboBox de Crear Proceso
+        OpComputadora.removeAllItems();
+        OpComputadora.addItem("Computadora 1");
+        OpComputadora.addItem("Computadora 2");
+        if (numComputadores >= 3) OpComputadora.addItem("Computadora 3");
+        if (numComputadores >= 4) OpComputadora.addItem("Computadora 4");
+        
+        if (panelComp3 != null) panelComp3.setVisible(numComputadores >= 3);
+        if (panelComp4 != null) panelComp4.setVisible(numComputadores >= 4);
+        
+                // --- AJUSTE DINÁMICO DEL DISEÑO ---
+        if (numComputadores == 2) {
+            // 1 fila, 2 columnas
+            jPanel2.setLayout(new java.awt.GridLayout(1, 2));
+        } else if (numComputadores == 3) {
+            // 1 fila, 3 columnas (se estiran para ocupar todo el ancho)
+            jPanel2.setLayout(new java.awt.GridLayout(1, 3));
+        } else if (numComputadores == 4) {
+            // 2 filas, 2 columnas (cuadrícula perfecta)
+            jPanel2.setLayout(new java.awt.GridLayout(2, 2));
+String seleccion = (String) jComboBox3.getSelectedItem();
+        }
         
         // ARREGLO VISUAL DE LAS BARRAS DE RAM
         jProgressBar1.setMaximum(2048); 
@@ -120,6 +152,73 @@ public class Interfaz extends javax.swing.JFrame {
             if (cluster.getReloj().isCorriendo()) {
                 txtLog.setCaretPosition(txtLog.getDocument().getLength());
             }
+            
+                        // --- COMPUTADOR 3 ---
+            if (cluster.getCantidad() >= 3) {
+                PCB p3 = cluster.getComputador(2).getCpu().getProcesoActual();
+                int ramUsada3 = cluster.getComputador(2).getRam().getUsada();
+                
+                if (p3 != null) {
+                    jLabel17.setText("CPU: " + p3.getNombre()); 
+                    jLabel18.setText("PC: " + p3.getPc() + " / Dead: " + p3.getDeadline() + " / Prio: " + p3.getPrioridad());
+                    String modoActual3 = cluster.getComputador(2).getCpu().getModo().toString();
+                    jLabel19.setText("Modo: " + modoActual3);
+                    
+                    if (modoActual3.equals("SISTEMA")) {
+                        jLabel19.setForeground(java.awt.Color.RED);
+                    } else {
+                        jLabel19.setForeground(java.awt.Color.BLACK);
+                    }
+                } else {
+                    jLabel17.setText("CPU: Libre");
+                    jLabel18.setText("PC: 0 / Deadline: 0");
+                    jLabel19.setText("Modo: Usuario");
+                    jLabel19.setForeground(java.awt.Color.BLACK); 
+                }
+                
+                jProgressBar3.setValue(ramUsada3);
+                jProgressBar3.setString("RAM: " + ramUsada3 + " / 2048");
+
+                jTextArea3.setText("Nuevos: " + cluster.getComputador(2).getNucleo().getColaNuevos().getNombresProcesos() +
+                       "\nListos: " + cluster.getComputador(2).getNucleo().getColaListos().getNombresProcesos() +
+                       "\nBloqueados: " + cluster.getComputador(2).getNucleo().getColaBloqueados().getNombresProcesos() +
+                       "\nTerminados: " + cluster.getComputador(2).getNucleo().getTerminados().getNombresProcesos());
+            }
+
+            // --- COMPUTADOR 4 ---
+            if (cluster.getCantidad() >= 4) {
+                PCB p4 = cluster.getComputador(3).getCpu().getProcesoActual();
+                int ramUsada4 = cluster.getComputador(3).getRam().getUsada();
+                
+                if (p4 != null) {
+                    jLabel20.setText("CPU: " + p4.getNombre()); 
+                    jLabel21.setText("PC: " + p4.getPc() + " / Dead: " + p4.getDeadline() + " / Prio: " + p4.getPrioridad());
+                    String modoActual4 = cluster.getComputador(3).getCpu().getModo().toString();
+                    jLabel22.setText("Modo: " + modoActual4);
+                    
+                    if (modoActual4.equals("SISTEMA")) {
+                        jLabel22.setForeground(java.awt.Color.RED);
+                    } else {
+                        jLabel22.setForeground(java.awt.Color.BLACK);
+                    }
+                } else {
+                    jLabel20.setText("CPU: Libre");
+                    jLabel21.setText("PC: 0 / Deadline: 0");
+                    jLabel22.setText("Modo: Usuario");
+                    jLabel22.setForeground(java.awt.Color.BLACK); 
+                }
+                
+                jProgressBar4.setValue(ramUsada4);
+                jProgressBar4.setString("RAM: " + ramUsada4 + " / 2048");
+
+                // Asumo que el JTextArea del Comp 4 se llama jTextArea4 (si se llama distinto, cámbialo aquí)
+                jTextArea4.setText("Nuevos: " + cluster.getComputador(3).getNucleo().getColaNuevos().getNombresProcesos() +
+                       "\nListos: " + cluster.getComputador(3).getNucleo().getColaListos().getNombresProcesos() +
+                       "\nBloqueados: " + cluster.getComputador(3).getNucleo().getColaBloqueados().getNombresProcesos() +
+                       "\nTerminados: " + cluster.getComputador(3).getNucleo().getTerminados().getNombresProcesos());
+            }
+            
+            
         }); // <---- AQUÍ CIERRA EL TIMER CORRECTAMENTE
         
         timer.start(); // <---- ARRANCA EL TIMER UNA SOLA VEZ
@@ -156,6 +255,22 @@ public class Interfaz extends javax.swing.JFrame {
         jComboBox2 = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTextArea2 = new javax.swing.JTextArea();
+        panelComp3 = new javax.swing.JPanel();
+        jLabel17 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        jLabel19 = new javax.swing.JLabel();
+        jProgressBar3 = new javax.swing.JProgressBar();
+        jComboBox3 = new javax.swing.JComboBox<>();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        jTextArea3 = new javax.swing.JTextArea();
+        panelComp4 = new javax.swing.JPanel();
+        jLabel20 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        jLabel22 = new javax.swing.JLabel();
+        jProgressBar4 = new javax.swing.JProgressBar();
+        jComboBox4 = new javax.swing.JComboBox<>();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        jTextArea4 = new javax.swing.JTextArea();
         crearProceso = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -202,7 +317,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 30, -1, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 30, -1, -1));
 
         jButton2.setText("PAUSAR");
         jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -211,7 +326,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton2ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 30, -1, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 30, -1, -1));
 
         jPanel2.setLayout(new java.awt.GridLayout(1, 0));
 
@@ -222,14 +337,14 @@ public class Interfaz extends javax.swing.JFrame {
         panelComp1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, -1, -1));
 
         jLabel4.setText("PC: 0 / Deadline: 0 ");
-        panelComp1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 250, 20));
+        panelComp1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 130, 20));
 
         jLabel5.setText("Modo: Usuario");
-        panelComp1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
+        panelComp1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 200, -1, -1));
 
         jProgressBar1.setString("RAM: 0 /KB: 2048");
         jProgressBar1.setStringPainted(true);
-        panelComp1.add(jProgressBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 70, 170, 30));
+        panelComp1.add(jProgressBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 60, 130, 30));
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {
@@ -237,7 +352,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jComboBox1ActionPerformed(evt);
             }
         });
-        panelComp1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 130, 110, -1));
+        panelComp1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 130, 80, -1));
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -245,7 +360,7 @@ public class Interfaz extends javax.swing.JFrame {
         jTextArea1.setEnabled(false);
         jScrollPane2.setViewportView(jTextArea1);
 
-        panelComp1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 210, 210, 180));
+        panelComp1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 240, 210, 180));
 
         jPanel2.add(panelComp1);
 
@@ -256,14 +371,14 @@ public class Interfaz extends javax.swing.JFrame {
         panelComp2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, -1, -1));
 
         jLabel7.setText("PC: 0 / Deadline: 0");
-        panelComp2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 220, 20));
+        panelComp2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 170, 20));
 
         jLabel8.setText("Modo: Usuario");
-        panelComp2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
+        panelComp2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 210, -1, -1));
 
         jProgressBar2.setString("RAM: 0 /KB: 2048");
         jProgressBar2.setStringPainted(true);
-        panelComp2.add(jProgressBar2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 60, 180, 30));
+        panelComp2.add(jProgressBar2, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 70, 130, 30));
 
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
         jComboBox2.addActionListener(new java.awt.event.ActionListener() {
@@ -271,7 +386,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jComboBox2ActionPerformed(evt);
             }
         });
-        panelComp2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 120, 110, -1));
+        panelComp2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 150, 70, -1));
 
         jTextArea2.setColumns(20);
         jTextArea2.setRows(5);
@@ -279,9 +394,79 @@ public class Interfaz extends javax.swing.JFrame {
         jTextArea2.setEnabled(false);
         jScrollPane3.setViewportView(jTextArea2);
 
-        panelComp2.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 210, 200, 180));
+        panelComp2.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 250, 200, 180));
 
         jPanel2.add(panelComp2);
+
+        panelComp3.setBorder(javax.swing.BorderFactory.createTitledBorder("Computador 2"));
+        panelComp3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel17.setText("CPU: Libre");
+        panelComp3.add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, -1, -1));
+
+        jLabel18.setText("PC: 0 / Deadline: 0");
+        panelComp3.add(jLabel18, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 160, 20));
+
+        jLabel19.setText("Modo: Usuario");
+        panelComp3.add(jLabel19, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 200, -1, -1));
+
+        jProgressBar3.setString("RAM: 0 /KB: 2048");
+        jProgressBar3.setStringPainted(true);
+        panelComp3.add(jProgressBar3, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 60, 130, 30));
+
+        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
+        jComboBox3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox3ActionPerformed(evt);
+            }
+        });
+        panelComp3.add(jComboBox3, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 120, 70, -1));
+
+        jTextArea3.setColumns(20);
+        jTextArea3.setRows(5);
+        jTextArea3.setText("Nuevos: [ ]\nListos: [ ]\nBloqueados: [ ]\nTerminados: [ ]");
+        jTextArea3.setEnabled(false);
+        jScrollPane5.setViewportView(jTextArea3);
+
+        panelComp3.add(jScrollPane5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, 200, 180));
+
+        jPanel2.add(panelComp3);
+        panelComp3.getAccessibleContext().setAccessibleName("Computador 3");
+
+        panelComp4.setBorder(javax.swing.BorderFactory.createTitledBorder("Computador 2"));
+        panelComp4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel20.setText("CPU: Libre");
+        panelComp4.add(jLabel20, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, -1, -1));
+
+        jLabel21.setText("PC: 0 / Deadline: 0");
+        panelComp4.add(jLabel21, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 150, 20));
+
+        jLabel22.setText("Modo: Usuario");
+        panelComp4.add(jLabel22, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 180, -1, -1));
+
+        jProgressBar4.setString("RAM: 0 /KB: 2048");
+        jProgressBar4.setStringPainted(true);
+        panelComp4.add(jProgressBar4, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 60, 120, 30));
+
+        jComboBox4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
+        jComboBox4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox4ActionPerformed(evt);
+            }
+        });
+        panelComp4.add(jComboBox4, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 120, 70, -1));
+
+        jTextArea4.setColumns(20);
+        jTextArea4.setRows(5);
+        jTextArea4.setText("Nuevos: [ ]\nListos: [ ]\nBloqueados: [ ]\nTerminados: [ ]");
+        jTextArea4.setEnabled(false);
+        jScrollPane6.setViewportView(jTextArea4);
+
+        panelComp4.add(jScrollPane6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 200, 180));
+
+        jPanel2.add(panelComp4);
+        panelComp4.getAccessibleContext().setAccessibleName("Computador 3");
 
         crearProceso.setBorder(javax.swing.BorderFactory.createTitledBorder("Crear Proceso"));
         crearProceso.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -300,7 +485,7 @@ public class Interfaz extends javax.swing.JFrame {
                 txtNombreActionPerformed(evt);
             }
         });
-        crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 30, 100, -1));
+        crearProceso.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 30, 80, -1));
 
         spnMemoria.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         crearProceso.add(spnMemoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 220, 100, -1));
@@ -321,7 +506,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jButton3ActionPerformed(evt);
             }
         });
-        crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 390, -1, -1));
+        crearProceso.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 390, -1, -1));
 
         jLabel13.setText("Tipo de proceso:");
         crearProceso.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, -1, -1));
@@ -333,7 +518,7 @@ public class Interfaz extends javax.swing.JFrame {
                 cbxTipoProcesoActionPerformed(evt);
             }
         });
-        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, -1, -1));
+        crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 80, 80, -1));
 
         OpComputadora.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computadora 1", "Computadora 2" }));
         OpComputadora.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -342,7 +527,7 @@ public class Interfaz extends javax.swing.JFrame {
                 OpComputadoraActionPerformed(evt);
             }
         });
-        crearProceso.add(OpComputadora, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 340, -1, -1));
+        crearProceso.add(OpComputadora, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 340, -1, -1));
 
         jLabel14.setText("Instrucciones: ");
         crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, -1, -1));
@@ -353,26 +538,26 @@ public class Interfaz extends javax.swing.JFrame {
                 cbxPrioridadActionPerformed(evt);
             }
         });
-        crearProceso.add(cbxPrioridad, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 170, 120, 30));
+        crearProceso.add(cbxPrioridad, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 170, 120, 30));
 
         jLabel15.setText("Prioridad:");
         crearProceso.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, -1, -1));
 
         jLabel16.setText("Quantum: ");
-        crearProceso.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, -1, -1));
+        crearProceso.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, -1, -1));
 
         spnQuantum.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 spnQuantumStateChanged(evt);
             }
         });
-        crearProceso.add(spnQuantum, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 120, 90, -1));
+        crearProceso.add(spnQuantum, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 130, 90, -1));
 
         jPanel2.add(crearProceso);
 
         Simulación.addTab("Simulación", jPanel2);
 
-        jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, 1020, 480));
+        jPanel1.add(Simulación, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 110, 1100, 500));
 
         btnGrafico.setText("GRAFICOS");
         btnGrafico.addActionListener(new java.awt.event.ActionListener() {
@@ -380,7 +565,7 @@ public class Interfaz extends javax.swing.JFrame {
                 btnGraficoActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 30, -1, -1));
+        jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 80, -1, -1));
 
         acBuffer.setText("BUFFER");
         acBuffer.addActionListener(new java.awt.event.ActionListener() {
@@ -388,7 +573,7 @@ public class Interfaz extends javax.swing.JFrame {
                 acBufferActionPerformed(evt);
             }
         });
-        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 30, -1, -1));
+        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 30, -1, -1));
 
         guardarJson.setText("GuardarJson");
         guardarJson.addActionListener(new java.awt.event.ActionListener() {
@@ -396,7 +581,7 @@ public class Interfaz extends javax.swing.JFrame {
                 guardarJsonActionPerformed(evt);
             }
         });
-        jPanel1.add(guardarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 70, -1, -1));
+        jPanel1.add(guardarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 80, -1, -1));
 
         cargarJson.setText("CargarJson");
         cargarJson.addActionListener(new java.awt.event.ActionListener() {
@@ -404,7 +589,7 @@ public class Interfaz extends javax.swing.JFrame {
                 cargarJsonActionPerformed(evt);
             }
         });
-        jPanel1.add(cargarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 70, -1, -1));
+        jPanel1.add(cargarJson, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 80, -1, -1));
 
         txtLog.setColumns(20);
         txtLog.setRows(5);
@@ -412,7 +597,7 @@ public class Interfaz extends javax.swing.JFrame {
 
         jScrollPane4.setViewportView(jScrollPane1);
 
-        jPanel1.add(jScrollPane4, new org.netbeans.lib.awtextra.AbsoluteConstraints(650, 10, 320, 120));
+        jPanel1.add(jScrollPane4, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 20, 320, 120));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -428,6 +613,7 @@ public class Interfaz extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
        if(cluster != null){
            cluster.iniciar();
@@ -785,6 +971,40 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
         }   // TODO add your handling code here:
     }//GEN-LAST:event_spnQuantumStateChanged
 
+    private void jComboBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox3ActionPerformed
+          if (cluster == null) return;
+        String seleccion = (String) jComboBox3.getSelectedItem();
+        PoliticaPlanificacion nuevaPolitica = null;
+        switch (seleccion) {
+            case "FCFS": nuevaPolitica = new FCFS(); break;
+            case "Round Robin": nuevaPolitica = new RoundRobin((int) spnQuantum.getValue()); break; 
+            case "EDF": nuevaPolitica = new EDF(); break;
+            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
+        }
+        if (nuevaPolitica != null) cluster.getComputador(2).setPolitica(nuevaPolitica);
+     
+    }//GEN-LAST:event_jComboBox3ActionPerformed
+
+    private void jComboBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox4ActionPerformed
+        if (cluster == null) return;
+        
+        // ¡OJO AQUÍ! Ahora sí lee el ComboBox 4
+        String seleccion = (String) jComboBox4.getSelectedItem();
+        PoliticaPlanificacion nuevaPolitica = null;
+        
+        switch (seleccion) {
+            case "FCFS": nuevaPolitica = new FCFS(); break;
+            case "Round Robin": nuevaPolitica = new RoundRobin((int) spnQuantum.getValue()); break; 
+            case "EDF": nuevaPolitica = new EDF(); break;
+            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
+        }
+        
+        if (nuevaPolitica != null) {
+            cluster.getComputador(3).setPolitica(nuevaPolitica); // Índice 3 = Computador 4
+        }
+     // <--- SOLO UNA LLAVE AQUÍ para cerrar el método
+    }//GEN-LAST:event_jComboBox4ActionPerformed
+
    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -802,6 +1022,8 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JButton jButton3;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
+    private javax.swing.JComboBox<String> jComboBox3;
+    private javax.swing.JComboBox<String> jComboBox4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -810,7 +1032,13 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -822,15 +1050,23 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     private javax.swing.JPanel jPanel2;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JProgressBar jProgressBar2;
+    private javax.swing.JProgressBar jProgressBar3;
+    private javax.swing.JProgressBar jProgressBar4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jTextArea2;
+    private javax.swing.JTextArea jTextArea3;
+    private javax.swing.JTextArea jTextArea4;
     private javax.swing.JPanel panelComp1;
     private javax.swing.JPanel panelComp2;
+    private javax.swing.JPanel panelComp3;
+    private javax.swing.JPanel panelComp4;
     private javax.swing.JSpinner spnDeadline;
     private javax.swing.JSpinner spnInstrucciones;
     private javax.swing.JSpinner spnMemoria;
