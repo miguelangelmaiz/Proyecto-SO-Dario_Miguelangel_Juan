@@ -1,7 +1,7 @@
 
 package gui;
 import gui.Interfaz;
-
+import sistemaOperativo.Cluster;
 /**
  *
  * @author jmmor
@@ -13,6 +13,9 @@ public class MenuInicial extends javax.swing.JFrame {
      */
     public MenuInicial() {
         initComponents();
+        
+        
+        
     }
 
     /**

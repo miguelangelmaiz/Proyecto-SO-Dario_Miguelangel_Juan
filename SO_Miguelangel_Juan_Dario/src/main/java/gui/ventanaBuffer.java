@@ -2,6 +2,7 @@
 package gui;
 import sistemaOperativo.Cluster;
 import estructuraDeDatos.Cola;
+import gui.Interfaz;
 /**
  *
  * @author jmmor
@@ -14,8 +15,12 @@ public sistemaOperativo.Cluster cluster;
     public ventanaBuffer() {
         
         initComponents();
-        Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+          // 1. Validar capacidad mínima
+       Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
 
+
+
+        // 2. EL TIMER DE ACTUALIZACIÓN
         javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
             if (cluster == null) return;
             
@@ -25,12 +30,13 @@ public sistemaOperativo.Cluster cluster;
             int totalProd = 0;
             int totalCons = 0;
 
+            // --- LÓGICA SI NO HAY BUFFERS ---
             if (lista.getSize() == 0) {
                 texto.append("No hay buffers creados aún.");
                 barraBuffer.setValue(0);
                 cbxSelectorBuffer.removeAllItems();
             } else {
-                // --- LÓGICA PARA LLENAR EL COMBOBOX DINÁMICAMENTE ---
+                // --- LLENAR EL COMBOBOX DE SELECTOR DE BUFFERS ---
                 if (cbxSelectorBuffer.getItemCount() != lista.getSize()) {
                     cbxSelectorBuffer.removeAllItems();
                     for (int i = 0; i < lista.getSize(); i++) {
@@ -42,7 +48,7 @@ public sistemaOperativo.Cluster cluster;
                     }
                 }
 
-                // --- IMPRIMIR TODOS LOS BUFFERS EN EL TEXTO DE ABAJO ---
+                // --- IMPRIMIR TODOS LOS BUFFERS EN EL TEXTO ---
                 for (int i = 0; i < lista.getSize(); i++) {
                     sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
                     
@@ -63,7 +69,7 @@ public sistemaOperativo.Cluster cluster;
                     totalCons += b.getTotalConsumidos();
                 }
 
-                // --- ACTUALIZAR LA BARRA DE PROGRESO SEGÚN EL COMBOBOX ---
+                // --- ACTUALIZAR LA BARRA DE PROGRESO DEL BUFFER SELECCIONADO ---
                 int indiceSeleccionado = cbxSelectorBuffer.getSelectedIndex();
                 if (indiceSeleccionado >= 0 && indiceSeleccionado < lista.getSize()) {
                     sistemaOperativo.Buffer bSeleccionado = (sistemaOperativo.Buffer) lista.getValue(indiceSeleccionado);
@@ -74,8 +80,10 @@ public sistemaOperativo.Cluster cluster;
                 }
             }
             txtEstadoBuffer.setText(texto.toString());
-
-            // --- ACTUALIZAR LAS MÉTRICAS ---
+          
+            // ==========================================
+            // 3. ACTUALIZAR LAS MÉTRICAS (DINÁMICO)
+            // ==========================================
             int cicloActual = cluster.getReloj().getCiclo();
             int indiceSeleccionado = cbxSelectorBuffer.getSelectedIndex();
             
@@ -96,12 +104,31 @@ public sistemaOperativo.Cluster cluster;
                 
                 double tr = cluster.getComputador(idCompAnfitrion - 1).getNucleo().getTiempoRespuestaPromedio();
                 jLabel4.setText("Tiempo Respuesta (C" + idCompAnfitrion + "): " + String.format("%.2f", tr));
+                jLabel7.setText("Tasa Plazos Cumplidos: 100%"); // Para un solo buffer es complicado, lo dejamos fijo
                 
             } else {
-                // CASO 2: No hay selección. Mostramos los totales.
-                int terminadosC1 = cluster.getComputador(0).getNucleo().getTerminados().getTamano();
-                int terminadosC2 = cluster.getComputador(1).getNucleo().getTerminados().getTamano();
-                int totalTerminados = terminadosC1 + terminadosC2;
+                // CASO 2: No hay selección. Mostramos los totales GLOBALES (Recorriendo todos los computadores).
+                int totalTerminados = 0;
+                int totalATiempo = 0;
+                double sumaTiempos = 0;
+
+                for (int i = 0; i < cluster.getCantidad(); i++) {
+                    int terminadosComp = cluster.getComputador(i).getNucleo().getTerminados().getTamano();
+                    
+                    if (terminadosComp > 0) {
+                        totalTerminados += terminadosComp;
+                        // Sumamos el tiempo de respuesta de este computador multiplicado por sus terminados
+                        sumaTiempos += cluster.getComputador(i).getNucleo().getTiempoRespuestaPromedio() * terminadosComp;
+
+                        // Contamos cuántos terminaron a tiempo
+                        estructuraDeDatos.Nodo aux = cluster.getComputador(i).getNucleo().getTerminados().getCabeza();
+                        while (aux != null) {
+                            sistemaOperativo.PCB p = (sistemaOperativo.PCB) aux.getDato();
+                            if (p.getDeadline() > 0) totalATiempo++;
+                            aux = aux.getpNext();
+                        }
+                    }
+                }
                 
                 if (cicloActual > 0) {
                     double throughput = (double) totalTerminados / cicloActual;
@@ -111,26 +138,43 @@ public sistemaOperativo.Cluster cluster;
                 jLabel6.setText("Total Producidos: " + totalProd);
                 jLabel5.setText("Total Consumidos: " + totalCons);
                 
-                double tr1 = cluster.getComputador(0).getNucleo().getTiempoRespuestaPromedio();
-                double tr2 = cluster.getComputador(1).getNucleo().getTiempoRespuestaPromedio();
-                double promedioReal = 0;
-                int pcsConDatos = 0;
-                if (terminadosC1 > 0) { promedioReal += tr1; pcsConDatos++; }
-                if (terminadosC2 > 0) { promedioReal += tr2; pcsConDatos++; }
-
-                if (pcsConDatos > 0) {
-                    jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", promedioReal / pcsConDatos));
+                if (totalTerminados > 0) {
+                    jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", sumaTiempos / totalTerminados));
+                    double tasa = ((double) totalATiempo / totalTerminados) * 100;
+                    jLabel7.setText("Tasa Plazos Cumplidos: " + String.format("%.1f", tasa) + "%");
                 } else {
                     jLabel4.setText("Tiempo Respuesta Promedio: 0");
+                    jLabel7.setText("Tasa Plazos Cumplidos: 0%");
                 }
             }
-            jLabel7.setText("Tasa Plazos Cumplidos: 100%");
-        });
+            
+            
+        }); // Aquí cierra el Timer
         
+
         timer.start();
+}
+     // Aquí cierra el Constructor
+          public void setCluster(sistemaOperativo.Cluster cluster) {
+         this.cluster = cluster;
         
+        if (this.cluster != null) {
+            Host.removeAllItems(); // Borra todo
+            for (int i = 0; i < this.cluster.getCantidad(); i++) {
+                Host.addItem("Computador " + (i + 1)); // Llena hasta el límite
+            }
+        }
+    } 
         
-    }
+            private void acBufferActionPerformed(java.awt.event.ActionEvent evt) {                                         
+       ventanaBuffer vb = new ventanaBuffer();
+        
+        // ¡ESTA ES LA LÍNEA VITAL! Llamamos al método setCluster
+        vb.setCluster(this.cluster); 
+        
+        vb.setVisible(true);            
+    } 
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -173,7 +217,12 @@ public sistemaOperativo.Cluster cluster;
         jLabel3.setText("Capacidad: ");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 70, -1, -1));
 
-        Host.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computador 1", "Computador 2" }));
+        Host.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computadora 1", "Computadora 2", "Computadora 3", "Computadora 4" }));
+        Host.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                HostActionPerformed(evt);
+            }
+        });
         jPanel1.add(Host, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 120, -1, -1));
 
         crearBuffer.setText("Crear Buffer");
@@ -239,31 +288,44 @@ public sistemaOperativo.Cluster cluster;
     }// </editor-fold>//GEN-END:initComponents
 
     private void crearBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crearBufferActionPerformed
-try {
-    
+        try {
             if (cluster == null) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Error: No hay conexión con el simulador.");
+                javax.swing.JOptionPane.showMessageDialog(this, "Error: No hay conexión.");
                 return;
             }
 
-            // 1. Atrapamos los datos de tu diseño
             int capacidad = (int) Capacidad.getValue();
-            // El índice 0 es Comp 1, el índice 1 es Comp 2. Le sumamos 1 para que el ID sea 1 o 2.
             int host = Host.getSelectedIndex() + 1; 
 
-            // 2. Le pedimos al GestorBuffers que cree el buffer
+            // VALIDACIÓN: ¿Hay suficiente RAM en ese computador?
+            int ramLibre = cluster.getComputador(host - 1).getRam().getLibre();
+            if (capacidad > ramLibre) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Error: No hay suficiente RAM en el Computador " + host + ".\n" +
+                    "Libre: " + ramLibre + " KB | Solicitado: " + capacidad + " KB");
+                return;
+            }
+
+            // 1. RESTAR LA RAM
+            cluster.getComputador(host - 1).getRam().asignar(capacidad);
+            
+            // 2. CREAR EL BUFFER
             cluster.getGestorBuffers().crearBuffer(capacidad, host);
             
-            javax.swing.JOptionPane.showMessageDialog(this, "¡Buffer creado exitosamente en el Computador " + host + "!");
+            javax.swing.JOptionPane.showMessageDialog(this, "¡Buffer creado en el Computador " + host + "!");
             
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error al crear buffer: " + e.getMessage());
-        }   // TODO add your handling code here:
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }//GEN-LAST:event_crearBufferActionPerformed
 
     private void cbxSelectorBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxSelectorBufferActionPerformed
         
     }//GEN-LAST:event_cbxSelectorBufferActionPerformed
+
+    private void HostActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HostActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_HostActionPerformed
 
     /**
      * @param args the command line arguments

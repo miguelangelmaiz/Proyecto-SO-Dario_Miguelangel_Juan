@@ -91,12 +91,17 @@
         <Component class="javax.swing.JComboBox" name="Host">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="2">
-                <StringItem index="0" value="Computador 1"/>
-                <StringItem index="1" value="Computador 2"/>
+              <StringArray count="4">
+                <StringItem index="0" value="Computadora 1"/>
+                <StringItem index="1" value="Computadora 2"/>
+                <StringItem index="2" value="Computadora 3"/>
+                <StringItem index="3" value="Computadora 4"/>
               </StringArray>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="HostActionPerformed"/>
+          </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
           </AuxValues>

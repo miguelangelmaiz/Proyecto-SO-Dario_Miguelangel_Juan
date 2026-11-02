@@ -37,6 +37,10 @@ public class Interfaz extends javax.swing.JFrame {
         
         // 1. CREAR EL CLUSTER
         cluster = new sistemaOperativo.Cluster(numComputadores, 2048, 500);
+         OpComputadora.removeAllItems();
+        for (int i = 0; i < numComputadores; i++) {
+            OpComputadora.addItem("Computadora " + (i + 1));
+        }
         
         // Ocultar o mostrar según el número elegido
         if (panelComp3 != null) {
@@ -517,7 +521,6 @@ public class Interfaz extends javax.swing.JFrame {
         });
         crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 80, 100, -1));
 
-        OpComputadora.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computadora 1", "Computadora 2" }));
         OpComputadora.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         OpComputadora.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
