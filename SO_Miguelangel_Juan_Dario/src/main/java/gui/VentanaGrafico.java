@@ -12,6 +12,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import java.awt.Color;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import estructuraDeDatos.Nodo;
 
 
 public class VentanaGrafico extends javax.swing.JFrame {
@@ -27,9 +28,9 @@ public class VentanaGrafico extends javax.swing.JFrame {
     
   
     public VentanaGrafico() {
-        initComponents();
+           initComponents(); // Inicializa el diseño base de NetBeans
         
-         datos = new DefaultCategoryDataset();
+        datos = new DefaultCategoryDataset();
         
         JFreeChart grafico = ChartFactory.createLineChart(
                 "Utilización del Procesador", 
@@ -40,23 +41,16 @@ public class VentanaGrafico extends javax.swing.JFrame {
                 true, true, false
         );
 
-        // Modificaciones al Gráfico
         org.jfree.chart.plot.CategoryPlot plot = grafico.getCategoryPlot();
         org.jfree.chart.axis.CategoryAxis ejeX = plot.getDomainAxis();
         ejeX.setLowerMargin(0.0); 
         ejeX.setUpperMargin(0.0); 
-        ejeX.setTickLabelsVisible(true);
-        ejeX.setTickMarksVisible(true);
-        ejeX.setAxisLineVisible(true);
-        
 
-        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, Color.RED);  
-        renderer.setSeriesPaint(1, Color.BLUE); 
-
+        // ¡AQUÍ ESTÁ EL TRUCO! Limpiamos la ventana y metemos el gráfico de primero
+        this.getContentPane().removeAll(); 
         ChartPanel panel = new ChartPanel(grafico);
-        panel.setBounds(10, 10, 780, 450); 
-        this.getContentPane().add(panel);
+        this.setContentPane(panel); 
+        this.validate(); // Refresca la ventana
 
         // Timer para actualizar
         javax.swing.Timer timer = new javax.swing.Timer(500, (e) -> {
@@ -65,17 +59,47 @@ public class VentanaGrafico extends javax.swing.JFrame {
             int cicloActual = cluster.getReloj().getCiclo();
             
             if (cicloActual > 0) {
-                int usoC1 = cluster.getComputador(0).getCpu().getCiclosOcupados();
-                int usoC2 = cluster.getComputador(1).getCpu().getCiclosOcupados();
-                datos.addValue(usoC1, "Computador 1", String.valueOf(tiempo));
-                datos.addValue(usoC2, "Computador 2", String.valueOf(tiempo));
-            }
-        });
-        timer.start();
-    
-        
-    }
+                LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+                Color[] colores = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE}; 
+                
+                for (int i = 0; i < cluster.getCantidad(); i++) {
+                    int usoCpu = cluster.getComputador(i).getCpu().getCiclosOcupados();
+                    String nombreComp = "Computador " + (i + 1);
+                    
+                    datos.addValue(usoCpu, nombreComp, String.valueOf(tiempo));
+                    renderer.setSeriesPaint(i, colores[i % colores.length]);
+                }
 
+                int totalTerminados = 0;
+                int totalATiempo = 0;
+                double sumaTiemposRespuesta = 0;
+
+                for (int i = 0; i < cluster.getCantidad(); i++) {
+                    Nodo aux = cluster.getComputador(i).getNucleo().getTerminados().getCabeza();
+                    while (aux != null) {
+                        sistemaOperativo.PCB p = (sistemaOperativo.PCB) aux.getDato();
+                        sumaTiemposRespuesta += (p.getCicloFin() - p.getCicloLlegada());
+                        if (p.getDeadline() > 0) totalATiempo++;
+                        totalTerminados++;
+                        aux = aux.getpNext();
+                    }
+                }
+
+                // 3. ACTUALIZAR LOS LABELS
+                if (totalTerminados > 0) {
+                    double throughput = (double) totalTerminados / cicloActual;
+                    double tiempoPromedio = sumaTiemposRespuesta / totalTerminados;
+                    double tasa = ((double) totalATiempo / totalTerminados) * 100;
+                    
+                    // Como no pusimos Labels, esto queda comentado (no hace daño)
+                    // lblThroughput.setText("Throughput: " + String.format("%.3f", throughput));
+                    // lblTiempoRespuesta.setText("Tiempo Respuesta Prom: " + String.format("%.1f", tiempoPromedio) + " ciclos");
+                    // lblTasaPlazos.setText("Tasa Plazos Cumplidos: " + String.format("%.1f", tasa) + "%");
+                }
+            } // <--- ESTA ERA LA LLAVE QUE FALTABA
+        }); 
+        timer.start();
+    } 
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
