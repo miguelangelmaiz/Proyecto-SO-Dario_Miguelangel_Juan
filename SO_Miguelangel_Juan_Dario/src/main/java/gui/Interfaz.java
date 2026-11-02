@@ -399,7 +399,7 @@ public class Interfaz extends javax.swing.JFrame {
 
         jPanel2.add(panelComp2);
 
-        panelComp3.setBorder(javax.swing.BorderFactory.createTitledBorder("Computador 2"));
+        panelComp3.setBorder(javax.swing.BorderFactory.createTitledBorder("Computador 3"));
         panelComp3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel17.setText("CPU: Libre");
@@ -434,7 +434,7 @@ public class Interfaz extends javax.swing.JFrame {
         jPanel2.add(panelComp3);
         panelComp3.getAccessibleContext().setAccessibleName("Computador 3");
 
-        panelComp4.setBorder(javax.swing.BorderFactory.createTitledBorder("Computador 2"));
+        panelComp4.setBorder(javax.swing.BorderFactory.createTitledBorder("Computador 4"));
         panelComp4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel20.setText("CPU: Libre");
