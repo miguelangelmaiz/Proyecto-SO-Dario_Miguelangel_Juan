@@ -3,6 +3,9 @@ package gui;
 import sistemaOperativo.Cluster;
 import estructuraDeDatos.Cola;
 import gui.Interfaz;
+import sistemaOperativo.Buffer;
+import estructuraDeDatos.Nodo;
+import sistemaOperativo.PCB;
 /**
  *
  * @author jmmor
@@ -16,11 +19,11 @@ public sistemaOperativo.Cluster cluster;
         
         initComponents();
           // 1. Validar capacidad mínima
-       Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
+       
+        // 1. Validar capacidad mínima del buffer
+        Capacidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
 
-
-
-        // 2. EL TIMER DE ACTUALIZACIÓN
+        // 2. TIMER DE ACTUALIZACIÓN
         javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
             if (cluster == null) return;
             
@@ -30,17 +33,17 @@ public sistemaOperativo.Cluster cluster;
             int totalProd = 0;
             int totalCons = 0;
 
-            // --- LÓGICA SI NO HAY BUFFERS ---
+            // --- LÓGICA DE LOS BUFFERS ---
             if (lista.getSize() == 0) {
-                texto.append("No hay buffers creados aún.");
+                texto.append("No hay buffers creados aún.\n");
                 barraBuffer.setValue(0);
                 cbxSelectorBuffer.removeAllItems();
             } else {
-                // --- LLENAR EL COMBOBOX DE SELECTOR DE BUFFERS ---
+                // Llenar el ComboBox de selección de buffers si cambió la cantidad
                 if (cbxSelectorBuffer.getItemCount() != lista.getSize()) {
                     cbxSelectorBuffer.removeAllItems();
                     for (int i = 0; i < lista.getSize(); i++) {
-                        sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
+                        Buffer b = (Buffer) lista.getValue(i);
                         cbxSelectorBuffer.addItem("Buffer " + b.getId() + " (Comp " + b.getAnfitrion() + ")");
                     }
                     if (cbxSelectorBuffer.getItemCount() > 0) {
@@ -48,109 +51,116 @@ public sistemaOperativo.Cluster cluster;
                     }
                 }
 
-                // --- IMPRIMIR TODOS LOS BUFFERS EN EL TEXTO ---
+                // Imprimir todos los buffers en el texto
                 for (int i = 0; i < lista.getSize(); i++) {
-                    sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) lista.getValue(i);
+                    Buffer b = (Buffer) lista.getValue(i);
                     
                     texto.append("BUFFER #").append(b.getId()).append(" (En Comp ").append(b.getAnfitrion()).append(")\n");
                     texto.append("Capacidad: ").append(b.getCapacidad()).append(" | Elementos: ").append(b.getElementos()).append("\n");
-                    
                     texto.append("Semáforos -> Mutex: ").append(b.getMutex().getValor())
                          .append(" | Vacíos: ").append(b.getVacios().getValor())
                          .append(" | Llenos: ").append(b.getLlenos().getValor()).append("\n");
-                         
                     texto.append("   * En Vacíos: ").append(b.getVacios().getBloqueados().getNombresProcesos()).append("\n");
                     texto.append("   * En Llenos: ").append(b.getLlenos().getBloqueados().getNombresProcesos()).append("\n");
                     texto.append("   * En Mutex: ").append(b.getMutex().getBloqueados().getNombresProcesos()).append("\n");
-                    
                     texto.append("--------------------------------------------------\n");
                     
                     totalProd += b.getTotalProducidos();
                     totalCons += b.getTotalConsumidos();
                 }
 
-                // --- ACTUALIZAR LA BARRA DE PROGRESO DEL BUFFER SELECCIONADO ---
+                // Actualizar la barra de progreso del buffer seleccionado
                 int indiceSeleccionado = cbxSelectorBuffer.getSelectedIndex();
                 if (indiceSeleccionado >= 0 && indiceSeleccionado < lista.getSize()) {
-                    sistemaOperativo.Buffer bSeleccionado = (sistemaOperativo.Buffer) lista.getValue(indiceSeleccionado);
+                    Buffer bSeleccionado = (Buffer) lista.getValue(indiceSeleccionado);
                     barraBuffer.setMaximum(bSeleccionado.getCapacidad());
                     barraBuffer.setValue(bSeleccionado.getElementos());
                     barraBuffer.setString(bSeleccionado.getElementos() + " / " + bSeleccionado.getCapacidad());
                     barraBuffer.setStringPainted(true);
                 }
             }
-            txtEstadoBuffer.setText(texto.toString());
-          
-            // ==========================================
-            // 3. ACTUALIZAR LAS MÉTRICAS (DINÁMICO)
-            // ==========================================
+
+            // =================================================================
+            // CÁLCULO EXACTO DE TODAS LAS MÉTRICAS (Página 8 del PDF)
+            // =================================================================
             int cicloActual = cluster.getReloj().getCiclo();
-            int indiceSeleccionado = cbxSelectorBuffer.getSelectedIndex();
-            
-            if (indiceSeleccionado >= 0 && indiceSeleccionado < lista.getSize()) {
-                // CASO 1: Hay un buffer seleccionado. Mostramos métricas SOLO de su computador.
-                sistemaOperativo.Buffer bSeleccionado = (sistemaOperativo.Buffer) lista.getValue(indiceSeleccionado);
-                int idCompAnfitrion = bSeleccionado.getAnfitrion(); 
-                
-                int terminadosComp = cluster.getComputador(idCompAnfitrion - 1).getNucleo().getTerminados().getTamano();
-                
-                if (cicloActual > 0) {
-                    double throughputComp = (double) terminadosComp / cicloActual;
-                    jLabel8.setText("Throughput (C" + idCompAnfitrion + "): " + String.format("%.2f", throughputComp));
-                }
-                
-                jLabel6.setText("Producidos (C" + idCompAnfitrion + "): " + bSeleccionado.getTotalProducidos());
-                jLabel5.setText("Consumidos (C" + idCompAnfitrion + "): " + bSeleccionado.getTotalConsumidos());
-                
-                double tr = cluster.getComputador(idCompAnfitrion - 1).getNucleo().getTiempoRespuestaPromedio();
-                jLabel4.setText("Tiempo Respuesta (C" + idCompAnfitrion + "): " + String.format("%.2f", tr));
-                jLabel7.setText("Tasa Plazos Cumplidos: 100%"); // Para un solo buffer es complicado, lo dejamos fijo
-                
-            } else {
-                // CASO 2: No hay selección. Mostramos los totales GLOBALES (Recorriendo todos los computadores).
+            StringBuilder reporteStats = new StringBuilder("\n\n===== REPORTE DE MÉTRICAS GLOBALES ====\n");
+
+            if (cicloActual > 0) {
                 int totalTerminados = 0;
                 int totalATiempo = 0;
-                double sumaTiempos = 0;
+                double sumaTiemposRespuesta = 0;
+                int totalBloqueos = 0;
+                double sumaUtilizacionCPU = 0;
 
+                // Recorrer todos los computadores para acumular datos
                 for (int i = 0; i < cluster.getCantidad(); i++) {
-                    int terminadosComp = cluster.getComputador(i).getNucleo().getTerminados().getTamano();
+                    sistemaOperativo.Nucleo nucleo = cluster.getComputador(i).getNucleo();
                     
-                    if (terminadosComp > 0) {
-                        totalTerminados += terminadosComp;
-                        // Sumamos el tiempo de respuesta de este computador multiplicado por sus terminados
-                        sumaTiempos += cluster.getComputador(i).getNucleo().getTiempoRespuestaPromedio() * terminadosComp;
+                    // Utilización de CPU
+                    int ciclosOcupados = cluster.getComputador(i).getCpu().getCiclosOcupados();
+                    sumaUtilizacionCPU += ((double) ciclosOcupados / cicloActual) * 100;
 
-                        // Contamos cuántos terminaron a tiempo
-                        estructuraDeDatos.Nodo aux = cluster.getComputador(i).getNucleo().getTerminados().getCabeza();
+                    // Recorrer cola de terminados
+                    Nodo aux = nucleo.getTerminados().getCabeza();
+                    while (aux != null) {
+                        PCB p = (PCB) aux.getDato();
+                        
+                        sumaTiemposRespuesta += (p.getCicloFin() - p.getCicloLlegada());
+                        totalBloqueos += p.getCiclosBloqueado();
+                        totalTerminados++;
+                        
+                        if (p.getDeadline() > 0) {
+                            totalATiempo++;
+                        }
+                        aux = aux.getpNext();
+                    }
+                }
+
+                // Calcular promedios y actualizar Labels
+                if (totalTerminados > 0) {
+                    double tiempoRespProm = sumaTiemposRespuesta / totalTerminados;
+                    double tasaPlazos = ((double) totalATiempo / totalTerminados) * 100;
+                    double tiempoBloqueadoProm = (double) totalBloqueos / totalTerminados;
+                    double throughputGlobal = (double) totalTerminados / cicloActual;
+                    double utilPromedio = sumaUtilizacionCPU / cluster.getCantidad();
+
+                    // Calcular Equidad (Desviación estándar)
+                    double sumaVarianza = 0;
+                    for (int i = 0; i < cluster.getCantidad(); i++) {
+                        Nodo aux = cluster.getComputador(i).getNucleo().getTerminados().getCabeza();
                         while (aux != null) {
-                            sistemaOperativo.PCB p = (sistemaOperativo.PCB) aux.getDato();
-                            if (p.getDeadline() > 0) totalATiempo++;
+                            PCB p = (PCB) aux.getDato();
+                            double tiempo = p.getCicloFin() - p.getCicloLlegada();
+                            sumaVarianza += Math.pow(tiempo - tiempoRespProm, 2);
                             aux = aux.getpNext();
                         }
                     }
-                }
-                
-                if (cicloActual > 0) {
-                    double throughput = (double) totalTerminados / cicloActual;
-                    jLabel8.setText("Throughput Total: " + String.format("%.2f", throughput));
-                }
-                
-                jLabel6.setText("Total Producidos: " + totalProd);
-                jLabel5.setText("Total Consumidos: " + totalCons);
-                
-                if (totalTerminados > 0) {
-                    jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", sumaTiempos / totalTerminados));
-                    double tasa = ((double) totalATiempo / totalTerminados) * 100;
-                    jLabel7.setText("Tasa Plazos Cumplidos: " + String.format("%.1f", tasa) + "%");
+                    double equidad = Math.sqrt(sumaVarianza / totalTerminados);
+
+                    // Actualizar Labels superiores
+                    jLabel8.setText("Throughput: " + String.format("%.3f", throughputGlobal));
+                    jLabel4.setText("Tiempo Resp: " + String.format("%.2f", tiempoRespProm));
+                    jLabel7.setText("Tasa Plazos: " + String.format("%.1f", tasaPlazos) + "%");
+                    jLabel6.setText("Producidos: " + totalProd);
+                    jLabel5.setText("Consumidos: " + totalCons);
+
+                    // Construir reporte completo
+                    reporteStats.append("Throughput Global: ").append(String.format("%.3f", throughputGlobal)).append(" proc/ciclo\n");
+                    reporteStats.append("Utilización Promedio CPU: ").append(String.format("%.1f", utilPromedio)).append("%\n");
+                    reporteStats.append("Tiempo Resp. Promedio: ").append(String.format("%.2f", tiempoRespProm)).append(" ciclos\n");
+                    reporteStats.append("Tasa Plazos Cumplidos: ").append(String.format("%.1f", tasaPlazos)).append("%\n");
+                    reporteStats.append("Equidad (Desv. Estándar): ").append(String.format("%.2f", equidad)).append("\n");
+                    reporteStats.append("Tiempo Bloq. Promedio: ").append(String.format("%.2f", tiempoBloqueadoProm)).append(" ciclos\n");
                 } else {
-                    jLabel4.setText("Tiempo Respuesta Promedio: 0");
-                    jLabel7.setText("Tasa Plazos Cumplidos: 0%");
+                    reporteStats.append("Aún no hay procesos terminados.\n");
                 }
             }
+
+            // Mostrar todo en el TextArea grande
+            txtEstadoBuffer.setText(texto.toString() + reporteStats.toString());
             
-            
-        }); // Aquí cierra el Timer
-        
+        }); // Cierra el Timer
 
         timer.start();
 }

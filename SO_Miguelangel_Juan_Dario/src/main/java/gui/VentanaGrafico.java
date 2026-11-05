@@ -11,6 +11,8 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import java.awt.Color;
+import java.awt.BorderLayout;
+import javax.swing.JTabbedPane;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import estructuraDeDatos.Nodo;
 
@@ -22,82 +24,116 @@ public class VentanaGrafico extends javax.swing.JFrame {
      */
     
     public sistemaOperativo.Cluster cluster;
-    private DefaultCategoryDataset datos;
+    private DefaultCategoryDataset datosCpu;
     private int tiempo = 0;
 
+      // Datos para el gráfico 2 (RAM)
+    private DefaultCategoryDataset datosRam;
+
+    // Datos para el gráfico 3 (Estados de Procesos)
+    private DefaultCategoryDataset datosEstados;
     
   
     public VentanaGrafico() {
            initComponents(); // Inicializa el diseño base de NetBeans
         
-        datos = new DefaultCategoryDataset();
-        
-        JFreeChart grafico = ChartFactory.createLineChart(
-                "Utilización del Procesador", 
-                "Tiempo", 
-                "Ciclos Ocupados", 
-                datos,
-                PlotOrientation.VERTICAL,
-                true, true, false
+         setTitle("Dashboard de Métricas - ÁvilaOS");
+        setSize(900, 600);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        // Creamos las pestañas
+        JTabbedPane pestanas = new JTabbedPane();
+
+        // ==========================================
+        // PESTAÑA 1: UTILIZACIÓN DE CPU
+        // ==========================================
+        datosCpu = new DefaultCategoryDataset();
+        JFreeChart graficoCpu = ChartFactory.createLineChart(
+                "Utilización del Procesador", "Tiempo (Ciclos)", "Ciclos Ocupados", 
+                datosCpu, PlotOrientation.VERTICAL, true, true, false
         );
+        ChartPanel panelCpu = new ChartPanel(graficoCpu);
+        pestanas.addTab("Utilización de CPU", panelCpu);
 
-        org.jfree.chart.plot.CategoryPlot plot = grafico.getCategoryPlot();
-        org.jfree.chart.axis.CategoryAxis ejeX = plot.getDomainAxis();
-        ejeX.setLowerMargin(0.0); 
-        ejeX.setUpperMargin(0.0); 
+        // ==========================================
+        // PESTAÑA 2: MEMORIA RAM
+        // ==========================================
+        datosRam = new DefaultCategoryDataset();
+        JFreeChart graficoRam = ChartFactory.createBarChart(
+                "Estado de la Memoria RAM por Computador", "Computador", "Memoria (KB)", 
+                datosRam, PlotOrientation.VERTICAL, true, true, false
+        );
+        ChartPanel panelRam = new ChartPanel(graficoRam);
+        pestanas.addTab("Memoria RAM", panelRam);
 
-        // ¡AQUÍ ESTÁ EL TRUCO! Limpiamos la ventana y metemos el gráfico de primero
-        this.getContentPane().removeAll(); 
-        ChartPanel panel = new ChartPanel(grafico);
-        this.setContentPane(panel); 
-        this.validate(); // Refresca la ventana
+        // ==========================================
+        // PESTAÑA 3: ESTADOS DE LOS PROCESOS
+        // ==========================================
+        datosEstados = new DefaultCategoryDataset();
+        JFreeChart graficoEstados = ChartFactory.createBarChart(
+                "Cantidad de Procesos por Estado (Global)", "Estado", "Cantidad de Procesos", 
+                datosEstados, PlotOrientation.VERTICAL, true, true, false
+        );
+        ChartPanel panelEstados = new ChartPanel(graficoEstados);
+        pestanas.addTab("Estados de Procesos", panelEstados);
 
-        // Timer para actualizar
+        // Agregamos las pestañas a la ventana
+        this.setContentPane(pestanas);
+
+        // ==========================================
+        // TIMER DE ACTUALIZACIÓN
+        // ==========================================
         javax.swing.Timer timer = new javax.swing.Timer(500, (e) -> {
             if (cluster == null) return;
             tiempo++; 
             int cicloActual = cluster.getReloj().getCiclo();
             
             if (cicloActual > 0) {
-                LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+                // --- 1. ACTUALIZAR GRÁFICO DE CPU ---
+                LineAndShapeRenderer renderer = (LineAndShapeRenderer) graficoCpu.getCategoryPlot().getRenderer();
                 Color[] colores = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE}; 
                 
                 for (int i = 0; i < cluster.getCantidad(); i++) {
                     int usoCpu = cluster.getComputador(i).getCpu().getCiclosOcupados();
                     String nombreComp = "Computador " + (i + 1);
-                    
-                    datos.addValue(usoCpu, nombreComp, String.valueOf(tiempo));
+                    datosCpu.addValue(usoCpu, nombreComp, String.valueOf(tiempo));
                     renderer.setSeriesPaint(i, colores[i % colores.length]);
                 }
 
-                int totalTerminados = 0;
-                int totalATiempo = 0;
-                double sumaTiemposRespuesta = 0;
-
+                // --- 2. ACTUALIZAR GRÁFICO DE RAM ---
                 for (int i = 0; i < cluster.getCantidad(); i++) {
-                    Nodo aux = cluster.getComputador(i).getNucleo().getTerminados().getCabeza();
-                    while (aux != null) {
-                        sistemaOperativo.PCB p = (sistemaOperativo.PCB) aux.getDato();
-                        sumaTiemposRespuesta += (p.getCicloFin() - p.getCicloLlegada());
-                        if (p.getDeadline() > 0) totalATiempo++;
-                        totalTerminados++;
-                        aux = aux.getpNext();
+                    int ramUsada = cluster.getComputador(i).getRam().getUsada();
+                    int ramLibre = cluster.getComputador(i).getRam().getLibre();
+                    String nombreComp = "Comp " + (i + 1);
+                    
+                    // Se actualizan los valores (reemplazando el anterior)
+                    datosRam.setValue(ramUsada, "Usada", nombreComp);
+                    datosRam.setValue(ramLibre, "Libre", nombreComp);
+                }
+
+                // --- 3. ACTUALIZAR GRÁFICO DE ESTADOS ---
+                int nuevos = 0, listos = 0, ejecucion = 0, bloqueados = 0, terminados = 0;
+                
+                for (int i = 0; i < cluster.getCantidad(); i++) {
+                    sistemaOperativo.Nucleo nucleo = cluster.getComputador(i).getNucleo();
+                    nuevos += nucleo.getColaNuevos().getTamano();
+                    listos += nucleo.getColaListos().getTamano();
+                    bloqueados += nucleo.getColaBloqueados().getTamano();
+                    terminados += nucleo.getTerminados().getTamano();
+                    
+                    if (nucleo.getCpu().getProcesoActual() != null) {
+                        ejecucion++;
                     }
                 }
-
-                // 3. ACTUALIZAR LOS LABELS
-                if (totalTerminados > 0) {
-                    double throughput = (double) totalTerminados / cicloActual;
-                    double tiempoPromedio = sumaTiemposRespuesta / totalTerminados;
-                    double tasa = ((double) totalATiempo / totalTerminados) * 100;
-                    
-                    // Como no pusimos Labels, esto queda comentado (no hace daño)
-                    // lblThroughput.setText("Throughput: " + String.format("%.3f", throughput));
-                    // lblTiempoRespuesta.setText("Tiempo Respuesta Prom: " + String.format("%.1f", tiempoPromedio) + " ciclos");
-                    // lblTasaPlazos.setText("Tasa Plazos Cumplidos: " + String.format("%.1f", tasa) + "%");
-                }
-            } // <--- ESTA ERA LA LLAVE QUE FALTABA
-        }); 
+                
+                datosEstados.setValue(nuevos, "Procesos", "Nuevos");
+                datosEstados.setValue(listos, "Procesos", "Listos");
+                datosEstados.setValue(ejecucion, "Procesos", "Ejecución");
+                datosEstados.setValue(bloqueados, "Procesos", "Bloqueados");
+                datosEstados.setValue(terminados, "Procesos", "Terminados");
+            }
+        });
         timer.start();
     } 
     /**
