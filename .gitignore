@@ -1,1 +1,15 @@
 /SO_Miguelangel_Juan_Dario/target/
+# Archivos de compilación de NetBeans
+**/target/
+**/nbproject/private/
+
+# Archivos de crash (Errores de memoria de Java)
+**/hs_err_pid*.log
+**/replay_pid*.log
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración local
+configuracion.json
