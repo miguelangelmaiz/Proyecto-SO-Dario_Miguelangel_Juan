@@ -9,6 +9,7 @@ import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import planificacionSO.PoliticaPlanificacion;
 import estructuraDeDatos.ListaSimple;
+import sistemaOperativo.PCB;
 /**
  *
  * @author Miguel
@@ -63,8 +64,9 @@ public class Nucleo {
 
     // ---------- API ----------
     public void admitir(PCB p) {
-        p.setEstado(EstadoProceso.NUEVO);
-        colaNuevos.encolar(p);
+         p.setEstado(EstadoProceso.NUEVO);
+    p.setCicloLlegada(cluster.getReloj().getCiclo());
+    colaNuevos.encolar(p);
     }
 
     public void bloquear(PCB p, MotivoBloqueo motivo) {
@@ -82,6 +84,7 @@ public class Nucleo {
         colaListos.encolar(p);
     }
 
+     
     // ---------- EL TIC ----------
     public void tic(int ciclo) {
         vencerPlazos(ciclo);
@@ -253,9 +256,6 @@ public class Nucleo {
         PCB p = cpu.getProcesoActual();
         if (p == null) return;
         
-         // --- LÍNEA NUEVA PARA QUE EL GRÁFICO FUNCIONE ---
-        cpu.setCiclosOcupados(cpu.getCiclosOcupados() + 1);
-
         if (p.getTipo() == TipoProceso.PRODUCTOR
                 || p.getTipo() == TipoProceso.CONSUMIDOR) {
             ejecutarProductorConsumidor(p);
@@ -323,6 +323,8 @@ public class Nucleo {
 
         p.ejecutarInstruccion();
     }
+    
+ 
 
     // ---------- Paso 6 ----------
     private void cerrarCiclo(int ciclo) {
@@ -346,7 +348,9 @@ public class Nucleo {
         estructuraDeDatos.Nodo actual = terminados.getCabeza();
         while (actual != null) {
             PCB p = (PCB) actual.getDato();
-            suma += (p.getCicloFin() - p.getCicloLlegada());
+             if (p.getCicloInicio() != -1) {
+                suma += (p.getCicloInicio() - p.getCicloLlegada());
+            }
             actual = actual.getpNext();
         }
         return suma / cantidad;

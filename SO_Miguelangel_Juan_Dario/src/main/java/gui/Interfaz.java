@@ -633,43 +633,22 @@ public class Interfaz extends javax.swing.JFrame {
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
          if (cluster == null) return;
-        String seleccion = (String) jComboBox1.getSelectedItem();
-        PoliticaPlanificacion nuevaPolitica = null;
+       
+String seleccion = (String) jComboBox1.getSelectedItem();
+int q = (int) spnQuantum.getValue();
+cluster.getComputador(0).setPolitica(FabricaPoliticas.crear(seleccion, q));
         
-        switch (seleccion) {
-            case "FCFS": nuevaPolitica = new FCFS(); break;
-            case "Round Robin": 
-                int q = (int) spnQuantum.getValue(); 
-                nuevaPolitica = new RoundRobin(q); 
-                break; 
-            case "EDF": nuevaPolitica = new EDF(); break;
-            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
-        }
-        
-        if (nuevaPolitica != null) {
-            cluster.getComputador(0).setPolitica(nuevaPolitica);
-        }
+       
     }//GEN-LAST:event_jComboBox1ActionPerformed
    
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
          if (cluster == null) return;
+        
         String seleccion = (String) jComboBox2.getSelectedItem();
-        PoliticaPlanificacion nuevaPolitica = null;
+        int q = (int) spnQuantum.getValue();
         
-        switch (seleccion) {
-            case "FCFS": nuevaPolitica = new FCFS(); break;
-            case "Round Robin": 
-                // Leemos el quantum del Spinner
-                int q = (int) spnQuantum.getValue(); 
-                nuevaPolitica = new RoundRobin(q); 
-                break; 
-            case "EDF": nuevaPolitica = new EDF(); break;
-            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
-        }
-        
-        if (nuevaPolitica != null) {
-            cluster.getComputador(1).setPolitica(nuevaPolitica);
-        } 
+        // Cambiamos el Computador 2 (índice 1)
+        cluster.getComputador(1).setPolitica(FabricaPoliticas.crear(seleccion, q));
     }//GEN-LAST:event_jComboBox2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -972,37 +951,23 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     }//GEN-LAST:event_spnQuantumStateChanged
 
     private void jComboBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox3ActionPerformed
-          if (cluster == null) return;
-        String seleccion = (String) jComboBox3.getSelectedItem();
-        PoliticaPlanificacion nuevaPolitica = null;
-        switch (seleccion) {
-            case "FCFS": nuevaPolitica = new FCFS(); break;
-            case "Round Robin": nuevaPolitica = new RoundRobin((int) spnQuantum.getValue()); break; 
-            case "EDF": nuevaPolitica = new EDF(); break;
-            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
-        }
-        if (nuevaPolitica != null) cluster.getComputador(2).setPolitica(nuevaPolitica);
-     
+        if (cluster == null) return;
+        
+        String seleccion = (String) jComboBox2.getSelectedItem();
+        int q = (int) spnQuantum.getValue();
+        
+        // Cambiamos el Computador 3 (índice 2)
+        cluster.getComputador(2).setPolitica(FabricaPoliticas.crear(seleccion, q));
     }//GEN-LAST:event_jComboBox3ActionPerformed
 
     private void jComboBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox4ActionPerformed
-        if (cluster == null) return;
+           if (cluster == null) return;
         
-        // ¡OJO AQUÍ! Ahora sí lee el ComboBox 4
-        String seleccion = (String) jComboBox4.getSelectedItem();
-        PoliticaPlanificacion nuevaPolitica = null;
+        String seleccion = (String) jComboBox2.getSelectedItem();
+        int q = (int) spnQuantum.getValue();
         
-        switch (seleccion) {
-            case "FCFS": nuevaPolitica = new FCFS(); break;
-            case "Round Robin": nuevaPolitica = new RoundRobin((int) spnQuantum.getValue()); break; 
-            case "EDF": nuevaPolitica = new EDF(); break;
-            case "Prioridades": nuevaPolitica = new PrioridadApropiativa(); break;
-        }
-        
-        if (nuevaPolitica != null) {
-            cluster.getComputador(3).setPolitica(nuevaPolitica); // Índice 3 = Computador 4
-        }
-     // <--- SOLO UNA LLAVE AQUÍ para cerrar el método
+        // Cambiamos el Computador 4 (índice 3)
+        cluster.getComputador(3).setPolitica(FabricaPoliticas.crear(seleccion, q));   // <--- SOLO UNA LLAVE AQUÍ para cerrar el método
     }//GEN-LAST:event_jComboBox4ActionPerformed
 
    

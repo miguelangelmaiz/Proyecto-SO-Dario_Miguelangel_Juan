@@ -36,6 +36,7 @@ public class Computador implements ComponenteReloj {
 
     @Override
     public void tic(int ciclo) {
+        cpu.tic(ciclo);
         nucleo.tic(ciclo);
     }
 

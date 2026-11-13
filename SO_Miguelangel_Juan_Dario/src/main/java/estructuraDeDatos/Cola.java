@@ -186,22 +186,10 @@ public class Cola {
             Nodo aux = cabeza;
             
             while (aux != null) {
-
-                String nombreCompleto = aux.getDato().toString().split("\\[")[0]; 
-                sb.append(nombreCompleto);
-                
-                // 3. Si está bloqueado, le pegamos el motivo
-                sistemaOperativo.PCB p = (sistemaOperativo.PCB) aux.getDato();
-                if (p.getEstado() == losEnums.EstadoProceso.BLOQUEADO && p.getMotivoBloqueo() != null) {
-                    sb.append("(").append(p.getMotivoBloqueo().name()).append(")");
-                }
-                
-                // 4. Agregamos una coma si hay más procesos adelante
-                if (aux.getpNext() != null) {
-                    sb.append(", ");
-                }
-                
-                aux = aux.getpNext();
+                sb.append(aux.getDato().toString()); 
+            if (aux.getpNext() != null) sb.append(", ");
+            aux = aux.getpNext();
+               
             }
             sb.append("]");
             return sb.toString();
