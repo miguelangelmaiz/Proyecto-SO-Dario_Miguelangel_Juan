@@ -1,6 +1,5 @@
 
 package sistemaOperativo;
-
 import hardware.Computador;
 import hardware.RelojGlobal;
 import planificacionSO.FCFS;
@@ -12,10 +11,13 @@ import estructuraDeDatos.ListaSimple;
  */
 public class Cluster {
     private final RelojGlobal reloj;
-    private final GestorBuffers gestorBuffers;
+    private final GestorBuffers gestorBuffers; // Lo dejamos por ahora para no romper Computador
     private final ListaSimple computadores;
-    private StringBuilder logEventos = new StringBuilder();
-    private Thread hiloReloj; // Variable para controlar el hilo
+    
+    // EL ARREGLO DEL LOG:
+    private final Log logSistema = new Log(); 
+    
+    private Thread hiloReloj;
 
     public Cluster(int numComputadores, int ramPorComputador, int duracionCicloMs) {
         this(ramIgualParaTodos(numComputadores, ramPorComputador), duracionCicloMs);
@@ -30,7 +32,7 @@ public class Cluster {
         for (int i = 0; i < ramsPorComputador.length; i++) {
             Computador c = new Computador(i + 1, ramsPorComputador[i],
                                           new FCFS(), gestorBuffers);
-            c.getNucleo().setCluster(this);   // C-2 fix
+            c.getNucleo().setCluster(this);
             computadores.insertFinale(c);
             reloj.suscribir(c);
         }
@@ -52,7 +54,6 @@ public class Cluster {
         return (Computador) computadores.getValue(i);
     }
 
-    /** Devuelve el núcleo del computador con el id dado (C-2 fix). */
     public Nucleo getNucleoDe(int idComputador) {
         for (int i = 0; i < computadores.getSize(); i++) {
             Computador c = (Computador) computadores.getValue(i);
@@ -67,7 +68,7 @@ public class Cluster {
     // ---------- Control ----------
 
     public void agregarComputador(Computador c) {
-        c.getNucleo().setCluster(this);   // C-2 fix
+        c.getNucleo().setCluster(this);
         computadores.insertFinale(c);
         reloj.suscribir(c);
     }
@@ -77,7 +78,6 @@ public class Cluster {
             return; 
         }
         reloj.iniciar();
-        // ¡AQUÍ ESTÁ EL ARREGLO! Asignamos 't' a 'hiloReloj'
         hiloReloj = new Thread(reloj, "reloj-avilaos");
         hiloReloj.setDaemon(true);
         hiloReloj.start();
@@ -86,15 +86,22 @@ public class Cluster {
     public void detener() {
         reloj.detener();
         if (hiloReloj != null) {
-            hiloReloj.interrupt(); // Despierta al hilo si está dormido
+            hiloReloj.interrupt();
         }
     }
     
-     public void registrarEvento(String evento) {
-        logEventos.append(evento).append("\n");
+    // ==========================================
+    // ARREGLOS DEL LOG (Error 3 del PDF)
+    // ==========================================
+    public void registrarEvento(String evento) {
+        logSistema.registrar(evento);
     }
 
     public String getLogEventos() {
-        return logEventos.toString();
+        return logSistema.getTexto();
+    }
+
+    public int getVersionLog() {
+        return logSistema.getVersion();
     }
 }
