@@ -8,30 +8,30 @@ import losEnums.TipoProceso;
 import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import planificacionSO.PoliticaPlanificacion;
-import estructuraDeDatos.ListaSimple;
-import sistemaOperativo.PCB;
 /**
  *
  * @author Miguel
  */
 public class Nucleo {
     
-    private final int idComputador;
+   private final int idComputador;
     private final CPU cpu;
     private final MemoriaPrincipal ram;
     private PoliticaPlanificacion politica;
     private final GestorBuffers gestorBuffers;
-
-    // C-2 fix: para devolver procesos a su propio núcleo
     private Cluster cluster;
 
+    // Colas del Proyecto 1
     private final Cola colaNuevos;
     private final Cola colaListos;
     private final Cola colaBloqueados;
     private final Cola terminados;
 
+    // NUEVAS COLAS DEL PROYECTO 2 (Suspensión)
+    private final Cola colaListosSusp;
+    private final Cola colaBloqueadosSusp;
+
     private int ciclosEnCpu = 0;
-    private int latenciaRed = 3;
 
     public Nucleo(int idComputador, CPU cpu, MemoriaPrincipal ram,
                   PoliticaPlanificacion politica, GestorBuffers gestorBuffers) {
@@ -40,18 +40,25 @@ public class Nucleo {
         this.ram = ram;
         this.politica = politica;
         this.gestorBuffers = gestorBuffers;
+        
         this.colaNuevos = new Cola();
         this.colaListos = new Cola();
         this.colaBloqueados = new Cola();
         this.terminados = new Cola();
+        
+        this.colaListosSusp = new Cola();
+        this.colaBloqueadosSusp = new Cola();
     }
 
-    // ---------- Getters y Setters ----------
+    // ---------- Getters ----------
     public int getIdComputador() { return idComputador; }
     public Cola getColaNuevos()     { return colaNuevos; }
     public Cola getColaListos()     { return colaListos; }
     public Cola getColaBloqueados() { return colaBloqueados; }
     public Cola getTerminados()     { return terminados; }
+    public Cola getColaListosSusp()     { return colaListosSusp; }
+    public Cola getColaBloqueadosSusp() { return colaBloqueadosSusp; }
+
     public CPU getCpu() { return cpu; }
     public MemoriaPrincipal getRam() { return ram; }
     public PoliticaPlanificacion getPolitica() { return politica; }
@@ -59,44 +66,23 @@ public class Nucleo {
     public GestorBuffers getGestorBuffers() { return gestorBuffers; }
     public Cluster getCluster() { return cluster; }
     public void setCluster(Cluster cluster) { this.cluster = cluster; }
-    public int getLatenciaRed() { return latenciaRed; }
-    public void setLatenciaRed(int latenciaRed) { this.latenciaRed = latenciaRed; }
 
-    // ---------- API ----------
+    // ---------- API del sistema ----------
     public void admitir(PCB p) {
-         p.setEstado(EstadoProceso.NUEVO);
-    p.setCicloLlegada(cluster.getReloj().getCiclo());
-    colaNuevos.encolar(p);
+        p.setEstado(EstadoProceso.NUEVO);
+        p.setCicloLlegada(cluster.getReloj().getCiclo());
+        colaNuevos.encolar(p);
     }
 
-    public void bloquear(PCB p, MotivoBloqueo motivo) {
-        p.setEstado(EstadoProceso.BLOQUEADO);
-        p.setMotivoBloqueo(motivo);
-        colaListos.eliminar(p);
-        colaBloqueados.encolar(p);
-        if (cluster != null) cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": Proceso " + p.getNombre() + " BLOQUEADO por " + motivo);
-    }
-
-    public void despertar(PCB p) {
-        p.setEstado(EstadoProceso.LISTO);
-        p.setMotivoBloqueo(null);
-        colaBloqueados.eliminar(p);
-        colaListos.encolar(p);
-    }
-
-     
-    // ---------- EL TIC ----------
+    // ---------- EL TIC (Con enganches del P2) ----------
     public void tic(int ciclo) {
-        vencerPlazos(ciclo);
-        despertarBloqueados();
-        admitirSiHayMemoria();
-        planificar(ciclo);
-        ejecutarInstruccion(ciclo);
-
-        if (!cpu.estaLibre()) ciclosEnCpu++;
-        else ciclosEnCpu = 0;
-
-        cerrarCiclo(ciclo);
+        vencerPlazos(ciclo);           // 1. + liberar swap si vence suspendido
+        despertarBloqueados();         // 2. E/S de disco: sin contador
+        admitirSiHayMemoria(ciclo);    // 3. + hacerEspacio si no cabe
+        planificar(ciclo);             // 4. Igual que P1
+        ejecutarInstruccion(ciclo);    // 5. + crear SolicitudES
+        if (!cpu.estaLibre()) ciclosEnCpu++; else ciclosEnCpu = 0;
+        cerrarCiclo(ciclo);            // 6. + reactivar si se liberó RAM
     }
 
     // ---------- Paso 1 ----------
@@ -104,7 +90,8 @@ public class Nucleo {
         vencerEnCola(colaNuevos, ciclo);
         vencerEnCola(colaListos, ciclo);
         vencerEnCola(colaBloqueados, ciclo);
-        vencerEnSemaforos(ciclo);
+        vencerEnCola(colaListosSusp, ciclo);
+        vencerEnCola(colaBloqueadosSusp, ciclo);
 
         PCB enCpu = cpu.getProcesoActual();
         if (enCpu != null) {
@@ -115,7 +102,6 @@ public class Nucleo {
                 enCpu.setEstado(EstadoProceso.TERMINADO);
                 enCpu.setCicloFin(ciclo);
                 terminados.encolar(enCpu);
-                if (cluster != null) cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + enCpu.getNombre() + " TERMINADO por Deadline en Comp " + idComputador);
             }
         }
     }
@@ -127,54 +113,16 @@ public class Nucleo {
             p.setDeadline(p.getDeadline() - 1);
 
             if (p.getDeadline() <= 0) {
-                if (p.getEstado() == EstadoProceso.LISTO
-                        || p.getEstado() == EstadoProceso.BLOQUEADO) {
+                if (!p.isEnSwap() && (p.getEstado() == EstadoProceso.LISTO || p.getEstado() == EstadoProceso.BLOQUEADO)) {
                     ram.liberar(p.getMemoria());
+                } else if (p.isEnSwap()) {
+                    // TODO: Liberar los bloques de swap en el disco (lo hará el Disco)
                 }
                 p.setEstado(EstadoProceso.TERMINADO);
                 p.setCicloFin(ciclo);
                 terminados.encolar(p);
-                 if (cluster != null) cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + p.getNombre() + " TERMINADO por Deadline en espera (Comp " + idComputador + ")");
             } else {
                 c.encolar(p);
-            }
-        }
-    }
-
-    private void vencerEnSemaforos(int ciclo) {
-        ListaSimple buffers = gestorBuffers.getLista();
-        for (int i = 0; i < buffers.getSize(); i++) {
-            Buffer b = (Buffer) buffers.getValue(i);
-            vencerEnSemaforo(b.getMutex(), ciclo);
-            vencerEnSemaforo(b.getVacios(), ciclo);
-            vencerEnSemaforo(b.getLlenos(), ciclo);
-        }
-    }
-
-    /**
-     * C-1 fix: solo procesa los PCBs de ESTE computador.
-     * Los ajenos se reencolan sin tocarlos.
-     */
-    private void vencerEnSemaforo(Semaforo s, int ciclo) {
-        int n = s.getBloqueados().getTamano();
-        for (int i = 0; i < n; i++) {
-            PCB p = (PCB) s.getBloqueados().desencolar();
-
-            if (p.getComputador() != this.idComputador) {
-                s.getBloqueados().encolar(p);
-                continue;
-            }
-
-            p.setDeadline(p.getDeadline() - 1);
-            p.setCiclosBloqueado(p.getCiclosBloqueado() + 1);
-
-            if (p.getDeadline() <= 0) {
-                ram.liberar(p.getMemoria());
-                p.setEstado(EstadoProceso.TERMINADO);
-                p.setCicloFin(ciclo);
-                terminados.encolar(p);
-            } else {
-                s.getBloqueados().encolar(p);
             }
         }
     }
@@ -186,33 +134,85 @@ public class Nucleo {
             PCB p = (PCB) colaBloqueados.desencolar();
             p.setCiclosBloqueado(p.getCiclosBloqueado() + 1);
 
-            if (p.getMotivoBloqueo() == MotivoBloqueo.E_S
-                    || p.getMotivoBloqueo() == MotivoBloqueo.RED) {
-                p.setCiclosParaSatisfacer(p.getCiclosParaSatisfacer() - 1);
-                if (p.getCiclosParaSatisfacer() <= 0) {
-                    p.setEstado(EstadoProceso.LISTO);
-                    p.setMotivoBloqueo(null);
-                    colaListos.encolar(p);
-                } else {
-                    colaBloqueados.encolar(p);
-                }
-            } else {
+            // NOTA: La E/S de disco ya no usa ciclosParaSatisfacer.
+            // Ahora el disco debe llamar a alTerminarES() para despertarlo.
+            if (p.getMotivoBloqueo() != MotivoBloqueo.E_S) {
                 colaBloqueados.encolar(p);
             }
+            // Si es E/S, se queda aquí hasta que el Disco lo despierte.
         }
     }
 
     // ---------- Paso 3 ----------
-    private void admitirSiHayMemoria() {
+    private void admitirSiHayMemoria(int ciclo) {
         PCB p = (PCB) colaNuevos.verFrente();
-        while (p != null && ram.hayEspacio(p.getMemoria())) {
-            colaNuevos.desencolar();
-            ram.asignar(p.getMemoria());
-            p.setEstado(EstadoProceso.LISTO);
-            colaListos.encolar(p);
-            if (cluster != null) cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": Proceso " + p.getNombre() + " admitido en Comp " + idComputador);
+        while (p != null) {
+            if (ram.hayEspacio(p.getMemoria())) {
+                colaNuevos.desencolar();
+                ram.asignar(p.getMemoria());
+                p.setEstado(EstadoProceso.LISTO);
+                colaListos.encolar(p);
+            } else {
+                // Si no cabe, intenta hacer espacio suspendiendo a alguien
+                if (!hacerEspacio(p, ciclo)) {
+                    break; // No se pudo hacer espacio, se detiene la admisión
+                }
+            }
             p = (PCB) colaNuevos.verFrente();
         }
+    }
+
+    // ---------- Planificador a Mediano Plazo ----------
+    private boolean hacerEspacio(PCB nuevoProceso, int ciclo) {
+        // Criterio de víctima: el primer proceso Bloqueado que encontremos.
+        // (Pueden mejorarlo eligiendo el de menor prioridad o más tiempo bloqueado)
+        if (colaBloqueados.estaVacia()) return false; 
+
+        PCB victima = (PCB) colaBloqueados.desencolar();
+        victima.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
+        victima.setEnSwap(true);
+        
+        // Creamos la solicitud de suspensión (el disco la procesará)
+        // NOTA: Bloqueamos la RAM hasta que el disco termine de escribir.
+        cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando suspender " + victima.getNombre() + " para admitir a " + nuevoProceso.getNombre());
+        
+        // TODO: Enviar SolicitudES(SUSPENDER) al Disco. 
+        // Por ahora, simulamos que ya se suspendió (para que el código compile):
+        ram.liberar(victima.getMemoria());
+        colaBloqueadosSusp.encolar(victima);
+        
+        return true;
+    }
+
+    private void reactivar(int ciclo) {
+        // Revisa si algún Listo/Suspendido puede volver a la RAM
+        int n = colaListosSusp.getTamano();
+        for (int i = 0; i < n; i++) {
+            PCB p = (PCB) colaListosSusp.desencolar();
+            if (ram.hayEspacio(p.getMemoria())) {
+                // TODO: Enviar SolicitudES(REACTIVAR) al Disco.
+                // Por ahora simulamos que ya se leyó:
+                ram.asignar(p.getMemoria());
+                p.setEstado(EstadoProceso.LISTO);
+                p.setEnSwap(false);
+                colaListos.encolar(p);
+                cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + p.getNombre() + " reactivado.");
+            } else {
+                colaListosSusp.encolar(p);
+            }
+        }
+    }
+
+    // Método que llamará el Disco cuando termine una operación
+    public void alTerminarES(SolicitudES s) {
+        PCB p = s.getPcb();
+        // Dependiendo de la operación, se aplica en el SistemaArchivos (lo hará Dario)
+        
+        // Despertamos al proceso
+        colaBloqueados.eliminar(p);
+        p.setEstado(EstadoProceso.LISTO);
+        p.setMotivoBloqueo(null);
+        colaListos.encolar(p);
     }
 
     // ---------- Paso 4 ----------
@@ -256,75 +256,36 @@ public class Nucleo {
         PCB p = cpu.getProcesoActual();
         if (p == null) return;
         
-        if (p.getTipo() == TipoProceso.PRODUCTOR
-                || p.getTipo() == TipoProceso.CONSUMIDOR) {
-            ejecutarProductorConsumidor(p);
-        } else if (p.getTipo() == TipoProceso.IO_BOUND) {
-            ejecutarIOBound(p);   // C-4 fix
+        cpu.setCiclosOcupados(cpu.getCiclosOcupados() + 1);
+
+        if (p.getTipo() == TipoProceso.IO_BOUND) {
+            ejecutarIOBound(p, ciclo);
         } else {
             p.ejecutarInstruccion();
-            
         }
     }
 
-    /** C-3 fix: modo SISTEMA mientras opera el buffer. */
-    private void ejecutarProductorConsumidor(PCB p) {
-        p.setContadorCiclos(p.getContadorCiclos() + 1);
-
-        if (p.getContadorCiclos() < p.getCiclosPorElemento()) {
-            p.setPc(p.getPc() + 1);
-            p.setMar(p.getMar() + 1);
+    private void ejecutarIOBound(PCB p, int ciclo) {
+        // Si no tiene una operación asignada, avanza normal
+        if (p.getOperacion() == null) {
+            p.ejecutarInstruccion();
             return;
         }
 
-        Buffer b = gestorBuffers.getBuffer(p.getBufferAsociado());
-        if (b == null) {
-            p.setContadorCiclos(0);
-            p.setPc(p.getPc() + 1);
-            p.setMar(p.getMar() + 1);
-            return;
-        }
-
-        boolean esRemoto = (p.getComputador() != b.getAnfitrion());
-        if (esRemoto && !p.isLatenciaPagada()) {
-            p.setLatenciaPagada(true);
-            p.setCiclosParaSatisfacer(latenciaRed);
-            bloquear(p, MotivoBloqueo.RED);
-            cpu.liberar();
-            return;
-        }
-
-        // C-3 fix
-         cpu.entrarModoSistema();
-        boolean exito;
-        if (p.getTipo() == TipoProceso.PRODUCTOR) {
-            exito = b.producir(p, this);
-        } else {
-            exito = b.consumir(p, this);
-        }
-        cpu.salirModoSistema();
+        // Genera la solicitud al disco
+        int bloqueFalso = 50; // Esto lo dará el SistemaArchivos de Darío luego
+        SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueFalso, 1, ciclo);
+        
+        // Bloquea el proceso
+        p.setEstado(EstadoProceso.BLOQUEADO);
+        p.setMotivoBloqueo(MotivoBloqueo.E_S);
+        cpu.liberar();
+        colaBloqueados.encolar(p);
+        
+        // Enviar al disco
+        // cluster.getDisco().encolarSolicitud(solicitud);
+        cluster.registrarEvento("Ciclo " + ciclo + ": " + p.getNombre() + " solicitó E/S de disco.");
     }
-
-    /** C-4 fix: I/O bound se bloquea cada N ciclos pidiendo E/S. */
-    private void ejecutarIOBound(PCB p) {
-        // Defaults si no se configuraron: cada 5 ciclos pide E/S de 3
-        int cadaN = (p.getCiclosPorElemento() > 0) ? p.getCiclosPorElemento() : 5;
-        int duracion = (p.getCiclosParaSatisfacer() > 0) ? p.getCiclosParaSatisfacer() : 3;
-
-        p.setContadorCiclos(p.getContadorCiclos() + 1);
-
-        if (p.getContadorCiclos() >= cadaN) {
-            p.setContadorCiclos(0);
-            p.setCiclosParaSatisfacer(duracion);
-            bloquear(p, MotivoBloqueo.E_S);
-            cpu.liberar();
-            return;
-        }
-
-        p.ejecutarInstruccion();
-    }
-    
- 
 
     // ---------- Paso 6 ----------
     private void cerrarCiclo(int ciclo) {
@@ -336,24 +297,9 @@ public class Nucleo {
             cpu.liberar();
             ram.liberar(p.getMemoria());
             terminados.encolar(p);
-            if (cluster != null) cluster.registrarEvento("Ciclo " + ciclo + ": Proceso " + p.getNombre() + " TERMINADO en Comp " + idComputador);
-            admitirSiHayMemoria();
+            admitirSiHayMemoria(ciclo); // Barrido obligatorio
+            reactivar(ciclo);            // Tratar de traer suspendidos
         }
-    }
-        public double getTiempoRespuestaPromedio() {
-        int cantidad = terminados.getTamano();
-        if (cantidad == 0) return 0.0;
-        
-        double suma = 0;
-        estructuraDeDatos.Nodo actual = terminados.getCabeza();
-        while (actual != null) {
-            PCB p = (PCB) actual.getDato();
-             if (p.getCicloInicio() != -1) {
-                suma += (p.getCicloInicio() - p.getCicloLlegada());
-            }
-            actual = actual.getpNext();
-        }
-        return suma / cantidad;
     }
     
 }
