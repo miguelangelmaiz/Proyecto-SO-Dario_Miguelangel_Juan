@@ -80,87 +80,24 @@ public sistemaOperativo.Cluster cluster;
                 }
             }
 
+                        // =================================================================
+            // CÁLCULO DE MÉTRICAS USANDO LA CLASE DEL SISTEMA OPERATIVO
             // =================================================================
-            // CÁLCULO EXACTO DE TODAS LAS MÉTRICAS (Página 8 del PDF)
-            // =================================================================
-            int cicloActual = cluster.getReloj().getCiclo();
-            StringBuilder reporteStats = new StringBuilder("\n\n===== REPORTE DE MÉTRICAS GLOBALES ====\n");
+            double tr = sistemaOperativo.Metricas.getTiempoRespuestaPromedio(cluster);
+            double th = sistemaOperativo.Metricas.getThroughput(cluster);
+            
+            jLabel4.setText("Tiempo Respuesta Promedio: " + String.format("%.2f", tr));
+            jLabel8.setText("Throughput: " + String.format("%.2f", th));
 
-            if (cicloActual > 0) {
-                int totalTerminados = 0;
-                int totalATiempo = 0;
-                double sumaTiemposRespuesta = 0;
-                int totalBloqueos = 0;
-                double sumaUtilizacionCPU = 0;
-
-                // Recorrer todos los computadores para acumular datos
-                for (int i = 0; i < cluster.getCantidad(); i++) {
-                    sistemaOperativo.Nucleo nucleo = cluster.getComputador(i).getNucleo();
-                    
-                    // Utilización de CPU
-                    int ciclosOcupados = cluster.getComputador(i).getCpu().getCiclosOcupados();
-                    sumaUtilizacionCPU += ((double) ciclosOcupados / cicloActual) * 100;
-
-                    // Recorrer cola de terminados
-                    Nodo aux = nucleo.getTerminados().getCabeza();
-                    while (aux != null) {
-                        PCB p = (PCB) aux.getDato();
-                        
-                        sumaTiemposRespuesta += (p.getCicloFin() - p.getCicloLlegada());
-                        totalBloqueos += p.getCiclosBloqueado();
-                        totalTerminados++;
-                        
-                        if (p.getDeadline() > 0) {
-                            totalATiempo++;
-                        }
-                        aux = aux.getpNext();
-                    }
-                }
-
-                // Calcular promedios y actualizar Labels
-                if (totalTerminados > 0) {
-                    double tiempoRespProm = sumaTiemposRespuesta / totalTerminados;
-                    double tasaPlazos = ((double) totalATiempo / totalTerminados) * 100;
-                    double tiempoBloqueadoProm = (double) totalBloqueos / totalTerminados;
-                    double throughputGlobal = (double) totalTerminados / cicloActual;
-                    double utilPromedio = sumaUtilizacionCPU / cluster.getCantidad();
-
-                    // Calcular Equidad (Desviación estándar)
-                    double sumaVarianza = 0;
-                    for (int i = 0; i < cluster.getCantidad(); i++) {
-                        Nodo aux = cluster.getComputador(i).getNucleo().getTerminados().getCabeza();
-                        while (aux != null) {
-                            PCB p = (PCB) aux.getDato();
-                            double tiempo = p.getCicloFin() - p.getCicloLlegada();
-                            sumaVarianza += Math.pow(tiempo - tiempoRespProm, 2);
-                            aux = aux.getpNext();
-                        }
-                    }
-                    double equidad = Math.sqrt(sumaVarianza / totalTerminados);
-
-                    // Actualizar Labels superiores
-                    jLabel8.setText("Throughput: " + String.format("%.3f", throughputGlobal));
-                    jLabel4.setText("Tiempo Resp: " + String.format("%.2f", tiempoRespProm));
-                    jLabel7.setText("Tasa Plazos: " + String.format("%.1f", tasaPlazos) + "%");
-                    jLabel6.setText("Producidos: " + totalProd);
-                    jLabel5.setText("Consumidos: " + totalCons);
-
-                    // Construir reporte completo
-                    reporteStats.append("Throughput Global: ").append(String.format("%.3f", throughputGlobal)).append(" proc/ciclo\n");
-                    reporteStats.append("Utilización Promedio CPU: ").append(String.format("%.1f", utilPromedio)).append("%\n");
-                    reporteStats.append("Tiempo Resp. Promedio: ").append(String.format("%.2f", tiempoRespProm)).append(" ciclos\n");
-                    reporteStats.append("Tasa Plazos Cumplidos: ").append(String.format("%.1f", tasaPlazos)).append("%\n");
-                    reporteStats.append("Equidad (Desv. Estándar): ").append(String.format("%.2f", equidad)).append("\n");
-                    reporteStats.append("Tiempo Bloq. Promedio: ").append(String.format("%.2f", tiempoBloqueadoProm)).append(" ciclos\n");
-                } else {
-                    reporteStats.append("Aún no hay procesos terminados.\n");
-                }
-            }
-
+            // Para el texto grande (txtEstadoBuffer), mantén el StringBuilder pero sin las matemáticas complejas
+            StringBuilder reporteStats = new StringBuilder("\n\n===== REPORTE DE MÉTRICAS GLOBALES =====\n");
+            reporteStats.append("Throughput Global: ").append(String.format("%.3f", th)).append(" proc/ciclo\n");
+            reporteStats.append("Tiempo Resp. Promedio: ").append(String.format("%.2f", tr)).append(" ciclos\n");
+            
             // Mostrar todo en el TextArea grande
             txtEstadoBuffer.setText(texto.toString() + reporteStats.toString());
-            
-        }); // Cierra el Timer
+                    // Actualizar Labels superiores
+           });         
 
         timer.start();
 }

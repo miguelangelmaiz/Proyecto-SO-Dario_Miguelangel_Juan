@@ -43,6 +43,9 @@ public class Cluster {
         for (int i = 0; i < n; i++) r[i] = ram;
         return r;
     }
+    public void registrarEvento(String evento) {
+        logSistema.registrar(evento); // Usa la nueva clase
+    }
 
     // ---------- Getters ----------
 
@@ -60,6 +63,12 @@ public class Cluster {
             if (c.getId() == idComputador) return c.getNucleo();
         }
         return null;
+    }
+    public String getLogEventos() {
+        return logSistema.getTexto();
+    }
+    public int getVersionLog() {
+        return logSistema.getVersion();
     }
 
     public RelojGlobal getReloj() { return reloj; }
@@ -90,18 +99,5 @@ public class Cluster {
         }
     }
     
-    // ==========================================
-    // ARREGLOS DEL LOG (Error 3 del PDF)
-    // ==========================================
-    public void registrarEvento(String evento) {
-        logSistema.registrar(evento);
-    }
-
-    public String getLogEventos() {
-        return logSistema.getTexto();
-    }
-
-    public int getVersionLog() {
-        return logSistema.getVersion();
-    }
+     
 }

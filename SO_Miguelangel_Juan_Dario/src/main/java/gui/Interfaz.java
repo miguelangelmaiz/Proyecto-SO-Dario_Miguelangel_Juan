@@ -540,106 +540,116 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     }//GEN-LAST:event_cbxPrioridadActionPerformed
 
     private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
-          try {
-            sistemaOperativo.configuracion config = new sistemaOperativo.configuracion();
+           try {
+            // 1. Creamos el objeto de configuración global
+            sistemaOperativo.configuracion.GlobalConfig config = new sistemaOperativo.configuracion.GlobalConfig();
             
-            config.duracionCicloMs = (int) jSpinner1.getValue();
-            config.latenciaRed = 3;
+            // 2. Llenamos los datos globales
+            config.cycleDurationMs = (int) jSpinner1.getValue();
+            config.swapSizeBlocks = 100; // Valor por defecto para el Proyecto 2
+            config.initialDiskPolicy = "FIFO"; // Valor por defecto para el Proyecto 2
 
-            sistemaOperativo.configuracion.ProcesoDTO pDto = new sistemaOperativo.configuracion.ProcesoDTO();
-            pDto.nombre = txtNombre.getText().isEmpty() ? "Proceso_Ejemplo" : txtNombre.getText();
-            pDto.tipo = cbxTipoProceso.getSelectedItem().toString();
-            pDto.memoria = (int) spnMemoria.getValue();
+            // 3. Llenamos la configuración de la computadora
+            config.computer = new sistemaOperativo.configuracion.ComputerConfig();
+            config.computer.ramCapacity = 2048; // RAM por defecto de la GUI
+            config.computer.policy = "FCFS"; // O podrías leerlo del combo jComboBox1
+            config.computer.quantum = (int) spnQuantum.getValue();
+
+            // 4. Creamos el proceso que está en pantalla para guardarlo
+            sistemaOperativo.configuracion.ProcessDTO pDto = new sistemaOperativo.configuracion.ProcessDTO();
+            pDto.name = txtNombre.getText().isEmpty() ? "Proceso_Ejemplo" : txtNombre.getText();
+            pDto.memory = (int) spnMemoria.getValue();
             pDto.deadline = (int) spnDeadline.getValue();
-            pDto.instrucciones = (int) spnInstrucciones.getValue();
-            pDto.computador = OpComputadora.getSelectedIndex() + 1;
+            pDto.instructions = (int) spnInstrucciones.getValue();
+            
+            // El Proyecto 2 pide targetPath y operation, le ponemos valores por defecto
+            pDto.targetPath = "/sistema/archivo.txt"; 
+            pDto.operation = cbxTipoProceso.getSelectedItem().toString(); // Usamos el combo como operación
+            pDto.fileSizeBlocks = 0;
 
-            String prioStr = cbxPrioridad.getSelectedItem().toString();
-            if (prioStr.equals("ALTA")) pDto.prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA;
-            else if (prioStr.equals("BAJA")) pDto.prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA;
-            else pDto.prioridad = sistemaOperativo.PCB.PRIORIDAD_MEDIA;
+            // Lo metemos en el arreglo de procesos (de tamaño 1)
+            config.processes = new sistemaOperativo.configuracion.ProcessDTO[1];
+            config.processes[0] = pDto;
 
-            config.procesosIniciales = new sistemaOperativo.configuracion.ProcesoDTO[1];
-            config.procesosIniciales[0] = pDto;
-
-            // Guardar buffers
-            estructuraDeDatos.ListaSimple listaBuffers = cluster.getGestorBuffers().getLista();
-            config.buffersIniciales = new sistemaOperativo.configuracion.BufferDTO[listaBuffers.getSize()];
-            for (int i = 0; i < listaBuffers.getSize(); i++) {
-                sistemaOperativo.Buffer b = (sistemaOperativo.Buffer) listaBuffers.getValue(i);
-                sistemaOperativo.configuracion.BufferDTO bDto = new sistemaOperativo.configuracion.BufferDTO();
-                bDto.capacidad = b.getCapacidad();
-                bDto.anfitrion = b.getAnfitrion();
-                config.buffersIniciales[i] = bDto;
-            }
-
-            // --- VENTANA PARA ELEGIR EL ARCHIVO ---
+            // 5. Ventana para elegir el archivo JSON
             javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
-            fileChooser.setDialogTitle("Guardar Escenario");
+            fileChooser.setDialogTitle("Guardar Procesos (Proyecto 2)");
             fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
             
-            // Si el usuario elige una ruta y le da a Guardar
             if (fileChooser.showSaveDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
                 java.io.File archivo = fileChooser.getSelectedFile();
                 
-                // Asegurarnos de que termine en .json
                 if (!archivo.getName().toLowerCase().endsWith(".json")) {
                     archivo = new java.io.File(archivo.getParentFile(), archivo.getName() + ".json");
                 }
 
+                // 6. Guardar con Gson
                 com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
                 java.io.FileWriter writer = new java.io.FileWriter(archivo);
                 gson.toJson(config, writer);
                 writer.close();
 
-                javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario guardado exitosamente en:\n" + archivo.getAbsolutePath());
+                javax.swing.JOptionPane.showMessageDialog(this, "¡Procesos guardados exitosamente en:\n" + archivo.getAbsolutePath());
             }
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage());
-        } // TODO add your handling code here:
+        }  // TODO add your handling code here:
     }//GEN-LAST:event_guardarJsonActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
         try {
-            // --- VENTANA PARA ELEGIR EL ARCHIVO A CARGAR ---
             javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
             fileChooser.setDialogTitle("Cargar Escenario");
             fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
 
             if (fileChooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
                 java.io.File archivo = fileChooser.getSelectedFile();
-
                 com.google.gson.Gson gson = new com.google.gson.Gson();
                 java.io.FileReader reader = new java.io.FileReader(archivo);
-                sistemaOperativo.configuracion config = gson.fromJson(reader, sistemaOperativo.configuracion.class);
+                
+                // Leer el nuevo formato
+                sistemaOperativo.configuracion.GlobalConfig config = gson.fromJson(reader, sistemaOperativo.configuracion.GlobalConfig.class);
                 reader.close();
 
-                if (config == null) return;
+                if (config == null || config.processes == null) return;
 
-                // Aplicar la velocidad al sistema
-                jSpinner1.setValue(config.duracionCicloMs);
-
-                // Rellenar los campos de la interfaz con el proceso guardado
-                if (config.procesosIniciales != null && config.procesosIniciales.length > 0) {
-                    sistemaOperativo.configuracion.ProcesoDTO pDto = config.procesosIniciales[0];
-                    
-                    txtNombre.setText(pDto.nombre);
-                    spnMemoria.setValue(pDto.memoria);
-                    spnDeadline.setValue(pDto.deadline);
-                    spnInstrucciones.setValue(pDto.instrucciones);
-                    OpComputadora.setSelectedIndex(pDto.computador - 1);
-                    cbxTipoProceso.setSelectedItem(pDto.tipo);
-                    
-                    if (pDto.prioridad == sistemaOperativo.PCB.PRIORIDAD_ALTA) cbxPrioridad.setSelectedItem("ALTA");
-                    else if (pDto.prioridad == sistemaOperativo.PCB.PRIORIDAD_BAJA) cbxPrioridad.setSelectedItem("BAJA");
-                    else cbxPrioridad.setSelectedItem("MEDIA");
-
-                    javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado!\nRevisa los datos y presiona 'Crear Proceso'.");
+                // 1. Aplicar configuración
+                if (config.cycleDurationMs > 0) {
+                    jSpinner1.setValue(config.cycleDurationMs);
                 }
+                
+                // 2. Cambiar política de CPU si viene en el JSON
+                if (config.computer != null && config.computer.policy != null) {
+                     cluster.getComputador(0).setPolitica(
+                         planificacionSO.FabricaPoliticas.crear(config.computer.policy, config.computer.quantum)
+                     );
+                }
+
+                // 3. CREAR LOS PROCESOS REALMENTE
+                for (sistemaOperativo.configuracion.ProcessDTO pDto : config.processes) {
+                    // Asumimos que el JSON trae tipos válidos (CPU_BOUND, IO_BOUND, etc.)
+                    losEnums.TipoProceso tipoProc = losEnums.TipoProceso.CPU_BOUND; // Por defecto
+                    try {
+                        if (pDto.operation != null) {
+                            tipoProc = losEnums.TipoProceso.valueOf(pDto.operation);
+                        }
+                    } catch(Exception e) {}
+
+                    // Crear el PCB
+                    sistemaOperativo.PCB p = new sistemaOperativo.PCB(
+                        pDto.name, tipoProc, sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
+                        pDto.memory, pDto.deadline, pDto.instructions, 1
+                    );
+                    
+                    // Meterlo al núcleo
+                    cluster.getComputador(0).getNucleo().admitir(p);
+                }
+
+                javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado con " + config.processes.length + " procesos reales!");
             }
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar el archivo: " + e.getMessage());
-        } 
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar: " + e.getMessage());
+        }  
          // TODO add your handling code here:
     }//GEN-LAST:event_cargarJsonActionPerformed
 
