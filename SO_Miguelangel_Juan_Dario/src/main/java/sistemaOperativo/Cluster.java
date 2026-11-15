@@ -14,7 +14,8 @@ public class Cluster {
     private final RelojGlobal reloj;
     private final GestorBuffers gestorBuffers;
     private final ListaSimple computadores;
-    private StringBuilder logEventos = new StringBuilder();
+    private final Log logSistema = new Log();
+
     private Thread hiloReloj; // Variable para controlar el hilo
 
     public Cluster(int numComputadores, int ramPorComputador, int duracionCicloMs) {
@@ -41,6 +42,9 @@ public class Cluster {
         for (int i = 0; i < n; i++) r[i] = ram;
         return r;
     }
+    public void registrarEvento(String evento) {
+        logSistema.registrar(evento); // Usa la nueva clase
+    }
 
     // ---------- Getters ----------
 
@@ -59,6 +63,12 @@ public class Cluster {
             if (c.getId() == idComputador) return c.getNucleo();
         }
         return null;
+    }
+    public String getLogEventos() {
+        return logSistema.getTexto();
+    }
+    public int getVersionLog() {
+        return logSistema.getVersion();
     }
 
     public RelojGlobal getReloj() { return reloj; }
@@ -90,11 +100,5 @@ public class Cluster {
         }
     }
     
-     public void registrarEvento(String evento) {
-        logEventos.append(evento).append("\n");
-    }
-
-    public String getLogEventos() {
-        return logEventos.toString();
-    }
+     
 }
