@@ -84,55 +84,54 @@ public class VentanaGrafico extends javax.swing.JFrame {
         // ==========================================
         // TIMER DE ACTUALIZACIÓN
         // ==========================================
+        // Muestreo: máximo un punto cada 10 ciclos (evita que el dataset crezca sin control)
+        final int[] ultimoCiclo = { 0 };
+
         javax.swing.Timer timer = new javax.swing.Timer(500, (e) -> {
             if (cluster == null) return;
-            tiempo++; 
             int cicloActual = cluster.getReloj().getCiclo();
-            
-            if (cicloActual > 0) {
-                // --- 1. ACTUALIZAR GRÁFICO DE CPU ---
-                LineAndShapeRenderer renderer = (LineAndShapeRenderer) graficoCpu.getCategoryPlot().getRenderer();
-                Color[] colores = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE}; 
-                
-                for (int i = 0; i < cluster.getCantidad(); i++) {
-                    int usoCpu = cluster.getComputador(i).getCpu().getCiclosOcupados();
-                    String nombreComp = "Computador " + (i + 1);
-                    datosCpu.addValue(usoCpu, nombreComp, String.valueOf(tiempo));
-                    renderer.setSeriesPaint(i, colores[i % colores.length]);
-                }
+            if (cicloActual <= 0 || cicloActual - ultimoCiclo[0] < 10) return;
+            ultimoCiclo[0] = cicloActual;
+            tiempo++;
 
-                // --- 2. ACTUALIZAR GRÁFICO DE RAM ---
-                for (int i = 0; i < cluster.getCantidad(); i++) {
-                    int ramUsada = cluster.getComputador(i).getRam().getUsada();
-                    int ramLibre = cluster.getComputador(i).getRam().getLibre();
-                    String nombreComp = "Comp " + (i + 1);
-                    
-                    // Se actualizan los valores (reemplazando el anterior)
-                    datosRam.setValue(ramUsada, "Usada", nombreComp);
-                    datosRam.setValue(ramLibre, "Libre", nombreComp);
-                }
+            // --- 1. ACTUALIZAR GRÁFICO DE CPU ---
+            LineAndShapeRenderer renderer = (LineAndShapeRenderer) graficoCpu.getCategoryPlot().getRenderer();
+            Color[] colores = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE};
 
-                // --- 3. ACTUALIZAR GRÁFICO DE ESTADOS ---
-                int nuevos = 0, listos = 0, ejecucion = 0, bloqueados = 0, terminados = 0;
-                
-                for (int i = 0; i < cluster.getCantidad(); i++) {
-                    sistemaOperativo.Nucleo nucleo = cluster.getComputador(i).getNucleo();
-                    nuevos += nucleo.getColaNuevos().getTamano();
-                    listos += nucleo.getColaListos().getTamano();
-                    bloqueados += nucleo.getColaBloqueados().getTamano();
-                    terminados += nucleo.getTerminados().getTamano();
-                    
-                    if (nucleo.getCpu().getProcesoActual() != null) {
-                        ejecucion++;
-                    }
-                }
-                
-                datosEstados.setValue(nuevos, "Procesos", "Nuevos");
-                datosEstados.setValue(listos, "Procesos", "Listos");
-                datosEstados.setValue(ejecucion, "Procesos", "Ejecución");
-                datosEstados.setValue(bloqueados, "Procesos", "Bloqueados");
-                datosEstados.setValue(terminados, "Procesos", "Terminados");
+            for (int i = 0; i < cluster.getCantidad(); i++) {
+                int usoCpu = cluster.getComputador(i).getCpu().getCiclosOcupados();
+                String nombreComp = "Computador " + (i + 1);
+                datosCpu.addValue(usoCpu, nombreComp, String.valueOf(tiempo));
+                renderer.setSeriesPaint(i, colores[i % colores.length]);
             }
+
+            // --- 2. ACTUALIZAR GRÁFICO DE RAM ---
+            for (int i = 0; i < cluster.getCantidad(); i++) {
+                int ramUsada = cluster.getComputador(i).getRam().getUsada();
+                int ramLibre = cluster.getComputador(i).getRam().getLibre();
+                String nombreComp = "Comp " + (i + 1);
+                datosRam.setValue(ramUsada, "Usada", nombreComp);
+                datosRam.setValue(ramLibre, "Libre", nombreComp);
+            }
+
+            // --- 3. ACTUALIZAR GRÁFICO DE ESTADOS ---
+            int nuevos = 0, listos = 0, ejecucion = 0, bloqueados = 0, terminados = 0;
+
+            for (int i = 0; i < cluster.getCantidad(); i++) {
+                sistemaOperativo.Nucleo nucleo = cluster.getComputador(i).getNucleo();
+                nuevos     += nucleo.getColaNuevos().getTamano();
+                listos     += nucleo.getColaListos().getTamano();
+                bloqueados += nucleo.getColaBloqueados().getTamano();
+                terminados += nucleo.getTerminados().getTamano();
+
+                if (nucleo.getCpu().getProcesoActual() != null) ejecucion++;
+            }
+
+            datosEstados.setValue(nuevos,     "Procesos", "Nuevos");
+            datosEstados.setValue(listos,     "Procesos", "Listos");
+            datosEstados.setValue(ejecucion,  "Procesos", "Ejecución");
+            datosEstados.setValue(bloqueados, "Procesos", "Bloqueados");
+            datosEstados.setValue(terminados, "Procesos", "Terminados");
         });
         timer.start();
     } 

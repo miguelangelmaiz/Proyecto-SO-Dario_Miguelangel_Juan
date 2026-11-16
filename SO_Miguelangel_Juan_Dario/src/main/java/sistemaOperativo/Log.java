@@ -9,11 +9,11 @@ import java.util.concurrent.Semaphore;
  * @author Miguel
  */
 public class Log {
-    private static final int MAX_LINEAS = 500; // Límite para no llenar la RAM
+    private static final int MAX_LINEAS = 500;
     private final String[] lineas = new String[MAX_LINEAS];
     private int inicio = 0;
     private int cantidad = 0;
-    private int version = 0; // Para que la GUI sepa si hay cambios
+    private int version = 0;
     private final Semaphore mutex = new Semaphore(1);
 
     public void registrar(String evento) {
@@ -23,7 +23,7 @@ public class Log {
             if (cantidad < MAX_LINEAS) {
                 cantidad++;
             } else {
-                inicio = (inicio + 1) % MAX_LINEAS; // Sobrescribe el más viejo
+                inicio = (inicio + 1) % MAX_LINEAS;
             }
             version++;
         } catch (InterruptedException e) {
@@ -48,6 +48,16 @@ public class Log {
             mutex.release();
         }
     }
-    
-    public int getVersion() { return version; }
+
+    public int getVersion() {
+        try {
+            mutex.acquire();
+            return version;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return 0;
+        } finally {
+            mutex.release();
+        }
+    }
 }
