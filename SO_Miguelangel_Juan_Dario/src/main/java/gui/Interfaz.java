@@ -5,7 +5,7 @@ package gui;
  *
  * @author jmmor
  */
-
+import sistemaOperativo.ProcesoESFactory ;
 import estructuraDeDatos.Cola;
 import estructuraDeDatos.Nodo;
 import hardware.Computador;
@@ -37,23 +37,9 @@ public class Interfaz extends javax.swing.JFrame {
         jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
         
         // 1. CREAR EL CLUSTER
-        cluster = new sistemaOperativo.Cluster(numComputadores, 2048, 500);
-         OpComputadora.removeAllItems();
-        for (int i = 0; i < numComputadores; i++) {
-            OpComputadora.addItem("Computadora " + (i + 1));
-        }
-        
-        // Ocultar o mostrar según el número elegido
-        
-        
-        // Agregar las opciones al ComboBox de Crear Proceso
+        cluster = new sistemaOperativo.Cluster(1, 2048, 500);
         OpComputadora.removeAllItems();
         OpComputadora.addItem("Computadora 1");
-        OpComputadora.addItem("Computadora 2");
-        if (numComputadores >= 3) OpComputadora.addItem("Computadora 3");
-        if (numComputadores >= 4) OpComputadora.addItem("Computadora 4");
-        
-        
       
         // ARREGLO VISUAL DE LAS BARRAS DE RAM
         jProgressBar1.setMaximum(2048); 
@@ -436,71 +422,36 @@ cluster.getComputador(0).setPolitica(FabricaPoliticas.crear(seleccion, q));
        
     }//GEN-LAST:event_jComboBox1ActionPerformed
    
+    
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-         try {
-            // 1. Atrapamos los datos
-            String nombre = txtNombre.getText(); 
-            int memoria = (int) spnMemoria.getValue();
-            int deadline = (int) spnDeadline.getValue();
-            int instrucciones = (int) spnInstrucciones.getValue();
+          try {
+            // La GUI solo lee los widgets y delega TODO a la fábrica.
+            // (Los últimos 2 parámetros son "LEER" y la ruta, que Darío conectará al JTree luego).
+            sistemaOperativo.Resultado r = sistemaOperativo.ProcesoESFactory.crear(
+                    cluster,
+                    txtNombre.getText(),
+                    cbxTipoProceso.getSelectedItem().toString(),
+                    cbxPrioridad.getSelectedItem().toString(),
+                    (int) spnMemoria.getValue(),
+                    (int) spnDeadline.getValue(),
+                    (int) spnInstrucciones.getValue(),
+                    "LEER",                       
+                    "/sistema/archivo.txt");      
 
-            // 2. Validamos que el nombre no esté vacío
-            if (nombre.trim().isEmpty()) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Escribe un nombre");
+            // Mostrar el resultado
+            if (!r.isOk()) {
+                javax.swing.JOptionPane.showMessageDialog(this,
+                        "Rechazado: " + r.getMotivo(),
+                        "No admitido",
+                        javax.swing.JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // 3. Validaciones
-            if (memoria <= 0 || deadline <= 0 || instrucciones <= 0) {
-                javax.swing.JOptionPane.showMessageDialog(this, 
-                    "Error: La memoria, el deadline y las instrucciones deben ser mayores a 0.",
-                    "Valores Inválidos", 
-                    javax.swing.JOptionPane.WARNING_MESSAGE);
-                return; 
-            }
-
-            // 4. Determinamos el Tipo de Proceso
-            losEnums.TipoProceso tipo = losEnums.TipoProceso.CPU_BOUND;
-            String tipoSeleccionado = cbxTipoProceso.getSelectedItem().toString();
-            
-            if (tipoSeleccionado.equals("IO_BOUND")) {
-                tipo = losEnums.TipoProceso.IO_BOUND;
-            }
-
-            // 5. Determinamos la Prioridad
-            int prioridad = 2; // Media por defecto
-            String prioStr = cbxPrioridad.getSelectedItem().toString();
-            if (prioStr.equals("ALTA")) {
-                prioridad = sistemaOperativo.PCB.PRIORIDAD_ALTA; 
-            } else if (prioStr.equals("BAJA")) {
-                prioridad = sistemaOperativo.PCB.PRIORIDAD_BAJA; 
-            }
-
-            // 6. Validación de RAM
-            int ramTotalComputador = cluster.getComputador(0).getRam().getTotal();
-            if (memoria > ramTotalComputador) {
-                javax.swing.JOptionPane.showMessageDialog(this, 
-                    "Error: El proceso tiene " + memoria + " KB de memoria, pero el Computador " 
-                    + " solo tiene " + ramTotalComputador + " KB en total.",
-                    "Memoria Insuficiente", 
-                    javax.swing.JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // 7. Creamos el proceso (Solo con los parámetros del P2)
-            sistemaOperativo.PCB p = new sistemaOperativo.PCB(nombre, tipo, prioridad, memoria, deadline, instrucciones, 1);
-            
-            // NOTA: Aquí irá la lógica de asignar "operacion" y "rutaArchivo" cuando Darío termine su parte.
-            
-            // 8. Lo mandamos al Núcleo
-            cluster.getComputador(0).getNucleo().admitir(p);
-            
-            // 9. Mensaje de éxito
-            javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso " + nombre + " creado!");
+            javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso creado!");
             txtNombre.setText("");
-            
+
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            javax.swing.JOptionPane.showMessageDialog(this, "Error inesperado: " + e.getMessage());
         }
         
                 
