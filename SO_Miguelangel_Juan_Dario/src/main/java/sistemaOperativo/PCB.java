@@ -151,5 +151,17 @@ private static int contadorId = 1;
 
     @Override
     public int hashCode() { return id; }
-
+ /**
+     * Mapea el texto del combo de la GUI a la prioridad numérica del PCB.
+     * Lanza excepción si el texto no corresponde a ninguna.
+     */
+    public static int prioridadDesdeTexto(String texto) {
+        if (texto == null) throw new IllegalArgumentException("Prioridad vacía.");
+        switch (texto.toUpperCase()) {
+            case "ALTA":  return PRIORIDAD_ALTA;
+            case "MEDIA": return PRIORIDAD_MEDIA;
+            case "BAJA":  return PRIORIDAD_BAJA;
+            default:
+                throw new IllegalArgumentException("Prioridad desconocida: " + texto);
+        }}
 }
