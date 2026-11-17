@@ -62,6 +62,7 @@ public class Nucleo {
     public MemoriaPrincipal getRam() { return ram; }
     public PoliticaPlanificacion getPolitica() { return politica; }
     public void setPolitica(PoliticaPlanificacion politica) { this.politica = politica; }
+
     public Cluster getCluster() { return cluster; }
     public void setCluster(Cluster cluster) { this.cluster = cluster; }
 

@@ -13,10 +13,7 @@ public class SolicitudES {
     private final int cicloLlegada;
 
     
-     private String ruta; 
-    private int bloque;
-    
-    
+   
     public SolicitudES(PCB pcb, TipoOperacionES operacion, int bloqueDestino, int bloquesRequeridos, int cicloLlegada) {
         this.pcb = pcb;
         this.operacion = operacion;
@@ -25,9 +22,23 @@ public class SolicitudES {
         this.cicloLlegada = cicloLlegada;
     }
 
-    public PCB getPcb() { return pcb; }
-    public TipoOperacionES getOperacion() { return operacion; }
-    public int getBloqueDestino() { return bloqueDestino; }
-    public int getBloquesRequeridos() { return bloquesRequeridos; }
-    public int getCicloLlegada() { return cicloLlegada; }
+     public PCB getPcb() {
+        return pcb;
+    }
+
+    public TipoOperacionES getOperacion() {
+        return operacion;
+    }
+
+    public int getBloqueDestino() {
+        return bloqueDestino;
+    }
+
+    public int getBloquesRequeridos() {
+        return bloquesRequeridos;
+    }
+
+    public int getCicloLlegada() {
+        return cicloLlegada;
+    }
 }
