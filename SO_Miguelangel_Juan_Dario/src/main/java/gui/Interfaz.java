@@ -1,4 +1,3 @@
-
 package gui;
 
 /**
@@ -18,16 +17,17 @@ import com.google.gson.Gson;
 import java.io.FileReader;
 import java.io.FileWriter;
 import sistemaOperativo.configuracion;
-import gui.MenuInicial;
+import sistemaOperativo.Cluster;
+
 
 
 public class Interfaz extends javax.swing.JFrame {
      
+ private int ultimaVersionLog = -1;
+   public sistemaOperativo.Cluster cluster;
+    
 
-     public sistemaOperativo.Cluster cluster;
-      private int ultimaVersionLog = -1;
-
-    public Interfaz(int numComputadores) {
+    public Interfaz() {
          initComponents();
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 5000, 1));
@@ -164,7 +164,6 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel16 = new javax.swing.JLabel();
         spnQuantum = new javax.swing.JSpinner();
         btnGrafico = new javax.swing.JButton();
-        acBuffer = new javax.swing.JButton();
         guardarJson = new javax.swing.JButton();
         cargarJson = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -348,14 +347,6 @@ public class Interfaz extends javax.swing.JFrame {
         });
         jPanel1.add(btnGrafico, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 80, -1, -1));
 
-        acBuffer.setText("BUFFER");
-        acBuffer.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                acBufferActionPerformed(evt);
-            }
-        });
-        jPanel1.add(acBuffer, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 30, -1, -1));
-
         guardarJson.setText("GuardarJson");
         guardarJson.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -479,12 +470,6 @@ cluster.getComputador(0).setPolitica(FabricaPoliticas.crear(seleccion, q));
         vg.cluster = this.cluster;        
         vg.setVisible(true);   // TODO add your handling code here:
     }//GEN-LAST:event_btnGraficoActionPerformed
-
-    private void acBufferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acBufferActionPerformed
-ventanaBuffer vb = new ventanaBuffer();
-vb.cluster = this.cluster; // Le pasas el mismo clúster
-vb.setVisible(true);       // La muestras        // TODO add your handling code here:
-    }//GEN-LAST:event_acBufferActionPerformed
 
     private void cbxPrioridadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPrioridadActionPerformed
         // TODO add your handling code here:
@@ -621,7 +606,6 @@ vb.setVisible(true);       // La muestras        // TODO add your handling code 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Computador;
     private javax.swing.JComboBox<String> OpComputadora;
-    private javax.swing.JButton acBuffer;
     private javax.swing.JButton btnGrafico;
     private javax.swing.JButton cargarJson;
     private javax.swing.JComboBox<String> cbxPrioridad;

@@ -22,7 +22,6 @@ public class Nucleo {
     private final CPU cpu;
     private final MemoriaPrincipal ram;
     private PoliticaPlanificacion politica;
-    private final GestorBuffers gestorBuffers;
     private Cluster cluster;
 
     private final Cola colaNuevos;
@@ -36,13 +35,11 @@ public class Nucleo {
     private int ciclosEnCpu = 0;
 
     public Nucleo(int idComputador, CPU cpu, MemoriaPrincipal ram,
-                  PoliticaPlanificacion politica, GestorBuffers gestorBuffers) {
+                  PoliticaPlanificacion politica) {
         this.idComputador = idComputador;
         this.cpu = cpu;
         this.ram = ram;
         this.politica = politica;
-        this.gestorBuffers = gestorBuffers;
-
         this.colaNuevos = new Cola();
         this.colaListos = new Cola();
         this.colaBloqueados = new Cola();
@@ -65,7 +62,6 @@ public class Nucleo {
     public MemoriaPrincipal getRam() { return ram; }
     public PoliticaPlanificacion getPolitica() { return politica; }
     public void setPolitica(PoliticaPlanificacion politica) { this.politica = politica; }
-    public GestorBuffers getGestorBuffers() { return gestorBuffers; }
     public Cluster getCluster() { return cluster; }
     public void setCluster(Cluster cluster) { this.cluster = cluster; }
 
