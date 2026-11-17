@@ -13,6 +13,7 @@ public class Cluster {
     private final RelojGlobal reloj;
     private final GestorBuffers gestorBuffers; // Lo dejamos por ahora para no romper Computador
     private final ListaSimple computadores;
+ 
     
     // EL ARREGLO DEL LOG:
     private final Log logSistema = new Log(); 
@@ -37,6 +38,7 @@ public class Cluster {
             reloj.suscribir(c);
         }
     }
+    
 
     private static int[] ramIgualParaTodos(int n, int ram) {
         int[] r = new int[n];

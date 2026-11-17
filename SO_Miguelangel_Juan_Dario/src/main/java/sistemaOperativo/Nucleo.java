@@ -11,6 +11,7 @@ import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import planificacionSO.PoliticaPlanificacion;
 
+
 /**
  *
  * @author Miguel
@@ -207,17 +208,15 @@ public class Nucleo {
         if (victima == null) return false;
         colaBloqueados.eliminar(victima);
 
-        victima.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
+         victima.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
         victima.setEnSwap(true);
 
-        cluster.registrarEvento("Ciclo " + ciclo + ": suspendiendo a "
-                + victima.getNombre() + " para admitir a "
-                + nuevoProceso.getNombre());
+        cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando suspensión de "
+                + victima.getNombre() + " para admitir a " + nuevoProceso.getNombre());
 
         // TODO (Juan/Darío): crear SolicitudES(SUSPENDER) y encolarla.
         // Por ahora, simulación inmediata:
-        ram.liberar(victima.getMemoria());
-        colaBloqueadosSusp.encolar(victima);
+         SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, -1, victima.getMemoria(), ciclo);
         return true;
     }
 
@@ -225,42 +224,62 @@ public class Nucleo {
         int n = colaListosSusp.getTamano();
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaListosSusp.desencolar();
+            
             if (ram.hayEspacio(p.getMemoria())) {
-                // TODO (Juan/Darío): crear SolicitudES(REACTIVAR).
-                // Por ahora, simulación inmediata:
-                ram.asignar(p.getMemoria());
-                p.setEstado(EstadoProceso.LISTO);
-                p.setEnSwap(false);
-                colaListos.encolar(p);
-                cluster.registrarEvento("Ciclo " + ciclo
-                        + ": proceso " + p.getNombre() + " reactivado.");
-            } else {
-                colaListosSusp.encolar(p);
+                // CORRECCIÓN AQUÍ (5 parámetros):
+                SolicitudES solicitud = new SolicitudES(p, TipoOperacionES.REACTIVAR, -1, p.getMemoria(), ciclo);
+                
+                // cluster.getDisco().encolarSolicitud(solicitud);
+                
+                cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando reactivación de " + p.getNombre());
+                colaListosSusp.encolar(p); 
             }
         }
     }
 
+    public void despertar(PCB p) {
+        p.setEstado(EstadoProceso.LISTO);
+        p.setMotivoBloqueo(null);
+        colaBloqueados.eliminar(p);
+        colaListos.encolar(p);
+        if (cluster != null) {
+            cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + 
+                ": Proceso " + p.getNombre() + " DESPERTÓ y pasó a Listos.");
+        }
+    }
+    
     /**
      * Llamado por el Disco (Juan/Darío) al terminar una SolicitudES.
      * Distingue si el proceso estaba o no suspendido.
      */
-    public void alTerminarES(SolicitudES s) {
-        PCB p = s.getPcb();
-        // TODO (Darío): sistemaArchivos.aplicarOperacion(s);
-
-        if (p.isEnSwap()) {
-            colaBloqueadosSusp.eliminar(p);
-            p.setEstado(EstadoProceso.LISTO_SUSPENDIDO);
-            p.setMotivoBloqueo(null);
-            colaListosSusp.encolar(p);
-        } else {
-            colaBloqueados.eliminar(p);
+     public void alTerminarES(SolicitudES s) {
+         PCB p = s.getPcb();
+        
+        if (s.getOperacion() == TipoOperacionES.SUSPENDER) {
+            ram.liberar(p.getMemoria());
+            p.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
+            colaBloqueadosSusp.encolar(p);
+            cluster.registrarEvento("Ciclo " + s.getCicloLlegada() + ": " + p.getNombre() + " suspendido en Disco (swap).");
+            
+        } else if (s.getOperacion() == TipoOperacionES.REACTIVAR) {
+            ram.asignar(p.getMemoria()); 
             p.setEstado(EstadoProceso.LISTO);
-            p.setMotivoBloqueo(null);
+            p.setEnSwap(false);
             colaListos.encolar(p);
-        }
-    }
-
+            cluster.registrarEvento("Ciclo " + s.getCicloLlegada() + ": " + p.getNombre() + " reactivado a RAM.");
+            
+        } else {
+            // LEER / ESCRIBIR (Para Darío)
+            // TODO: sistemaArchivos.aplicarOperacion(s);
+            
+            if (p.getEstado() == EstadoProceso.BLOQUEADO) {
+                despertar(p); 
+            } 
+            
+        } 
+        
+    } 
+     
     // ---------- Paso 4: planificación CPU ----------
     private void planificar(int ciclo) {
         if (!cpu.estaLibre()) {

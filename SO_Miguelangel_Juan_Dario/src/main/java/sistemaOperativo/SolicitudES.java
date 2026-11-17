@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package sistemaOperativo;
 
 import losEnums.TipoOperacionES;
@@ -16,6 +12,11 @@ public class SolicitudES {
     private final int bloquesRequeridos;
     private final int cicloLlegada;
 
+    
+     private String ruta; 
+    private int bloque;
+    
+    
     public SolicitudES(PCB pcb, TipoOperacionES operacion, int bloqueDestino, int bloquesRequeridos, int cicloLlegada) {
         this.pcb = pcb;
         this.operacion = operacion;
