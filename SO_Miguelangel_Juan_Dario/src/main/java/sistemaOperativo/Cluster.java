@@ -11,7 +11,7 @@ import estructuraDeDatos.ListaSimple;
  */
 public class Cluster {
     private final RelojGlobal reloj;
-    private final GestorBuffers gestorBuffers; // Lo dejamos por ahora para no romper Computador
+    
     private final ListaSimple computadores;
  
     
@@ -26,13 +26,12 @@ public class Cluster {
 
     /** Constructor con RAM distinta por computador. */
     public Cluster(int[] ramsPorComputador, int duracionCicloMs) {
-        this.computadores = new ListaSimple();
-        this.gestorBuffers = new GestorBuffers();
+           this.computadores = new ListaSimple();
         this.reloj = new RelojGlobal(duracionCicloMs);
 
         for (int i = 0; i < ramsPorComputador.length; i++) {
-            Computador c = new Computador(i + 1, ramsPorComputador[i],
-                                          new FCFS(), gestorBuffers);
+            // Ya sin gestorBuffers
+            Computador c = new Computador(i + 1, ramsPorComputador[i], new FCFS());
             c.getNucleo().setCluster(this);
             computadores.insertFinale(c);
             reloj.suscribir(c);
@@ -74,7 +73,7 @@ public class Cluster {
     }
 
     public RelojGlobal getReloj() { return reloj; }
-    public GestorBuffers getGestorBuffers() { return gestorBuffers; }
+ 
 
     // ---------- Control ----------
 
