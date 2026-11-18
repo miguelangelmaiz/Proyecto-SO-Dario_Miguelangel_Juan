@@ -3,6 +3,8 @@ package hardware;
 import sistemaOperativo.SolicitudES;
 import estructuraDeDatos.Cola;
 import planificacionSO.PoliticaFIFO;
+import planificacionSO.PoliticaDisco;
+import sistemaOperativo.Cluster;
 
 /**
  *
@@ -17,31 +19,40 @@ public class Disco implements ComponenteReloj {
     private SolicitudES solicitudActual = null;
     private int bloquesRestantes = 0;
     public int desplazamientoTotal = 0;
+    
+    private Cluster cluster;
+    private PoliticaDisco politica = new PoliticaFIFO(); // Por defecto FIFO
+
+    public void setCluster(Cluster cluster) { this.cluster = cluster; }
+    public void setPolitica(PoliticaDisco p) { this.politica = p; }
 
     public void encolarSolicitud(SolicitudES s) {
         colaES.encolar(s);
     }
 
-   @Override
-     public void tic(int ciclo) {
+    @Override
+    public void tic(int ciclo) {
         // 1. SI ESTÁ TRANSFIRIENDO, SE QUEDA QUIETO
         if (bloquesRestantes > 0) {
             bloquesRestantes--;
             if (bloquesRestantes == 0) {
-                System.out.println("   -> Terminó transferencia en bloque " + cabezal);
-                solicitudActual = null; // Queda libre para la siguiente
+                // AQUÍ AVISAMOS AL NÚCLEO QUE TERMINÓ
+                if (cluster != null) {
+                    cluster.getComputador(0).getNucleo().alTerminarES(solicitudActual);
+                }
+                solicitudActual = null; 
             }
-            return; // IMPORTANTE: No se mueve en este ciclo, ya está en el destino
+            return; 
         }
 
-        // 2. SI NO TIENE SOLICITUD, PIDE UNA A LA COLA
+        // 2. SI NO TIENE SOLICITUD, PIDE UNA A LA COLA USANDO LA POLÍTICA
         if (solicitudActual == null) {
-            solicitudActual = (SolicitudES) colaES.verFrente();
+            solicitudActual = politica.elegir(colaES, cabezal);
             if (solicitudActual != null) {
-                colaES.desencolar();
-                System.out.println("   -> Atendiendo solicitud destino: " + solicitudActual.getBloqueDestino());
+                colaES.eliminar(solicitudActual); // Lo sacamos de la cola
+                System.out.println("   -> Disco atiende solicitud destino: " + solicitudActual.getBloqueDestino());
             } else {
-                return; // Disco ocioso, no hay nada que hacer
+                return; 
             }
         }
 
@@ -57,14 +68,12 @@ public class Disco implements ComponenteReloj {
             desplazamientoTotal += mover;
         }
 
-        // 4. SI YA LLEGÓ AL DESTINO, EMPIEZA A TRANSFERIR (en el siguiente ciclo)
+        // 4. SI YA LLEGÓ AL DESTINO, EMPIEZA A TRANSFERIR
         if (cabezal == destino) {
             bloquesRestantes = solicitudActual.getBloquesRequeridos();
-            System.out.println("   -> Llegó al bloque " + destino + ". Iniciando transferencia.");
         }
     }
     
-
     public int getCabezal() { return cabezal; }
     
 }

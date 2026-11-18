@@ -8,9 +8,10 @@ package planificacionSO;
 import estructuraDeDatos.Cola;
 import sistemaOperativo.SolicitudES;
 
-public class PoliticaFIFO {
+public class PoliticaFIFO implements PoliticaDisco {
       // Este método recibe la cola y devuelve cuál es la siguiente solicitud a atender
-    public SolicitudES elegir(Cola colaES) {
-        // Simplemente sacamos la primera de la cola
-        return (SolicitudES) colaES.verFrente(); }
-}
+     @Override
+    public SolicitudES elegir(Cola colaES, int cabezalActual) {
+        // FIFO simplemente atiende al primero que llegó
+        return (SolicitudES) colaES.verFrente();
+    }}

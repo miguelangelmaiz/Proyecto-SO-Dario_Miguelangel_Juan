@@ -5,6 +5,7 @@ import hardware.RelojGlobal;
 import planificacionSO.FCFS;
 import planificacionSO.PoliticaPlanificacion;
 import estructuraDeDatos.ListaSimple;
+import hardware.Disco;
 /**
  *
  * @author Miguel
@@ -17,7 +18,7 @@ public class Cluster {
     
     // EL ARREGLO DEL LOG:
     private final Log logSistema = new Log(); 
-    
+    private final Disco disco; // <--- NUEVO
     private Thread hiloReloj;
 
     public Cluster(int numComputadores, int ramPorComputador, int duracionCicloMs) {
@@ -28,6 +29,9 @@ public class Cluster {
     public Cluster(int[] ramsPorComputador, int duracionCicloMs) {
            this.computadores = new ListaSimple();
         this.reloj = new RelojGlobal(duracionCicloMs);
+        this.disco = new Disco();
+        this.disco.setCluster(this); // Para que el disco pueda avisarle al núcleo
+        this.reloj.suscribir(this.disco); // El disco ahora late con el reloj
 
         for (int i = 0; i < ramsPorComputador.length; i++) {
             // Ya sin gestorBuffers
@@ -49,6 +53,7 @@ public class Cluster {
     }
 
     // ---------- Getters ----------
+    public Disco getDisco() { return disco; }
 
     public int getCantidad() {
         return computadores.getSize();

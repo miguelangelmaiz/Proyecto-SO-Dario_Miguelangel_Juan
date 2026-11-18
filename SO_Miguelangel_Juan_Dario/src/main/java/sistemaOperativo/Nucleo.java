@@ -177,17 +177,18 @@ public class Nucleo {
 
     // ---------- Paso 3: admisión + planificador a mediano plazo ----------
     private void admitirSiHayMemoria(int ciclo) {
-        PCB p = (PCB) colaNuevos.verFrente();
-        while (p != null) {
-            if (ram.hayEspacio(p.getMemoria())) {
-                colaNuevos.desencolar();
-                ram.asignar(p.getMemoria());
-                p.setEstado(EstadoProceso.LISTO);
-                colaListos.encolar(p);
-            } else {
-                if (!hacerEspacio(p, ciclo)) break;
-            }
-            p = (PCB) colaNuevos.verFrente();
+         PCB p = (PCB) colaNuevos.verFrente();
+        if (p == null) return;
+
+        if (ram.hayEspacio(p.getMemoria())) {
+            colaNuevos.desencolar();
+            ram.asignar(p.getMemoria());
+            p.setEstado(EstadoProceso.LISTO);
+            colaListos.encolar(p);
+        } else {
+            // Si no cabe, intenta hacer espacio. 
+            // Retorna y espera al siguiente ciclo (el disco tardará en suspender)
+            hacerEspacio(p, ciclo); 
         }
     }
 
@@ -195,7 +196,7 @@ public class Nucleo {
      * Criterio justificado para la defensa: el proceso bloqueado
      * que lleva MÁS tiempo bloqueado (mayor ciclosBloqueado).
      */
-    private boolean hacerEspacio(PCB nuevoProceso, int ciclo) {
+              private boolean hacerEspacio(PCB nuevoProceso, int ciclo) {
         if (colaBloqueados.estaVacia()) return false;
 
         Criterio masTiempoBloqueado = (a, b) ->
@@ -205,31 +206,30 @@ public class Nucleo {
         if (victima == null) return false;
         colaBloqueados.eliminar(victima);
 
-         victima.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
-        victima.setEnSwap(true);
+        victima.setEnSwap(true); // CLAVE: Lo marcamos para que LEER sepa que está en trámite
 
         cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando suspensión de "
                 + victima.getNombre() + " para admitir a " + nuevoProceso.getNombre());
 
-        // TODO (Juan/Darío): crear SolicitudES(SUSPENDER) y encolarla.
-        // Por ahora, simulación inmediata:
-         SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, -1, victima.getMemoria(), ciclo);
-        return true;
+        SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, -1, victima.getMemoria(), ciclo);
+        cluster.getDisco().encolarSolicitud(solicitud);
+        
+        return false; 
     }
-
-    private void reactivar(int ciclo) {
+        private void reactivar(int ciclo) {
         int n = colaListosSusp.getTamano();
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaListosSusp.desencolar();
             
             if (ram.hayEspacio(p.getMemoria())) {
-                // CORRECCIÓN AQUÍ (5 parámetros):
+                // ENVIAMOS LA SOLICITUD AL DISCO REAL
                 SolicitudES solicitud = new SolicitudES(p, TipoOperacionES.REACTIVAR, -1, p.getMemoria(), ciclo);
-                
-                // cluster.getDisco().encolarSolicitud(solicitud);
+                cluster.getDisco().encolarSolicitud(solicitud);
                 
                 cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando reactivación de " + p.getNombre());
-                colaListosSusp.encolar(p); 
+                // No lo volvemos a encolar en Listos/Susp, el disco lo pasará a Listos cuando termine
+            } else {
+                colaListosSusp.encolar(p); // Se queda ahí si no hay RAM
             }
         }
     }
@@ -249,14 +249,19 @@ public class Nucleo {
      * Llamado por el Disco (Juan/Darío) al terminar una SolicitudES.
      * Distingue si el proceso estaba o no suspendido.
      */
-     public void alTerminarES(SolicitudES s) {
+               public void alTerminarES(SolicitudES s) {
          PCB p = s.getPcb();
         
         if (s.getOperacion() == TipoOperacionES.SUSPENDER) {
             ram.liberar(p.getMemoria());
-            p.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
-            colaBloqueadosSusp.encolar(p);
-            cluster.registrarEvento("Ciclo " + s.getCicloLlegada() + ": " + p.getNombre() + " suspendido en Disco (swap).");
+            
+            // Si el proceso YA había terminado su E/S, ya se fue a Listos/Susp. No lo duplicamos.
+            if (p.getEstado() != EstadoProceso.LISTO_SUSPENDIDO) {
+                p.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
+                colaBloqueadosSusp.encolar(p);
+            }
+           // En alTerminarES, cambia esto:
+cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " suspendido en Disco (Swap).");
             
         } else if (s.getOperacion() == TipoOperacionES.REACTIVAR) {
             ram.asignar(p.getMemoria()); 
@@ -266,16 +271,20 @@ public class Nucleo {
             cluster.registrarEvento("Ciclo " + s.getCicloLlegada() + ": " + p.getNombre() + " reactivado a RAM.");
             
         } else {
-            // LEER / ESCRIBIR (Para Darío)
-            // TODO: sistemaArchivos.aplicarOperacion(s);
-            
-            if (p.getEstado() == EstadoProceso.BLOQUEADO) {
+            // LEER / ESCRIBIR
+            if (p.isEnSwap()) {
+                // Por si acaso ya estaba en Bloq/Susp y terminó su E/S, lo sacamos de ahí
+                colaBloqueadosSusp.eliminar(p); 
+                
+                p.setEstado(EstadoProceso.LISTO_SUSPENDIDO);
+                p.setMotivoBloqueo(null);
+                colaListosSusp.encolar(p);
+                cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " terminó E/S estando suspendido. Pasa a Listo/Susp.");
+            } else {
                 despertar(p); 
-            } 
-            
+            }
         } 
-        
-    } 
+    }  
      
     // ---------- Paso 4: planificación CPU ----------
     private void planificar(int ciclo) {
@@ -327,21 +336,26 @@ public class Nucleo {
         }
     }
 
-    private void ejecutarIOBound(PCB p, int ciclo) {
+            private void ejecutarIOBound(PCB p, int ciclo) {
         if (p.getOperacion() == null) {
             p.ejecutarInstruccion();
             return;
         }
 
-        // Esta instrucción es una syscall: corregir contadores y modo
+        // ¡ESTA LÍNEA FALTABA! El proceso consume 1 instrucción al pedir E/S
+        p.ejecutarInstruccion();
+        
+        // Si con esa instrucción ya terminó, no lo bloqueamos, lo dejamos morir
+        if (p.estaTerminado()) {
+            return;
+        }
+
         cpu.registrarOperacionSistema();
         cpu.entrarModoSistema();
         try {
-            int bloqueFalso = 50; // TODO (Darío): SistemaArchivos dará el bloque real
-            SolicitudES solicitud = new SolicitudES(
-                    p, p.getOperacion(), bloqueFalso, 1, ciclo);
-
-            // TODO (Juan/Darío): cluster.getDisco().encolarSolicitud(solicitud);
+            int bloqueFalso = 50; 
+            SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueFalso, 1, ciclo);
+            cluster.getDisco().encolarSolicitud(solicitud); 
 
             cluster.registrarEvento("Ciclo " + ciclo + ": " + p.getNombre()
                     + " solicitó " + p.getOperacion()
