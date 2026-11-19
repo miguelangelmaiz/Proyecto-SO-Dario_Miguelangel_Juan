@@ -20,15 +20,18 @@ import sistemaOperativo.configuracion;
 import sistemaOperativo.Cluster;
 
 
-
 public class Interfaz extends javax.swing.JFrame {
-     
+  
  private int ultimaVersionLog = -1;
    public sistemaOperativo.Cluster cluster;
-    
+   private gui.PanelArbolFS panelArbolFS;
 
     public Interfaz() {
          initComponents();
+         
+        panelArbolFS = new gui.PanelArbolFS(); // Crea el JTree
+        tabbedPanePrincipal.addTab("Sistema de Archivos", panelArbolFS); // Pone el JTree en la pestaña
+        
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 9999, 1));
         spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 9999, 1));
@@ -46,7 +49,6 @@ public class Interfaz extends javax.swing.JFrame {
         jProgressBar1.setStringPainted(true);
         jProgressBar1.setString("RAM: 0 / 2048");
 
-        
 
         // 2. CONFIGURAR EL SPINNER DE VELOCIDAD
         jSpinner1.setModel(new javax.swing.SpinnerNumberModel(500, 50, 5000, 50));
@@ -113,11 +115,13 @@ public class Interfaz extends javax.swing.JFrame {
                 }
                 ultimaVersionLog = versionActual;
             }
+            if (cluster != null && cluster.getSistemaArchivos() != null) {
+                panelArbolFS.actualizarArbol(cluster.getSistemaArchivos().getSnapshotArbol());
+            }
         }); 
         
         timer.start();
     }
-    
     
     
 
@@ -402,78 +406,14 @@ public class Interfaz extends javax.swing.JFrame {
             jButton2.setEnabled(false);
         }
     }//GEN-LAST:event_jButton2ActionPerformed
-
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-         if (cluster == null) return;
-       
-String seleccion = (String) jComboBox1.getSelectedItem();
-int q = (int) spnQuantum.getValue();
-cluster.getComputador(0).setPolitica(FabricaPoliticas.crear(seleccion, q));
-        
-       
-    }//GEN-LAST:event_jComboBox1ActionPerformed
    
     
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-          try {
-            // La GUI solo lee los widgets y delega TODO a la fábrica.
-            // (Los últimos 2 parámetros son "LEER" y la ruta, que Darío conectará al JTree luego).
-            sistemaOperativo.Resultado r = sistemaOperativo.ProcesoESFactory.crear(
-                    cluster,
-                    txtNombre.getText(),
-                    cbxTipoProceso.getSelectedItem().toString(),
-                    cbxPrioridad.getSelectedItem().toString(),
-                    (int) spnMemoria.getValue(),
-                    (int) spnDeadline.getValue(),
-                    (int) spnInstrucciones.getValue(),
-                    "LEER",                       
-                    "/sistema/archivo.txt");      
-
-            // Mostrar el resultado
-            if (!r.isOk()) {
-                javax.swing.JOptionPane.showMessageDialog(this,
-                        "Rechazado: " + r.getMotivo(),
-                        "No admitido",
-                        javax.swing.JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso creado!");
-            txtNombre.setText("");
-
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error inesperado: " + e.getMessage());
-        }
-        
-                
-
-            
-
-
-    }//GEN-LAST:event_jButton3ActionPerformed
-
-    private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtNombreActionPerformed
-
-    private void cbxTipoProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTipoProcesoActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cbxTipoProcesoActionPerformed
-
-    private void OpComputadoraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpComputadoraActionPerformed
-        
-    }//GEN-LAST:event_OpComputadoraActionPerformed
-
     private void btnGraficoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGraficoActionPerformed
 
         VentanaGrafico vg = new VentanaGrafico();
         vg.cluster = this.cluster;        
         vg.setVisible(true);   // TODO add your handling code here:
     }//GEN-LAST:event_btnGraficoActionPerformed
-
-    private void cbxPrioridadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPrioridadActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cbxPrioridadActionPerformed
 
     private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
            try {
@@ -590,16 +530,74 @@ cluster.getComputador(0).setPolitica(FabricaPoliticas.crear(seleccion, q));
     }//GEN-LAST:event_cargarJsonActionPerformed
 
     private void spnQuantumStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnQuantumStateChanged
-      if (cluster == null) return;
+        if (cluster == null) return;
         int q = (int) spnQuantum.getValue();
-        
+
         // Actualiza el Computador 1 si está en Round Robin
         if (jComboBox1.getSelectedItem().toString().equals("Round Robin")) {
             cluster.getComputador(0).setPolitica(new planificacionSO.RoundRobin(q));
         }
         // Actualiza el Computador 2 si está en Round Robin
-         // TODO add your handling code here:
+        // TODO add your handling code here:
     }//GEN-LAST:event_spnQuantumStateChanged
+
+    private void cbxPrioridadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPrioridadActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxPrioridadActionPerformed
+
+    private void OpComputadoraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpComputadoraActionPerformed
+
+    }//GEN-LAST:event_OpComputadoraActionPerformed
+
+    private void cbxTipoProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTipoProcesoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxTipoProcesoActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        try {
+            // La GUI solo lee los widgets y delega TODO a la fábrica.
+            // (Los últimos 2 parámetros son "LEER" y la ruta, que Darío conectará al JTree luego).
+            sistemaOperativo.Resultado r = sistemaOperativo.ProcesoESFactory.crear(
+                cluster,
+                txtNombre.getText(),
+                cbxTipoProceso.getSelectedItem().toString(),
+                cbxPrioridad.getSelectedItem().toString(),
+                (int) spnMemoria.getValue(),
+                (int) spnDeadline.getValue(),
+                (int) spnInstrucciones.getValue(),
+                "LEER",
+                "/sistema/archivo.txt");
+
+            // Mostrar el resultado
+            if (!r.isOk()) {
+                javax.swing.JOptionPane.showMessageDialog(this,
+                    "Rechazado: " + r.getMotivo(),
+                    "No admitido",
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso creado!");
+            txtNombre.setText("");
+
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error inesperado: " + e.getMessage());
+        }
+
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtNombreActionPerformed
+
+    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+        if (cluster == null) return;
+
+        String seleccion = (String) jComboBox1.getSelectedItem();
+        int q = (int) spnQuantum.getValue();
+        cluster.getComputador(0).setPolitica(FabricaPoliticas.crear(seleccion, q));
+
+    }//GEN-LAST:event_jComboBox1ActionPerformed
 
    
 

@@ -6,8 +6,11 @@ package losEnums;
  * @author Miguel
  */
 public enum TipoOperacionES {
-     LEER,
+    LEER,
     ESCRIBIR,
     SUSPENDER,
-    REACTIVAR
+    REACTIVAR,
+    CREAR, 
+    ELIMINAR, 
+    ACTUALIZAR,
 }

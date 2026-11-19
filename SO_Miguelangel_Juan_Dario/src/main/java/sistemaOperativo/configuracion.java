@@ -5,6 +5,7 @@ package sistemaOperativo;
  *
  * @author jmmor
  */
+
 public class configuracion {
 
    public static class GlobalConfig {
@@ -30,6 +31,7 @@ public class configuracion {
         public String operation;
         public int fileSizeBlocks;
     }
+    public sistemaArchivo.FileSystemConfig fileSystem;
 }
     
     
