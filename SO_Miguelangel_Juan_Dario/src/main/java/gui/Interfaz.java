@@ -17,40 +17,41 @@ import com.google.gson.Gson;
 import java.io.FileReader;
 import java.io.FileWriter;
 import sistemaOperativo.configuracion;
-import sistemaOperativo.Cluster;
 
 
 public class Interfaz extends javax.swing.JFrame {
-  
- private int ultimaVersionLog = -1;
-   public sistemaOperativo.Cluster cluster;
-   private gui.PanelArbolFS panelArbolFS;
+   private int ultimaVersionLog = -1;
+    public sistemaOperativo.Cluster cluster;
+    private gui.PanelArbolFS panelArbolFS;
+    private javax.swing.JLabel[] bloquesVisuales = new javax.swing.JLabel[200];
+    private boolean fsCargado = false;
+    private boolean procesosCargados = false; //crea la lógica para que se habilite solo cuando el usuario cargue los dos JSON.
 
     public Interfaz() {
-         initComponents();
+        initComponents();
          
-        panelArbolFS = new gui.PanelArbolFS(); // Crea el JTree
-        tabbedPanePrincipal.addTab("Sistema de Archivos", panelArbolFS); // Pone el JTree en la pestaña
+        // 1. CONFIGURACIÓN INICIAL Y PANELES
+        panelArbolFS = new gui.PanelArbolFS(); 
+        Tab.addTab("Sistema de Archivos", panelArbolFS); 
         
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 9999, 1));
         spnInstrucciones.setModel(new javax.swing.SpinnerNumberModel(1, 1, 9999, 1));
         spnQuantum.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         
-        jButton2.setEnabled(false); // PAUSAR deshabilitado al inicio
-        
-        // 1. CREAR EL CLUSTER
+        jButton2.setEnabled(false); // PAUSAR deshabilitado
+        jButton1.setEnabled(false); // INICIAR deshabilitado hasta cargar JSONs
+
+        // 2. CREAR EL CLUSTER
         cluster = new sistemaOperativo.Cluster(1, 2048, 500);
         OpComputadora.removeAllItems();
         OpComputadora.addItem("Computadora 1");
       
-        // ARREGLO VISUAL DE LAS BARRAS DE RAM
+        // 3. CONFIGURAR BARRAS Y SPINNERS
         jProgressBar1.setMaximum(2048); 
         jProgressBar1.setStringPainted(true);
         jProgressBar1.setString("RAM: 0 / 2048");
 
-
-        // 2. CONFIGURAR EL SPINNER DE VELOCIDAD
         jSpinner1.setModel(new javax.swing.SpinnerNumberModel(500, 50, 5000, 50));
         jSpinner1.addChangeListener((e) -> {
             if (cluster != null) {
@@ -60,16 +61,30 @@ public class Interfaz extends javax.swing.JFrame {
             }
         });
 
-        // 3. EL TIMER QUE ACTUALIZA LA PANTALLA
+        // 4. CREAR LOS 200 BLOQUES DEL DISCO
+        jPanel3.setLayout(new java.awt.GridLayout(10, 20, 1, 1)); 
+        for (int i = 0; i < 200; i++) {
+            javax.swing.JLabel bloque = new javax.swing.JLabel(String.valueOf(i));
+            bloque.setOpaque(true);
+            bloque.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            bloque.setBackground(java.awt.Color.WHITE);
+            bloque.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));
+            bloque.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 10));
+            
+            bloquesVisuales[i] = bloque;
+            jPanel3.add(bloque);
+        }
+        
+        
+        
+        // 5. EL TIMER (Actualiza la interfaz cada 100ms)
         javax.swing.Timer timer = new javax.swing.Timer(100, (e) -> {
             if (cluster == null || cluster.getCantidad() == 0) return;
 
-            // Obtenemos el único núcleo del sistema
             sistemaOperativo.Nucleo nucleo = cluster.getComputador(0).getNucleo();
 
+            // --- A. ACTUALIZAR CICLO Y CPU ---
             jLabel1.setText("Ciclo Global: " + cluster.getReloj().getCiclo());
-
-            // --- CPU ---
             sistemaOperativo.PCB enCpu = nucleo.getCpu().getProcesoActual();
             int ramUsada = nucleo.getRam().getUsada();
             
@@ -78,12 +93,7 @@ public class Interfaz extends javax.swing.JFrame {
                 jLabel4.setText("PC: " + enCpu.getPc() + " / Deadline: " + enCpu.getDeadline() + " / Prio: " + enCpu.getPrioridad());
                 String modoActual = nucleo.getCpu().getModo().toString();
                 jLabel5.setText("Modo: " + modoActual);
-                
-                if (modoActual.equals("SISTEMA")) {
-                    jLabel5.setForeground(java.awt.Color.RED);
-                } else {
-                    jLabel5.setForeground(java.awt.Color.BLACK);
-                }
+                jLabel5.setForeground(modoActual.equals("SISTEMA") ? java.awt.Color.RED : java.awt.Color.BLACK);
             } else {
                 jLabel3.setText("CPU: Libre");
                 jLabel4.setText("PC: 0 / Deadline: 0");
@@ -91,22 +101,20 @@ public class Interfaz extends javax.swing.JFrame {
                 jLabel5.setForeground(java.awt.Color.BLACK); 
             }
            
-            // --- RAM ---
+            // --- B. ACTUALIZAR RAM ---
             jProgressBar1.setValue(ramUsada);
             jProgressBar1.setString("RAM: " + ramUsada + " / 2048");
 
-            // --- LAS COLAS DEL COMPUTADOR ---
-            // Nota: Si renombraste jTextArea1 a txtColaNuevos, usa ese nombre aquí.
+            // --- C. ACTUALIZAR COLAS ---
             txtColaNuevos.setText("Nuevos: " + nucleo.getColaNuevos().getNombresProcesos() +
                                "\nListos: " + nucleo.getColaListos().getNombresProcesos() +
                                "\nBloqueados: " + nucleo.getColaBloqueados().getNombresProcesos() +
                                "\nTerminados: " + nucleo.getTerminados().getNombresProcesos());
             
-            // NUEVAS COLAS DEL PROYECTO 2 (Suspensión)
             txtColaListosSusp.setText("Listos/Susp: " + nucleo.getColaListosSusp().getNombresProcesos());
             txtColaBloqSusp.setText("Bloq/Susp: " + nucleo.getColaBloqueadosSusp().getNombresProcesos());
 
-            // --- LOG DE EVENTOS ---
+            // --- D. ACTUALIZAR LOG ---
             int versionActual = cluster.getVersionLog();
             if (versionActual != ultimaVersionLog) {
                 txtLog.setText(cluster.getLogEventos());
@@ -115,13 +123,41 @@ public class Interfaz extends javax.swing.JFrame {
                 }
                 ultimaVersionLog = versionActual;
             }
-            if (cluster != null && cluster.getSistemaArchivos() != null) {
+
+            
+            
+            // --- E. ACTUALIZAR ÁRBOL DE ARCHIVOS ---
+            if (cluster.getSistemaArchivos() != null) {
                 panelArbolFS.actualizarArbol(cluster.getSistemaArchivos().getSnapshotArbol());
             }
+             
+            // --- F. PINTAR EL DISCO ---
+            if (cluster.getDisco() != null) {
+                int cabezalActual = cluster.getDisco().getCabezal();
+                for (int i = 0; i < 200; i++) {
+                    if (i == cabezalActual) {
+                        bloquesVisuales[i].setBackground(java.awt.Color.RED);
+                        bloquesVisuales[i].setForeground(java.awt.Color.WHITE);
+                    } else {
+                        bloquesVisuales[i].setBackground(java.awt.Color.WHITE);
+                        bloquesVisuales[i].setForeground(java.awt.Color.BLACK);
+                    }
+                }
+            } 
+            
+            
         }); 
         
         timer.start();
     }
+    
+  private void verificarInicio(){
+      if(fsCargado && procesosCargados){
+        jButton1.setEnabled(true);
+        javax.swing.JOptionPane.showMessageDialog(this, "Archivos Cargados!!!, ya puedes iniciar la simulación");
+      
+      }
+  } 
     
     
 
@@ -135,7 +171,7 @@ public class Interfaz extends javax.swing.JFrame {
         jSpinner1 = new javax.swing.JSpinner();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
-        tabbedPanePrincipal = new javax.swing.JTabbedPane();
+        Tab = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         Computador = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -167,13 +203,14 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel15 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
         spnQuantum = new javax.swing.JSpinner();
+        jPanel3 = new javax.swing.JPanel();
         btnGrafico = new javax.swing.JButton();
         guardarJson = new javax.swing.JButton();
         cargarJson = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtLog = new javax.swing.JTextArea();
-        jButton4 = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -340,9 +377,12 @@ public class Interfaz extends javax.swing.JFrame {
 
         jPanel2.add(crearProceso);
 
-        tabbedPanePrincipal.addTab("Simulación", jPanel2);
+        Tab.addTab("Simulación", jPanel2);
 
-        jPanel1.add(tabbedPanePrincipal, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 110, 1110, 500));
+        jPanel3.setLayout(new java.awt.GridLayout());
+        Tab.addTab("Disco", jPanel3);
+
+        jPanel1.add(Tab, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 110, 1110, 500));
 
         btnGrafico.setText("GRAFICOS");
         btnGrafico.addActionListener(new java.awt.event.ActionListener() {
@@ -376,13 +416,8 @@ public class Interfaz extends javax.swing.JFrame {
 
         jPanel1.add(jScrollPane4, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 20, 320, 120));
 
-        jButton4.setText("DISCO");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
-            }
-        });
-        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 30, -1, -1));
+        jPanel4.setLayout(new java.awt.GridLayout());
+        jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -529,6 +564,8 @@ public class Interfaz extends javax.swing.JFrame {
                     // Meterlo al núcleo
                     cluster.getComputador(0).getNucleo().admitir(p);
                 }
+                
+                
 
                 javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado con " + config.processes.length + " procesos reales!");
             }
@@ -604,10 +641,6 @@ public class Interfaz extends javax.swing.JFrame {
 
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton4ActionPerformed
-
     private void OpComputadoraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpComputadoraActionPerformed
 
     }//GEN-LAST:event_OpComputadoraActionPerformed
@@ -617,6 +650,7 @@ public class Interfaz extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Computador;
     private javax.swing.JComboBox<String> OpComputadora;
+    private javax.swing.JTabbedPane Tab;
     private javax.swing.JButton btnGrafico;
     private javax.swing.JButton cargarJson;
     private javax.swing.JComboBox<String> cbxPrioridad;
@@ -626,7 +660,6 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -643,6 +676,8 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -654,7 +689,6 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JSpinner spnInstrucciones;
     private javax.swing.JSpinner spnMemoria;
     private javax.swing.JSpinner spnQuantum;
-    private javax.swing.JTabbedPane tabbedPanePrincipal;
     private javax.swing.JTextArea txtColaBloqSusp;
     private javax.swing.JTextArea txtColaListosSusp;
     private javax.swing.JTextArea txtColaNuevos;
