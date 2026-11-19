@@ -25,6 +25,10 @@ public class Disco implements ComponenteReloj {
 
     public void setCluster(Cluster cluster) { this.cluster = cluster; }
     public void setPolitica(PoliticaDisco p) { this.politica = p; }
+    
+    public int getDesplazamientoTotal() {
+        return desplazamientoTotal;
+    }
 
     public void encolarSolicitud(SolicitudES s) {
         colaES.encolar(s);
@@ -45,6 +49,7 @@ public class Disco implements ComponenteReloj {
             return; 
         }
 
+        
         // 2. SI NO TIENE SOLICITUD, PIDE UNA A LA COLA USANDO LA POLÍTICA
         if (solicitudActual == null) {
             solicitudActual = politica.elegir(colaES, cabezal);
@@ -72,6 +77,10 @@ public class Disco implements ComponenteReloj {
         if (cabezal == destino) {
             bloquesRestantes = solicitudActual.getBloquesRequeridos();
         }
+    }
+    
+    public planificacionSO.PoliticaDisco getPolitica() {
+        return this.politica;
     }
     
     public int getCabezal() { return cabezal; }

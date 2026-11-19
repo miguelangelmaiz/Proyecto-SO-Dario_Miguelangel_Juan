@@ -40,7 +40,7 @@ public class Interfaz extends javax.swing.JFrame {
         spnQuantum.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         
         jButton2.setEnabled(false); // PAUSAR deshabilitado
-        jButton1.setEnabled(false); // INICIAR deshabilitado hasta cargar JSONs
+        jButton1.setEnabled(true); // INICIAR deshabilitado hasta cargar JSONs
 
         // 2. CREAR EL CLUSTER
         cluster = new sistemaOperativo.Cluster(1, 2048, 500);
@@ -211,6 +211,7 @@ public class Interfaz extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         txtLog = new javax.swing.JTextArea();
         jPanel4 = new javax.swing.JPanel();
+        cbxPoliticaDisco = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -379,7 +380,7 @@ public class Interfaz extends javax.swing.JFrame {
 
         Tab.addTab("Simulación", jPanel2);
 
-        jPanel3.setLayout(new java.awt.GridLayout());
+        jPanel3.setLayout(new java.awt.GridLayout(1, 0));
         Tab.addTab("Disco", jPanel3);
 
         jPanel1.add(Tab, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 110, 1110, 500));
@@ -416,8 +417,16 @@ public class Interfaz extends javax.swing.JFrame {
 
         jPanel1.add(jScrollPane4, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 20, 320, 120));
 
-        jPanel4.setLayout(new java.awt.GridLayout());
+        jPanel4.setLayout(new java.awt.GridLayout(1, 0));
         jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
+
+        cbxPoliticaDisco.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FIFO", "SSTF", "SCAN", "CSCAN" }));
+        cbxPoliticaDisco.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxPoliticaDiscoActionPerformed(evt);
+            }
+        });
+        jPanel1.add(cbxPoliticaDisco, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 30, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -565,6 +574,11 @@ public class Interfaz extends javax.swing.JFrame {
                     cluster.getComputador(0).getNucleo().admitir(p);
                 }
                 
+                procesosCargados = true;
+                    verificarInicio();
+
+                fsCargado = true;
+                    verificarInicio();
                 
 
                 javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado con " + config.processes.length + " procesos reales!");
@@ -597,31 +611,26 @@ public class Interfaz extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         try {
-            // La GUI solo lee los widgets y delega TODO a la fábrica.
-            // (Los últimos 2 parámetros son "LEER" y la ruta, que Darío conectará al JTree luego).
+            // Como solo hay 1 computador, el índice siempre es 0
+            int indiceComp = 0; 
+            
             sistemaOperativo.Resultado r = sistemaOperativo.ProcesoESFactory.crear(
-                cluster,
-                txtNombre.getText(),
-                cbxTipoProceso.getSelectedItem().toString(),
-                cbxPrioridad.getSelectedItem().toString(),
-                (int) spnMemoria.getValue(),
-                (int) spnDeadline.getValue(),
-                (int) spnInstrucciones.getValue(),
-                "LEER",
-                "/sistema/archivo.txt");
+                    cluster,
+                    txtNombre.getText(),
+                    cbxTipoProceso.getSelectedItem().toString(),
+                    cbxPrioridad.getSelectedItem().toString(),
+                    (int) spnMemoria.getValue(),
+                    (int) spnDeadline.getValue(),
+                    (int) spnInstrucciones.getValue(),
+                    "LEER",                       
+                    "/sistema/archivo.txt");      
 
-            // Mostrar el resultado
             if (!r.isOk()) {
-                javax.swing.JOptionPane.showMessageDialog(this,
-                    "Rechazado: " + r.getMotivo(),
-                    "No admitido",
-                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                javax.swing.JOptionPane.showMessageDialog(this, "Rechazado: " + r.getMotivo());
                 return;
             }
-
             javax.swing.JOptionPane.showMessageDialog(this, "¡Proceso creado!");
             txtNombre.setText("");
-
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error inesperado: " + e.getMessage());
         }
@@ -645,6 +654,21 @@ public class Interfaz extends javax.swing.JFrame {
 
     }//GEN-LAST:event_OpComputadoraActionPerformed
 
+    private void cbxPoliticaDiscoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPoliticaDiscoActionPerformed
+       if (cluster == null || cluster.getDisco() == null) return;
+        
+        String seleccion = cbxPoliticaDisco.getSelectedItem().toString();
+        
+        switch (seleccion) {
+            case "FIFO": cluster.getDisco().setPolitica(new planificacionSO.PoliticaFIFO()); break;
+            case "SSTF": cluster.getDisco().setPolitica(new planificacionSO.PoliticaSSTF()); break;
+            case "SCAN": cluster.getDisco().setPolitica(new planificacionSO.PoliticaSCAN()); break;
+            case "C-SCAN": cluster.getDisco().setPolitica(new planificacionSO.PoliticaCSCAN()); break;
+        }
+        
+        cluster.registrarEvento("Política de disco cambiada a: " + seleccion); // TODO add your handling code here:
+    }//GEN-LAST:event_cbxPoliticaDiscoActionPerformed
+
    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -653,6 +677,7 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JTabbedPane Tab;
     private javax.swing.JButton btnGrafico;
     private javax.swing.JButton cargarJson;
+    private javax.swing.JComboBox<String> cbxPoliticaDisco;
     private javax.swing.JComboBox<String> cbxPrioridad;
     private javax.swing.JComboBox<String> cbxTipoProceso;
     private javax.swing.JPanel crearProceso;

@@ -11,17 +11,31 @@ public class PoliticaSCAN implements PoliticaDisco{
     public SolicitudES elegir(Cola colaES, int cabezalActual) {
         if (colaES.estaVacia()) return null;
 
-        // Buscamos la solicitud más cercana EN LA DIRECCIÓN ACTUAL
-        Criterio masCercanoArriba = (a, b) -> {
-            SolicitudES sa = (SolicitudES) a;
-            SolicitudES sb = (SolicitudES) b;
-            return sa.getBloqueDestino() < sb.getBloqueDestino();
-        };
+        SolicitudES mejor = null;
+        int distanciaMinima = Integer.MAX_VALUE;
 
-        // (Lógica simplificada para el proyecto: si hay alguna arriba, vamos a la más cercana.
-        // Si no, a la más alta)
-        // Nota: Aquí puedes usar el criterio de verMejor o iterar.
-        return null; // (Completa esto usando la lógica del PDF)
+        for (int i = 0; i < colaES.getTamano(); i++) {
+            SolicitudES s = (SolicitudES) colaES.desencolar();
+            // SCAN solo busca los que están ADELANTE (asumiendo que va subiendo)
+            if (s.getBloqueDestino() >= cabezalActual) {
+                int dist = s.getBloqueDestino() - cabezalActual;
+                if (dist < distanciaMinima) {
+                    distanciaMinima = dist;
+                    mejor = s;
+                }
+            }
+            colaES.encolar(s); // Lo devolvemos a la cola
+        }
+        
+        // Si no hay nadie adelante, va al final del disco (199)
+        if (mejor == null) return null; // (El Disco.java debe manejar el rebote)
+        
+        return mejor;
+    }
+    
+     @Override
+    public String getNombre() {
+        return "SCAN";
     }
     
 }
