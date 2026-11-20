@@ -163,4 +163,14 @@ public class SistemaArchivos {
             generarSnapshotRecursivo((NodoFS) hijos.getValue(i), prefijo + "  ", sb);
         }
     }
+    public NodoFS getRaiz() { return raiz; }
+
+public void inicializarDesdeJSON(FileSystemConfig config) {
+    for (FileSystemConfig.NodoFSDTO dto : config.nodos) {
+        NodoFS nuevo = new NodoFS(obtenerNombre(dto.ruta), dto.esDirectorio, dto.dueno);
+        nuevo.setBloqueInicio(dto.bloqueInicio);
+        nuevo.setCantidadBloques(dto.cantidadBloques);
+        insertarNodo(dto.ruta, nuevo);
+    }}
+    
 }

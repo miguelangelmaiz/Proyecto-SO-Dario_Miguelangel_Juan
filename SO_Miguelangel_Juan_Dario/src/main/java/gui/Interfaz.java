@@ -40,7 +40,7 @@ public class Interfaz extends javax.swing.JFrame {
         spnQuantum.setModel(new javax.swing.SpinnerNumberModel(1, 1, 1000, 1));
         
         jButton2.setEnabled(false); // PAUSAR deshabilitado
-        jButton1.setEnabled(true); // INICIAR deshabilitado hasta cargar JSONs
+        jButton1.setEnabled(false); // INICIAR deshabilitado hasta cargar JSONs
 
         // 2. CREAR EL CLUSTER
         cluster = new sistemaOperativo.Cluster(1, 2048, 500);
@@ -526,63 +526,81 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_guardarJsonActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
-        try {
-            javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
-            fileChooser.setDialogTitle("Cargar Escenario");
-            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
-
-            if (fileChooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
-                java.io.File archivo = fileChooser.getSelectedFile();
-                com.google.gson.Gson gson = new com.google.gson.Gson();
-                java.io.FileReader reader = new java.io.FileReader(archivo);
-                
-                // Leer el nuevo formato
-                sistemaOperativo.configuracion.GlobalConfig config = gson.fromJson(reader, sistemaOperativo.configuracion.GlobalConfig.class);
-                reader.close();
-
-                if (config == null || config.processes == null) return;
-
-                // 1. Aplicar configuración
-                if (config.cycleDurationMs > 0) {
-                    jSpinner1.setValue(config.cycleDurationMs);
-                }
-                
-                // 2. Cambiar política de CPU si viene en el JSON
-                if (config.computer != null && config.computer.policy != null) {
-                     cluster.getComputador(0).setPolitica(
-                         planificacionSO.FabricaPoliticas.crear(config.computer.policy, config.computer.quantum)
-                     );
-                }
-
-                // 3. CREAR LOS PROCESOS REALMENTE
-                for (sistemaOperativo.configuracion.ProcessDTO pDto : config.processes) {
-                    // Asumimos que el JSON trae tipos válidos (CPU_BOUND, IO_BOUND, etc.)
-                    losEnums.TipoProceso tipoProc = losEnums.TipoProceso.CPU_BOUND; // Por defecto
-                    try {
-                        if (pDto.operation != null) {
-                            tipoProc = losEnums.TipoProceso.valueOf(pDto.operation);
-                        }
-                    } catch(Exception e) {}
-
-                    // Crear el PCB
-                    sistemaOperativo.PCB p = new sistemaOperativo.PCB(
-                        pDto.name, tipoProc, sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
-                        pDto.memory, pDto.deadline, pDto.instructions, 1
-                    );
-                    
-                    // Meterlo al núcleo
-                    cluster.getComputador(0).getNucleo().admitir(p);
-                }
-                
-                procesosCargados = true;
-                    verificarInicio();
-
+         try {
+            // 1. PRIMERO: Cargar el JSON del Sistema de Archivos
+            javax.swing.JFileChooser chooserFS = new javax.swing.JFileChooser();
+            chooserFS.setDialogTitle("1. Selecciona el JSON del Sistema de Archivos");
+            if (chooserFS.showOpenDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
+            
+            java.io.File archivoFS = chooserFS.getSelectedFile();
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.io.FileReader readerFS = new java.io.FileReader(archivoFS);
+            
+            sistemaArchivo.FileSystemConfig configFS = gson.fromJson(readerFS, sistemaArchivo.FileSystemConfig.class);
+            readerFS.close();
+            
+            if (configFS != null && configFS.nodos != null) {
+                cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
                 fsCargado = true;
-                    verificarInicio();
-                
-
-                javax.swing.JOptionPane.showMessageDialog(this, "¡Escenario cargado con " + config.processes.length + " procesos reales!");
+                verificarInicio();
             }
+
+            // 2. SEGUNDO: Cargar el JSON de los Procesos
+            javax.swing.JFileChooser chooserProc = new javax.swing.JFileChooser();
+            chooserProc.setDialogTitle("2. Selecciona el JSON de Procesos");
+            if (chooserProc.showOpenDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
+            
+            java.io.File archivoProc = chooserProc.getSelectedFile();
+            java.io.FileReader readerProc = new java.io.FileReader(archivoProc);
+            
+            sistemaOperativo.configuracion.GlobalConfig config = gson.fromJson(readerProc, sistemaOperativo.configuracion.GlobalConfig.class);
+            readerProc.close();
+
+            if (config == null || config.processes == null) return;
+
+            if (config.cycleDurationMs > 0) jSpinner1.setValue(config.cycleDurationMs);
+            if (config.computer != null && config.computer.policy != null) {
+                 cluster.getComputador(0).setPolitica(planificacionSO.FabricaPoliticas.crear(config.computer.policy, config.computer.quantum));
+            }
+
+            for (sistemaOperativo.configuracion.ProcessDTO pDto : config.processes) {
+                // 1. SI TIENE UNA RUTA, ES UN PROCESO DE E/S (IO_BOUND). SI NO, ES CPU_BOUND.
+                losEnums.TipoProceso tipoProc = losEnums.TipoProceso.CPU_BOUND;
+                if (pDto.targetPath != null && !pDto.targetPath.trim().isEmpty()) {
+                    tipoProc = losEnums.TipoProceso.IO_BOUND;
+                }
+                
+                // 2. LEEMOS LA OPERACIÓN (LEER, CREAR, ELIMINAR, ETC)
+                losEnums.TipoOperacionES op = losEnums.TipoOperacionES.LEER;
+                try { 
+                    if (pDto.operation != null) {
+                        op = losEnums.TipoOperacionES.valueOf(pDto.operation); 
+                    }
+                } catch(Exception e) {
+                    System.out.println("Operación desconocida en JSON: " + pDto.operation + ". Se usará LEER por defecto.");
+                }
+
+                // 3. CREAMOS EL PROCESO CON SUS DATOS
+                sistemaOperativo.PCB p = new sistemaOperativo.PCB(
+                        pDto.name, 
+                        tipoProc, 
+                        sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
+                        pDto.memory, 
+                        pDto.deadline, 
+                        pDto.instructions, 
+                        1
+                );
+                p.setOperacion(op);
+                p.setRutaArchivo(pDto.targetPath != null ? pDto.targetPath : "/sistema/archivo.txt");
+                p.setBloques(pDto.fileSizeBlocks);
+                p.setDueno("admin");
+                
+                cluster.getComputador(0).getNucleo().admitir(p);
+            }
+            
+            procesosCargados = true;
+            verificarInicio();
+
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error al cargar: " + e.getMessage());
         }  
