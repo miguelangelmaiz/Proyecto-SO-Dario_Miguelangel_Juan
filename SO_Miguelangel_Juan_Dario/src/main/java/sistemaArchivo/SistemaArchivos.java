@@ -17,6 +17,21 @@ public class SistemaArchivos {
     public SistemaArchivos(int totalBloques) {
         this.raiz = new NodoFS("raiz", true, "admin");
         this.mapa = new MapaBloques(totalBloques);
+        
+        // --- FIX 2: Evitar el bucle infinito de "Archivo inválido" ---
+        // Creamos la carpeta "/sistema" y el archivo "archivo.txt" por defecto.
+        NodoFS carpetaSistema = new NodoFS("sistema", true, "admin");
+        raiz.getHijos().insertFinale(carpetaSistema);
+        
+        try {
+            int bloqueInicial = mapa.asignarCadena(1);
+            NodoFS archivoPorDefecto = new NodoFS("archivo.txt", false, "admin");
+            if (bloqueInicial != -1) {
+                archivoPorDefecto.setBloqueInicio(bloqueInicial);
+                archivoPorDefecto.setCantidadBloques(1);
+            }
+            carpetaSistema.getHijos().insertFinale(archivoPorDefecto);
+        } catch (Exception e) {}
     }
 
     public int primerBloqueReal(String ruta) {
@@ -33,7 +48,6 @@ public class SistemaArchivos {
         }
     }
 
-    // AHORA DEVUELVE String: null si todo bien, o el mensaje de error
     public String aplicarCRUD(TipoOperacionES op, String ruta, String usuario, boolean admin, int bloquesSolicitados) {
         try {
             mutex.acquire();
@@ -82,7 +96,7 @@ public class SistemaArchivos {
     }
 
     private NodoFS buscarRutaInterno(String ruta) {
-        if (ruta.equals("/") || ruta.equals("raiz")) return raiz;
+        if (ruta == null || ruta.equals("/") || ruta.equals("raiz")) return raiz;
         String[] partes = ruta.split("/");
         NodoFS actual = raiz;
         for (String p : partes) {
@@ -128,8 +142,17 @@ public class SistemaArchivos {
         }
     }
 
+    // --- FIX 1: Proteger totalmente obtenerNombre contra Index -1 ---
     private String obtenerNombre(String ruta) {
+<<<<<<< Updated upstream
         String[] partes = ruta.split("/");
+=======
+        if (ruta == null || ruta.trim().isEmpty() || ruta.equals("/")) {
+            return "raiz";
+        }
+        String[] partes = ruta.split("/");
+        if (partes.length == 0) return "raiz"; 
+>>>>>>> Stashed changes
         return partes[partes.length - 1];
     }
 
@@ -163,4 +186,24 @@ public class SistemaArchivos {
             generarSnapshotRecursivo((NodoFS) hijos.getValue(i), prefijo + "  ", sb);
         }
     }
+<<<<<<< Updated upstream
 }
+=======
+
+    public NodoFS getRaiz() { return raiz; }
+
+    public void inicializarDesdeJSON(FileSystemConfig config) {
+        if (config == null || config.nodos == null) return;
+        
+        for (FileSystemConfig.NodoFSDTO dto : config.nodos) {
+            NodoFS nuevo = new NodoFS(obtenerNombre(dto.ruta), dto.esDirectorio, dto.dueno);
+            nuevo.setBloqueInicio(dto.bloqueInicio);
+            
+            // CORREGIDO: usar solo cantidadBloques (sin la 'o')
+            nuevo.setCantidadBloques(dto.cantidadBloques); 
+            
+            insertarNodo(dto.ruta, nuevo);
+        }
+    }
+}
+>>>>>>> Stashed changes

@@ -482,10 +482,31 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_guardarJsonActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
+<<<<<<< Updated upstream
         try {
             javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
             fileChooser.setDialogTitle("Cargar Escenario");
             fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
+=======
+         try {
+            // 1. PRIMERO: Cargar el JSON del Sistema de Archivos
+            javax.swing.JFileChooser chooserFS = new javax.swing.JFileChooser();
+            chooserFS.setDialogTitle("1. Selecciona el JSON del Sistema de Archivos");
+            if (chooserFS.showOpenDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
+            
+            java.io.File archivoFS = chooserFS.getSelectedFile();
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.io.FileReader readerFS = new java.io.FileReader(archivoFS);
+            
+            sistemaArchivo.FileSystemConfig configFS = gson.fromJson(readerFS, sistemaArchivo.FileSystemConfig.class);
+            readerFS.close();
+            
+            if (configFS != null && configFS.nodos != null) {
+                cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
+                fsCargado = true;
+                verificarInicio();
+            }
+>>>>>>> Stashed changes
 
             if (fileChooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
                 java.io.File archivo = fileChooser.getSelectedFile();

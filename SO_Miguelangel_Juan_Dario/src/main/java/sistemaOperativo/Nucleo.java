@@ -11,7 +11,6 @@ import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import planificacionSO.PoliticaPlanificacion;
 
-
 /**
  *
  * @author Miguel
@@ -236,7 +235,7 @@ public class Nucleo {
     }
     
     /**
-     * Llamado por el Disco (Juan/Darío) al terminar una SolicitudES.
+     * Llamado por el Disco al terminar una SolicitudES.
      * Distingue si el proceso estaba o no suspendido.
      */
     public void alTerminarES(SolicitudES s) {
@@ -259,9 +258,14 @@ public class Nucleo {
             cluster.registrarEvento("Ciclo " + s.getCicloLlegada() + ": " + p.getNombre() + " reactivado a RAM.");
             
         } else {
+<<<<<<< Updated upstream
             // --- AQUI APLICAMOS EL CRUD DEL SISTEMA DE ARCHIVOS DE DARIO ---
             if (cluster.getSistemaArchivos() != null) {
                 // Ahora devuelve un String (null = éxito, texto = error)
+=======
+            // --- APLICAMOS EL CRUD DEL SISTEMA DE ARCHIVOS (DARIO) ---
+            if (cluster.getSistemaArchivos() != null) {
+>>>>>>> Stashed changes
                 String errorFS = cluster.getSistemaArchivos().aplicarCRUD(
                         s.getOperacion(), 
                         p.getRutaArchivo(), 
@@ -271,7 +275,17 @@ public class Nucleo {
                 );
                 
                 if (errorFS != null) {
+<<<<<<< Updated upstream
                     cluster.registrarEvento("FS Error: " + p.getNombre() + " - " + errorFS);
+=======
+                    // EL FIX DEL BUCLE INFINITO: Si falla el FS, el proceso se termina inmediatamente
+                    cluster.registrarEvento("FS Error: " + p.getNombre() + " - " + errorFS + ". Proceso terminado.");
+                    colaBloqueados.eliminar(p); // Lo sacamos de bloqueados
+                    p.setEstado(EstadoProceso.TERMINADO);
+                    p.setCicloFin(cluster.getReloj().getCiclo());
+                    terminados.encolar(p);
+                    return; // IMPORTANTE: Cortamos la ejecución aquí para que no se despierte
+>>>>>>> Stashed changes
                 } else {
                     cluster.registrarEvento("FS Exitoso: " + p.getNombre() + " aplicó " + s.getOperacion() + " en " + p.getRutaArchivo());
                 }
@@ -357,7 +371,10 @@ public class Nucleo {
         cpu.registrarOperacionSistema();
         cpu.entrarModoSistema();
         try {
+<<<<<<< Updated upstream
             // --- AQUI REEMPLAZAMOS EL BLOQUE FALSO POR EL MÉTODO DE DARIO ---
+=======
+>>>>>>> Stashed changes
             int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
             
             SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueReal, p.getBloques(), ciclo);
