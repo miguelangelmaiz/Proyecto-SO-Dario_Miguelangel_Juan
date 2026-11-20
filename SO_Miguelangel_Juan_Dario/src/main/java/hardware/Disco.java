@@ -12,7 +12,7 @@ import sistemaOperativo.Cluster;
  */
 public class Disco implements ComponenteReloj {
     
-   private int cabezal = 50;
+    private int cabezal = 50;
     private int posPorCiclo = 5; 
     private final Cola colaES = new Cola();
     
@@ -21,7 +21,10 @@ public class Disco implements ComponenteReloj {
     public int desplazamientoTotal = 0;
     
     private Cluster cluster;
-    private PoliticaDisco politica = new PoliticaFIFO(); // Por defecto FIFO
+    private PoliticaDisco politica = new PoliticaFIFO();
+    
+    // NUEVO: Variable para recordar la dirección del cabezal (1 = sube, -1 = baja)
+    private int direccion = 1; 
 
     public void setCluster(Cluster cluster) { this.cluster = cluster; }
     public void setPolitica(PoliticaDisco p) { this.politica = p; }
@@ -40,7 +43,6 @@ public class Disco implements ComponenteReloj {
         if (bloquesRestantes > 0) {
             bloquesRestantes--;
             if (bloquesRestantes == 0) {
-                // AQUÍ AVISAMOS AL NÚCLEO QUE TERMINÓ
                 if (cluster != null) {
                     cluster.getComputador(0).getNucleo().alTerminarES(solicitudActual);
                 }
@@ -49,13 +51,45 @@ public class Disco implements ComponenteReloj {
             return; 
         }
 
-        
         // 2. SI NO TIENE SOLICITUD, PIDE UNA A LA COLA USANDO LA POLÍTICA
         if (solicitudActual == null) {
             solicitudActual = politica.elegir(colaES, cabezal);
             if (solicitudActual != null) {
-                colaES.eliminar(solicitudActual); // Lo sacamos de la cola
-                } else {
+                colaES.eliminar(solicitudActual);
+            } else {
+                // SI NO HAY NADA ADELANTE, SIMULAMOS EL COMPORTAMIENTO DEL BRAZO
+                if (!colaES.estaVacia()) {
+                    
+                    if (politica.getNombre().equals("SCAN")) {
+                        // SCAN: Sube y baja recordando su dirección
+                        if (direccion == 1) { // Va subiendo
+                            if (cabezal < 199) {
+                                cabezal += posPorCiclo;
+                            } else {
+                                direccion = -1; // Cambia de dirección
+                                cabezal -= posPorCiclo;
+                            }
+                        } else { // Va bajando
+                            if (cabezal > 0) {
+                                cabezal -= posPorCiclo;
+                            } else {
+                                direccion = 1; // Cambia de dirección
+                                cabezal += posPorCiclo;
+                            }
+                        }
+                        return;
+                        
+                    } else if (politica.getNombre().equals("CSCAN")) {
+                        // C-SCAN: Sube hasta el final, salta al 0 y vuelve a subir
+                        if (cabezal < 199) {
+                            cabezal += posPorCiclo;
+                        } else {
+                            cabezal = 0;
+                            desplazamientoTotal += 199; // Costo del salto
+                        }
+                        return;
+                    }
+                }
                 return; 
             }
         }
@@ -66,10 +100,12 @@ public class Disco implements ComponenteReloj {
             int mover = Math.min(posPorCiclo, destino - cabezal);
             cabezal += mover;
             desplazamientoTotal += mover;
+            direccion = 1; // Si va a un destino mayor, sube
         } else if (cabezal > destino) {
             int mover = Math.min(posPorCiclo, cabezal - destino);
             cabezal -= mover;
             desplazamientoTotal += mover;
+            direccion = -1; // Si va a un destino menor, baja
         }
 
         // 4. SI YA LLEGÓ AL DESTINO, EMPIEZA A TRANSFERIR
@@ -83,5 +119,4 @@ public class Disco implements ComponenteReloj {
     }
     
     public int getCabezal() { return cabezal; }
-    
 }

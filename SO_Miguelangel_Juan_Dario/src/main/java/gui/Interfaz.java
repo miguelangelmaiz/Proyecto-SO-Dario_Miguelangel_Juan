@@ -525,7 +525,7 @@ public class Interfaz extends javax.swing.JFrame {
             readerFS.close();
             
             if (configFS != null && configFS.nodos != null) {
-               // cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
+                cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
                 fsCargado = true;
                 verificarInicio();
             }
@@ -662,7 +662,7 @@ public class Interfaz extends javax.swing.JFrame {
             case "FIFO": cluster.getDisco().setPolitica(new planificacionSO.PoliticaFIFO()); break;
             case "SSTF": cluster.getDisco().setPolitica(new planificacionSO.PoliticaSSTF()); break;
             case "SCAN": cluster.getDisco().setPolitica(new planificacionSO.PoliticaSCAN()); break;
-            case "C-SCAN": cluster.getDisco().setPolitica(new planificacionSO.PoliticaCSCAN()); break;
+            case "CSCAN": cluster.getDisco().setPolitica(new planificacionSO.PoliticaCSCAN()); break;
         }
         
         cluster.registrarEvento("Política de disco cambiada a: " + seleccion); // TODO add your handling code here:
