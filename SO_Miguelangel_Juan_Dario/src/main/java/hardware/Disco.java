@@ -55,8 +55,7 @@ public class Disco implements ComponenteReloj {
             solicitudActual = politica.elegir(colaES, cabezal);
             if (solicitudActual != null) {
                 colaES.eliminar(solicitudActual); // Lo sacamos de la cola
-                System.out.println("   -> Disco atiende solicitud destino: " + solicitudActual.getBloqueDestino());
-            } else {
+                } else {
                 return; 
             }
         }

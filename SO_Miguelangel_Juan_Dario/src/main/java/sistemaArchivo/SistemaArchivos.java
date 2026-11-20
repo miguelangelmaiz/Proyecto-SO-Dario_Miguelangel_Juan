@@ -129,7 +129,15 @@ public class SistemaArchivos {
     }
 
     private String obtenerNombre(String ruta) {
+          // 1. Si es la raíz, devolvemos "raiz" directamente
+        if (ruta.equals("/") || ruta.trim().isEmpty()) {
+            return "raiz";
+        }
+        
+        // 2. Si es un archivo normal, extraemos el nombre
         String[] partes = ruta.split("/");
+        if (partes.length == 0) return "raiz"; // Protección extra
+        
         return partes[partes.length - 1];
     }
 

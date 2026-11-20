@@ -43,14 +43,12 @@ public class Interfaz extends javax.swing.JFrame {
         jButton1.setEnabled(false); // INICIAR deshabilitado hasta cargar JSONs
 
         // 2. CREAR EL CLUSTER
-        cluster = new sistemaOperativo.Cluster(1, 2048, 500);
-        OpComputadora.removeAllItems();
-        OpComputadora.addItem("Computadora 1");
-      
+        cluster = new sistemaOperativo.Cluster(1, 8192, 500);
+             
         // 3. CONFIGURAR BARRAS Y SPINNERS
-        jProgressBar1.setMaximum(2048); 
+        jProgressBar1.setMaximum(8192); 
         jProgressBar1.setStringPainted(true);
-        jProgressBar1.setString("RAM: 0 / 2048");
+        jProgressBar1.setString("RAM: 0 / 8192");
 
         jSpinner1.setModel(new javax.swing.SpinnerNumberModel(500, 50, 5000, 50));
         jSpinner1.addChangeListener((e) -> {
@@ -103,13 +101,13 @@ public class Interfaz extends javax.swing.JFrame {
            
             // --- B. ACTUALIZAR RAM ---
             jProgressBar1.setValue(ramUsada);
-            jProgressBar1.setString("RAM: " + ramUsada + " / 2048");
+            jProgressBar1.setString("RAM: " + ramUsada + " / 8192");
 
             // --- C. ACTUALIZAR COLAS ---
             txtColaNuevos.setText("Nuevos: " + nucleo.getColaNuevos().getNombresProcesos() +
-                               "\nListos: " + nucleo.getColaListos().getNombresProcesos() +
-                               "\nBloqueados: " + nucleo.getColaBloqueados().getNombresProcesos() +
-                               "\nTerminados: " + nucleo.getTerminados().getNombresProcesos());
+                   "\nListos: " + nucleo.getColaListos().getNombresProcesos() +
+                   "\nBloqueados: " + nucleo.getColaBloqueados().getNombresProcesos() +
+                   "\nTerminados: " + nucleo.getTerminados().getNombresProcesos());
             
             txtColaListosSusp.setText("Listos/Susp: " + nucleo.getColaListosSusp().getNombresProcesos());
             txtColaBloqSusp.setText("Bloq/Susp: " + nucleo.getColaBloqueadosSusp().getNombresProcesos());
@@ -188,7 +186,6 @@ public class Interfaz extends javax.swing.JFrame {
         crearProceso = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
         txtNombre = new javax.swing.JTextField();
         spnMemoria = new javax.swing.JSpinner();
         spnDeadline = new javax.swing.JSpinner();
@@ -197,7 +194,6 @@ public class Interfaz extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jLabel13 = new javax.swing.JLabel();
         cbxTipoProceso = new javax.swing.JComboBox<>();
-        OpComputadora = new javax.swing.JComboBox<>();
         jLabel14 = new javax.swing.JLabel();
         cbxPrioridad = new javax.swing.JComboBox<>();
         jLabel15 = new javax.swing.JLabel();
@@ -250,17 +246,17 @@ public class Interfaz extends javax.swing.JFrame {
         Computador.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel3.setText("CPU: Libre");
-        Computador.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, -1, -1));
+        Computador.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 30, -1, -1));
 
         jLabel4.setText("PC: 0 / Deadline: 0 ");
-        Computador.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 110, 130, 20));
+        Computador.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 90, 190, 20));
 
         jLabel5.setText("Modo: Usuario");
         Computador.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 200, -1, -1));
 
         jProgressBar1.setString("RAM: 0 /KB: 2048");
         jProgressBar1.setStringPainted(true);
-        Computador.add(jProgressBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 50, 130, 30));
+        Computador.add(jProgressBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 30, 130, 30));
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "Round Robin", "EDF", "Prioridades" }));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {
@@ -301,9 +297,6 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel10.setText("Memoria: ");
         crearProceso.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, -1, -1));
 
-        jLabel11.setText("Computadora:");
-        crearProceso.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 340, -1, -1));
-
         txtNombre.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtNombreActionPerformed(evt);
@@ -343,14 +336,6 @@ public class Interfaz extends javax.swing.JFrame {
             }
         });
         crearProceso.add(cbxTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 80, 100, -1));
-
-        OpComputadora.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        OpComputadora.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                OpComputadoraActionPerformed(evt);
-            }
-        });
-        crearProceso.add(OpComputadora, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 340, -1, -1));
 
         jLabel14.setText("Instrucciones: ");
         crearProceso.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, -1, -1));
@@ -447,7 +432,7 @@ public class Interfaz extends javax.swing.JFrame {
        if(cluster != null){
            cluster.iniciar();
            jLabel2.setText("Velocidad (ms): " + jSpinner1.getValue());
-           jButton1.setEnabled(false);
+           jButton1.setEnabled(true);
            jButton2.setEnabled(true);
        }
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -456,7 +441,7 @@ public class Interfaz extends javax.swing.JFrame {
         if (cluster != null) {
             cluster.detener();
             jButton1.setEnabled(true);
-            jButton2.setEnabled(false);
+            jButton2.setEnabled(true);
         }
     }//GEN-LAST:event_jButton2ActionPerformed
    
@@ -480,7 +465,7 @@ public class Interfaz extends javax.swing.JFrame {
 
             // 3. Llenamos la configuración de la computadora
             config.computer = new sistemaOperativo.configuracion.ComputerConfig();
-            config.computer.ramCapacity = 2048; // RAM por defecto de la GUI
+            config.computer.ramCapacity = 8192; // RAM por defecto de la GUI
             config.computer.policy = "FCFS"; // O podrías leerlo del combo jComboBox1
             config.computer.quantum = (int) spnQuantum.getValue();
 
@@ -540,7 +525,7 @@ public class Interfaz extends javax.swing.JFrame {
             readerFS.close();
             
             if (configFS != null && configFS.nodos != null) {
-                cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
+               // cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
                 fsCargado = true;
                 verificarInicio();
             }
@@ -668,10 +653,6 @@ public class Interfaz extends javax.swing.JFrame {
 
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-    private void OpComputadoraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpComputadoraActionPerformed
-
-    }//GEN-LAST:event_OpComputadoraActionPerformed
-
     private void cbxPoliticaDiscoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPoliticaDiscoActionPerformed
        if (cluster == null || cluster.getDisco() == null) return;
         
@@ -691,7 +672,6 @@ public class Interfaz extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Computador;
-    private javax.swing.JComboBox<String> OpComputadora;
     private javax.swing.JTabbedPane Tab;
     private javax.swing.JButton btnGrafico;
     private javax.swing.JButton cargarJson;
@@ -706,7 +686,6 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;

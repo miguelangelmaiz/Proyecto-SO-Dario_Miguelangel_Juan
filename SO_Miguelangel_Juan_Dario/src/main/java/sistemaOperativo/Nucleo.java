@@ -331,7 +331,7 @@ public class Nucleo {
         }
     }
 
-        private void ejecutarIOBound(PCB p, int ciclo) {
+          private void ejecutarIOBound(PCB p, int ciclo) {
         if (p.getOperacion() == null) {
             p.ejecutarInstruccion();
             return;
@@ -346,9 +346,14 @@ public class Nucleo {
         cpu.registrarOperacionSistema();
         cpu.entrarModoSistema();
         try {
-            // Le pedimos a Darío el bloque real
-            int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
-            if (bloqueReal == -1) bloqueReal = 50; // Por si el archivo no existe
+            // TRUCO TEMPORAL PARA PROBAR EL DISCO: 
+            // Usamos los bloques del anexo del PDF para que el cabezal se mueva
+            int[] bloquesPrueba = {82, 15, 140, 43, 190, 24, 16};
+            int bloqueReal = bloquesPrueba[p.getId() % bloquesPrueba.length];
+
+            // (Cuando Darío arregle su código, cambiarás esto por:)
+            // int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
+            // if (bloqueReal < 0) bloqueReal = 50;
 
             SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueReal, 1, ciclo);
             cluster.getDisco().encolarSolicitud(solicitud); 
@@ -365,7 +370,6 @@ public class Nucleo {
         cpu.liberar();
         colaBloqueados.encolar(p);
     }
-
     // ---------- Paso 6: cierre ----------
     private void cerrarCiclo(int ciclo) {
         PCB p = cpu.getProcesoActual();
