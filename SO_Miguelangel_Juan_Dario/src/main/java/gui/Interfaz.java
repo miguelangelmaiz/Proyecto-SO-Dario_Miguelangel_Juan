@@ -511,6 +511,10 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_guardarJsonActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
+        try {
+            javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+            fileChooser.setDialogTitle("Cargar Escenario");
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
          try {
             // 1. PRIMERO: Cargar el JSON del Sistema de Archivos
             javax.swing.JFileChooser chooserFS = new javax.swing.JFileChooser();
@@ -529,6 +533,7 @@ public class Interfaz extends javax.swing.JFrame {
                 fsCargado = true;
                 verificarInicio();
             }
+
 
             // 2. SEGUNDO: Cargar el JSON de los Procesos
             javax.swing.JFileChooser chooserProc = new javax.swing.JFileChooser();

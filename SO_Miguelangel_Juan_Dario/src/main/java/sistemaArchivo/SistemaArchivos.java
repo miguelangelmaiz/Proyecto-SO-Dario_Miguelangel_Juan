@@ -17,6 +17,21 @@ public class SistemaArchivos {
     public SistemaArchivos(int totalBloques) {
         this.raiz = new NodoFS("raiz", true, "admin");
         this.mapa = new MapaBloques(totalBloques);
+        
+        // --- FIX 2: Evitar el bucle infinito de "Archivo inválido" ---
+        // Creamos la carpeta "/sistema" y el archivo "archivo.txt" por defecto.
+        NodoFS carpetaSistema = new NodoFS("sistema", true, "admin");
+        raiz.getHijos().insertFinale(carpetaSistema);
+        
+        try {
+            int bloqueInicial = mapa.asignarCadena(1);
+            NodoFS archivoPorDefecto = new NodoFS("archivo.txt", false, "admin");
+            if (bloqueInicial != -1) {
+                archivoPorDefecto.setBloqueInicio(bloqueInicial);
+                archivoPorDefecto.setCantidadBloques(1);
+            }
+            carpetaSistema.getHijos().insertFinale(archivoPorDefecto);
+        } catch (Exception e) {}
     }
 
     public int primerBloqueReal(String ruta) {
@@ -33,7 +48,6 @@ public class SistemaArchivos {
         }
     }
 
-    // AHORA DEVUELVE String: null si todo bien, o el mensaje de error
     public String aplicarCRUD(TipoOperacionES op, String ruta, String usuario, boolean admin, int bloquesSolicitados) {
         try {
             mutex.acquire();
@@ -82,7 +96,7 @@ public class SistemaArchivos {
     }
 
     private NodoFS buscarRutaInterno(String ruta) {
-        if (ruta.equals("/") || ruta.equals("raiz")) return raiz;
+        if (ruta == null || ruta.equals("/") || ruta.equals("raiz")) return raiz;
         String[] partes = ruta.split("/");
         NodoFS actual = raiz;
         for (String p : partes) {
@@ -128,6 +142,7 @@ public class SistemaArchivos {
         }
     }
 
+    // --- FIX 1: Proteger totalmente obtenerNombre contra Index -1 ---
     private String obtenerNombre(String ruta) {
           // 1. Si es la raíz, devolvemos "raiz" directamente
         if (ruta.equals("/") || ruta.trim().isEmpty()) {
@@ -138,6 +153,8 @@ public class SistemaArchivos {
         String[] partes = ruta.split("/");
         if (partes.length == 0) return "raiz"; // Protección extra
         
+        String[] partes = ruta.split("/");
+
         return partes[partes.length - 1];
     }
 
@@ -182,3 +199,5 @@ public void inicializarDesdeJSON(FileSystemConfig config) {
     }}
     
 }
+}
+

@@ -11,7 +11,6 @@ import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import planificacionSO.PoliticaPlanificacion;
 
-
 /**
  *
  * @author Miguel
@@ -236,7 +235,7 @@ public class Nucleo {
     }
     
     /**
-     * Llamado por el Disco (Juan/Darío) al terminar una SolicitudES.
+     * Llamado por el Disco al terminar una SolicitudES.
      * Distingue si el proceso estaba o no suspendido.
      */
         public void alTerminarES(SolicitudES s) {
@@ -266,6 +265,20 @@ public class Nucleo {
                 
                 if (error != null) {
                     cluster.registrarEvento("Error de FS: " + error);
+            // --- AQUI APLICAMOS EL CRUD DEL SISTEMA DE ARCHIVOS DE DARIO ---
+            if (cluster.getSistemaArchivos() != null) {
+                // Ahora devuelve un String (null = éxito, texto = error)
+                String errorFS = cluster.getSistemaArchivos().aplicarCRUD(
+                        s.getOperacion(), 
+                        p.getRutaArchivo(), 
+                        p.getDueno() != null ? p.getDueno() : "usuario", 
+                        false, 
+                        p.getBloques()
+                );
+                
+                if (errorFS != null) {
+                    cluster.registrarEvento("FS Error: " + p.getNombre() + " - " + errorFS);
+                  
                 } else {
                     cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " ejecutó " + s.getOperacion() + " en " + p.getRutaArchivo());
                 }
@@ -356,6 +369,11 @@ public class Nucleo {
             // if (bloqueReal < 0) bloqueReal = 50;
 
             SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueReal, 1, ciclo);
+            // --- AQUI REEMPLAZAMOS EL BLOQUE FALSO POR EL MÉTODO DE DARIO ---
+            int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
+            
+            SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueReal, p.getBloques(), ciclo);
+
             cluster.getDisco().encolarSolicitud(solicitud); 
 
             cluster.registrarEvento("Ciclo " + ciclo + ": " + p.getNombre()
