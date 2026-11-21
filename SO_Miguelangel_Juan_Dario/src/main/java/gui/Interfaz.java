@@ -208,6 +208,7 @@ public class Interfaz extends javax.swing.JFrame {
         txtLog = new javax.swing.JTextArea();
         jPanel4 = new javax.swing.JPanel();
         cbxPoliticaDisco = new javax.swing.JComboBox<>();
+        comboUserAdmin = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -413,6 +414,14 @@ public class Interfaz extends javax.swing.JFrame {
         });
         jPanel1.add(cbxPoliticaDisco, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 30, -1, -1));
 
+        comboUserAdmin.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin", "User1" }));
+        comboUserAdmin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                comboUserAdminActionPerformed(evt);
+            }
+        });
+        jPanel1.add(comboUserAdmin, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 30, -1, -1));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -567,18 +576,17 @@ public class Interfaz extends javax.swing.JFrame {
 
                 // 3. CREAMOS EL PROCESO CON SUS DATOS
                 sistemaOperativo.PCB p = new sistemaOperativo.PCB(
-                        pDto.name, 
-                        tipoProc, 
-                        sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
-                        pDto.memory, 
-                        pDto.deadline, 
-                        pDto.instructions, 
-                        1
+                        pDto.name, tipoProc, sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
+                        pDto.memory, pDto.deadline, pDto.instructions, 1
                 );
                 p.setOperacion(op);
                 p.setRutaArchivo(pDto.targetPath != null ? pDto.targetPath : "/sistema/archivo.txt");
                 p.setBloques(pDto.fileSizeBlocks);
-                p.setDueno("admin");
+                
+                // LEEMOS EL COMBO PARA ASIGNAR EL DUEÑO AL PROCESO CARGADO
+                String usuarioSeleccionado = comboUserAdmin.getSelectedItem().toString();
+                String dueno = usuarioSeleccionado.equals("Admin") ? "admin" : "user1";
+                p.setDueno(dueno); 
                 
                 cluster.getComputador(0).getNucleo().admitir(p);
             }
@@ -614,8 +622,9 @@ public class Interfaz extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         try {
-            // Como solo hay 1 computador, el índice siempre es 0
-            int indiceComp = 0; 
+            // Leemos el combo que agregaste
+            String usuarioSeleccionado = comboUserAdmin.getSelectedItem().toString();
+            String dueno = usuarioSeleccionado.equals("Admin") ? "admin" : "user1";
             
             sistemaOperativo.Resultado r = sistemaOperativo.ProcesoESFactory.crear(
                     cluster,
@@ -626,7 +635,8 @@ public class Interfaz extends javax.swing.JFrame {
                     (int) spnDeadline.getValue(),
                     (int) spnInstrucciones.getValue(),
                     "LEER",                       
-                    "/sistema/archivo.txt");      
+                    "/sistema/archivo.txt",
+                    dueno); // <-- AGREGADO AQUÍ
 
             if (!r.isOk()) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Rechazado: " + r.getMotivo());
@@ -668,6 +678,10 @@ public class Interfaz extends javax.swing.JFrame {
         cluster.registrarEvento("Política de disco cambiada a: " + seleccion); // TODO add your handling code here:
     }//GEN-LAST:event_cbxPoliticaDiscoActionPerformed
 
+    private void comboUserAdminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboUserAdminActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_comboUserAdminActionPerformed
+
    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -678,6 +692,7 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxPoliticaDisco;
     private javax.swing.JComboBox<String> cbxPrioridad;
     private javax.swing.JComboBox<String> cbxTipoProceso;
+    private javax.swing.JComboBox<String> comboUserAdmin;
     private javax.swing.JPanel crearProceso;
     private javax.swing.JButton guardarJson;
     private javax.swing.JButton jButton1;

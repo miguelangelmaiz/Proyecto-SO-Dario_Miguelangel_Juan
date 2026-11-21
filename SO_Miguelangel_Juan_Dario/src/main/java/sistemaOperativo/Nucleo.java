@@ -261,8 +261,9 @@ public class Nucleo {
         } else {
             // LEER / ESCRIBIR / CREAR / ELIMINAR
             if (cluster.getSistemaArchivos() != null) {
+                boolean esAdmin = p.getDueno().equals("admin");
                 String error = cluster.getSistemaArchivos().aplicarCRUD(
-                        s.getOperacion(), p.getRutaArchivo(), p.getDueno(), true, p.getBloques());
+                        s.getOperacion(), p.getRutaArchivo(), p.getDueno(), esAdmin, p.getBloques());
                 
                 if (error != null) {
                     cluster.registrarEvento("Error de FS: " + error);
@@ -348,9 +349,8 @@ public class Nucleo {
         try {
             // TRUCO TEMPORAL PARA PROBAR EL DISCO: 
             // Usamos los bloques del anexo del PDF para que el cabezal se mueva
-            int[] bloquesPrueba = {82, 15, 140, 43, 190, 24, 16};
-            int bloqueReal = bloquesPrueba[p.getId() % bloquesPrueba.length];
-
+                        int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
+            if (bloqueReal < 0) bloqueReal = 50;
             // (Cuando Darío arregle su código, cambiarás esto por:)
             // int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
             // if (bloqueReal < 0) bloqueReal = 50;

@@ -16,5 +16,6 @@ public class FileSystemConfig {
         public String dueno;
         public int bloqueInicio;
         public int cantidadBloques;
+         public boolean permisoLectura = true;
     }
 }

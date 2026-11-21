@@ -34,13 +34,25 @@ public class SistemaArchivos {
     }
 
     // AHORA DEVUELVE String: null si todo bien, o el mensaje de error
-    public String aplicarCRUD(TipoOperacionES op, String ruta, String usuario, boolean admin, int bloquesSolicitados) {
+     public String aplicarCRUD(TipoOperacionES op, String ruta, String usuario, boolean admin, int bloquesSolicitados) {
         try {
             mutex.acquire();
             NodoFS nodo = buscarRutaInterno(ruta);
-
-            if (nodo != null && !admin && !nodo.getDueno().equals(usuario)) {
-                return "Permiso denegado: no eres el dueño";
+            
+            // REGLA DE SEGURIDAD (Solo si NO es admin)
+            if (!admin) {
+                // 1. Para LEER: el archivo debe ser suyo o ser público.
+                if (op == TipoOperacionES.LEER) {
+                    if (nodo != null && !nodo.getDueno().equals(usuario) && !nodo.isPermisoLectura()) {
+                        return "Permiso denegado: el archivo es privado";
+                    }
+                } 
+                // 2. Para BORRAR o MODIFICAR: TIENE que ser el dueño obligatoriamente.
+                else {
+                    if (nodo != null && !nodo.getDueno().equals(usuario)) {
+                        return "Permiso denegado: solo el dueño puede modificar/eliminar";
+                    }
+                }
             }
 
             switch (op) {
@@ -160,8 +172,13 @@ public class SistemaArchivos {
         }
     }
 
-    private void generarSnapshotRecursivo(NodoFS nodo, String prefijo, StringBuilder sb) {
+        private void generarSnapshotRecursivo(NodoFS nodo, String prefijo, StringBuilder sb) {
+        // AQUÍ AGREGAMOS DUEÑO Y PERMISOS
         sb.append(prefijo).append(nodo.getNombre());
+        
+        String permisos = nodo.isPermisoLectura() ? "público" : "privado";
+        sb.append(" (").append(nodo.getDueno()).append(" · ").append(permisos).append(")");
+        
         if (!nodo.isEsDirectorio()) {
             sb.append(" [Bloque: ").append(nodo.getBloqueInicio()).append("]");
         }
@@ -178,6 +195,7 @@ public void inicializarDesdeJSON(FileSystemConfig config) {
         NodoFS nuevo = new NodoFS(obtenerNombre(dto.ruta), dto.esDirectorio, dto.dueno);
         nuevo.setBloqueInicio(dto.bloqueInicio);
         nuevo.setCantidadBloques(dto.cantidadBloques);
+         nuevo.setPermisoLectura(dto.permisoLectura);
         insertarNodo(dto.ruta, nuevo);
     }}
     

@@ -39,6 +39,9 @@ public class Disco implements ComponenteReloj {
 
     @Override
     public void tic(int ciclo) {
+         if (ciclo <= 8) {
+            return; 
+        }
         // 1. SI ESTÁ TRANSFIRIENDO, SE QUEDA QUIETO
         if (bloquesRestantes > 0) {
             bloquesRestantes--;
