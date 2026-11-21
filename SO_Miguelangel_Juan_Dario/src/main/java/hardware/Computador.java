@@ -8,7 +8,7 @@ package hardware;
 
 import sistemaOperativo.Nucleo;
 import planificacionSO.PoliticaPlanificacion;
-import sistemaOperativo.GestorBuffers;
+
 
 public class Computador implements ComponenteReloj {
     
@@ -17,12 +17,11 @@ public class Computador implements ComponenteReloj {
     private final MemoriaPrincipal ram;
     private final Nucleo nucleo;
 
-    public Computador(int id, int ramKB, PoliticaPlanificacion politica,
-                      GestorBuffers gestorBuffers) {
+    public Computador(int id, int ramKB, PoliticaPlanificacion politica) {
         this.id = id;
         this.cpu = new CPU();
         this.ram = new MemoriaPrincipal(ramKB);
-        this.nucleo = new Nucleo(id, this.cpu, this.ram, politica, gestorBuffers);
+        this.nucleo = new Nucleo(id, this.cpu, this.ram, politica);
     }
 
     public int getId() { return id; }

@@ -1,39 +1,37 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package sistemaOperativo;
 
 /**
  *
  * @author jmmor
  */
+
 public class configuracion {
 
-    public int numComputadores;
-    public int ramPorComputador;
-    public int duracionCicloMs;
-    public int latenciaRed;
-    
-    // ¡AQUÍ ESTÁN LAS CLASES QUE TE FALTAN!
-    public static class ProcesoDTO {
-        public String nombre;
-        public String tipo;
-        public int prioridad;
-        public int memoria;
+   public static class GlobalConfig {
+        public int cycleDurationMs;
+        public int swapSizeBlocks;
+        public String initialDiskPolicy;
+        public ComputerConfig computer;
+        public ProcessDTO[] processes;
+    }
+
+    public static class ComputerConfig {
+        public int ramCapacity;
+        public String policy;
+        public int quantum;
+    }
+
+    public static class ProcessDTO {
+        public String name;
+        public int memory;
         public int deadline;
-        public int instrucciones;
-        public int computador;
+        public int instructions;
+        public String targetPath;
+        public String operation;
+        public int fileSizeBlocks;
     }
-    
-    public static class BufferDTO {
-        public int capacidad;
-        public int anfitrion;
-    }
-    
-    // Los arreglos que usa tu Interfaz
-    public ProcesoDTO[] procesosIniciales;
-    public BufferDTO[] buffersIniciales;
+    public sistemaArchivo.FileSystemConfig fileSystem;
 }
     
     
