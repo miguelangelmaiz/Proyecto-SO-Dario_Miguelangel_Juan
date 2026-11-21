@@ -11,16 +11,16 @@ import planificacionSO.PrioridadApropiativa;
 import planificacionSO.PoliticaPlanificacion;
 import losEnums.TipoProceso;
 import hardware.Computador;
+import javax.swing.SwingUtilities;
 import gui.Interfaz;
-import gui.MenuInicial;
-import gui.ventanaBuffer;
+
 /**
  *
  * @author Miguel
  */
 public class main {
     public static void main(String[] args) {
-        try {
+          try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
@@ -28,15 +28,16 @@ public class main {
                 }
             }
         } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(Interfaz.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            System.out.println("Error al cargar Nimbus: " + ex.getMessage());
         }
 
-        java.awt.EventQueue.invokeLater(() -> {
-            // Abrimos el MENÚ INICIAL, no la interfaz
-            new gui.MenuInicial().setVisible(true); 
+        // Arrancamos directamente la Interfaz principal
+        SwingUtilities.invokeLater(() -> {
+            Interfaz ventana = new Interfaz();
+            ventana.setVisible(true);
         });
     }
 }
-        
+       
     
 

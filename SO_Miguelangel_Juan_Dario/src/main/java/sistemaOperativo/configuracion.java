@@ -1,13 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package sistemaOperativo;
 
 /**
  *
  * @author jmmor
  */
+
 public class configuracion {
 
    public static class GlobalConfig {
@@ -33,6 +31,7 @@ public class configuracion {
         public String operation;
         public int fileSizeBlocks;
     }
+    public sistemaArchivo.FileSystemConfig fileSystem;
 }
     
     
