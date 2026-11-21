@@ -144,15 +144,17 @@ public class SistemaArchivos {
 
     // --- FIX 1: Proteger totalmente obtenerNombre contra Index -1 ---
     private String obtenerNombre(String ruta) {
-<<<<<<< Updated upstream
-        String[] partes = ruta.split("/");
-=======
-        if (ruta == null || ruta.trim().isEmpty() || ruta.equals("/")) {
+          // 1. Si es la raíz, devolvemos "raiz" directamente
+        if (ruta.equals("/") || ruta.trim().isEmpty()) {
             return "raiz";
         }
+        
+        // 2. Si es un archivo normal, extraemos el nombre
         String[] partes = ruta.split("/");
-        if (partes.length == 0) return "raiz"; 
->>>>>>> Stashed changes
+        if (partes.length == 0) return "raiz"; // Protección extra
+        
+        String[] partes = ruta.split("/");
+
         return partes[partes.length - 1];
     }
 
@@ -186,24 +188,16 @@ public class SistemaArchivos {
             generarSnapshotRecursivo((NodoFS) hijos.getValue(i), prefijo + "  ", sb);
         }
     }
-<<<<<<< Updated upstream
-}
-=======
-
     public NodoFS getRaiz() { return raiz; }
 
-    public void inicializarDesdeJSON(FileSystemConfig config) {
-        if (config == null || config.nodos == null) return;
-        
-        for (FileSystemConfig.NodoFSDTO dto : config.nodos) {
-            NodoFS nuevo = new NodoFS(obtenerNombre(dto.ruta), dto.esDirectorio, dto.dueno);
-            nuevo.setBloqueInicio(dto.bloqueInicio);
-            
-            // CORREGIDO: usar solo cantidadBloques (sin la 'o')
-            nuevo.setCantidadBloques(dto.cantidadBloques); 
-            
-            insertarNodo(dto.ruta, nuevo);
-        }
-    }
+public void inicializarDesdeJSON(FileSystemConfig config) {
+    for (FileSystemConfig.NodoFSDTO dto : config.nodos) {
+        NodoFS nuevo = new NodoFS(obtenerNombre(dto.ruta), dto.esDirectorio, dto.dueno);
+        nuevo.setBloqueInicio(dto.bloqueInicio);
+        nuevo.setCantidadBloques(dto.cantidadBloques);
+        insertarNodo(dto.ruta, nuevo);
+    }}
+    
 }
->>>>>>> Stashed changes
+}
+

@@ -14,4 +14,12 @@ public class PoliticaFIFO implements PoliticaDisco {
     public SolicitudES elegir(Cola colaES, int cabezalActual) {
         // FIFO simplemente atiende al primero que llegó
         return (SolicitudES) colaES.verFrente();
-    }}
+        
+        
+    }
+     @Override
+    public String getNombre() {
+        return "FIFO";
+    }
+
+}

@@ -10,18 +10,29 @@ public class PoliticaSCAN implements PoliticaDisco{
       @Override
     public SolicitudES elegir(Cola colaES, int cabezalActual) {
         if (colaES.estaVacia()) return null;
+        
+        SolicitudES mejor = null;
+        int distanciaMinima = Integer.MAX_VALUE;
 
-        // Buscamos la solicitud más cercana EN LA DIRECCIÓN ACTUAL
-        Criterio masCercanoArriba = (a, b) -> {
-            SolicitudES sa = (SolicitudES) a;
-            SolicitudES sb = (SolicitudES) b;
-            return sa.getBloqueDestino() < sb.getBloqueDestino();
-        };
-
-        // (Lógica simplificada para el proyecto: si hay alguna arriba, vamos a la más cercana.
-        // Si no, a la más alta)
-        // Nota: Aquí puedes usar el criterio de verMejor o iterar.
-        return null; // (Completa esto usando la lógica del PDF)
+        // Busca el más cercano que esté por delante (o igual)
+        for (int i = 0; i < colaES.getTamano(); i++) {
+            SolicitudES s = (SolicitudES) colaES.desencolar();
+            if (s.getBloqueDestino() >= cabezalActual) {
+                int dist = s.getBloqueDestino() - cabezalActual;
+                if (dist < distanciaMinima) {
+                    distanciaMinima = dist;
+                    mejor = s;
+                }
+            }
+            colaES.encolar(s);
+        }
+        
+        // Si no hay nada adelante, devolvemos null para que el disco vaya al final
+        return mejor; 
     }
+    
+    @Override
+    public String getNombre() { 
+        return "SCAN"; }
     
 }

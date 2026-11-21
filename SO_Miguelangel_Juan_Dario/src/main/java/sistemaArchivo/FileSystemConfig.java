@@ -8,7 +8,7 @@ import java.util.List;
 
 public class FileSystemConfig {
     // Esta clase es solo para que Gson lea y guarde el JSON
-    public List<NodoFSDTO> nodos;
+    public NodoFSDTO[] nodos;
 
     public static class NodoFSDTO {
         public String ruta;

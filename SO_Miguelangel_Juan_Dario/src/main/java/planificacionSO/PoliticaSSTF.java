@@ -28,4 +28,9 @@ public class PoliticaSSTF implements PoliticaDisco {
         // Le pedimos a la cola que nos devuelva la solicitud más cercana
         return (SolicitudES) colaES.verMejor(masCercano);
     }
+    
+     @Override
+    public String getNombre() {
+        return "SSTF";
+    }
 }

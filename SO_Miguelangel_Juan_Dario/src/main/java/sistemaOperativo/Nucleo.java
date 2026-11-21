@@ -238,15 +238,15 @@ public class Nucleo {
      * Llamado por el Disco al terminar una SolicitudES.
      * Distingue si el proceso estaba o no suspendido.
      */
-    public void alTerminarES(SolicitudES s) {
+        public void alTerminarES(SolicitudES s) {
         PCB p = s.getPcb();
         
         if (s.getOperacion() == TipoOperacionES.SUSPENDER) {
             ram.liberar(p.getMemoria());
-            
             if (p.getEstado() != EstadoProceso.LISTO_SUSPENDIDO) {
                 p.setEstado(EstadoProceso.BLOQUEADO_SUSPENDIDO);
                 colaBloqueadosSusp.encolar(p);
+                cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " pasó a BLOQ/SUSP (Esperando E/S).");
             }
             cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " suspendido en Disco (Swap).");
             
@@ -255,17 +255,19 @@ public class Nucleo {
             p.setEstado(EstadoProceso.LISTO);
             p.setEnSwap(false);
             colaListos.encolar(p);
-            cluster.registrarEvento("Ciclo " + s.getCicloLlegada() + ": " + p.getNombre() + " reactivado a RAM.");
+            cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " reactivado a RAM.");
             
         } else {
-<<<<<<< Updated upstream
+            // LEER / ESCRIBIR / CREAR / ELIMINAR
+            if (cluster.getSistemaArchivos() != null) {
+                String error = cluster.getSistemaArchivos().aplicarCRUD(
+                        s.getOperacion(), p.getRutaArchivo(), p.getDueno(), true, p.getBloques());
+                
+                if (error != null) {
+                    cluster.registrarEvento("Error de FS: " + error);
             // --- AQUI APLICAMOS EL CRUD DEL SISTEMA DE ARCHIVOS DE DARIO ---
             if (cluster.getSistemaArchivos() != null) {
                 // Ahora devuelve un String (null = éxito, texto = error)
-=======
-            // --- APLICAMOS EL CRUD DEL SISTEMA DE ARCHIVOS (DARIO) ---
-            if (cluster.getSistemaArchivos() != null) {
->>>>>>> Stashed changes
                 String errorFS = cluster.getSistemaArchivos().aplicarCRUD(
                         s.getOperacion(), 
                         p.getRutaArchivo(), 
@@ -275,28 +277,15 @@ public class Nucleo {
                 );
                 
                 if (errorFS != null) {
-<<<<<<< Updated upstream
                     cluster.registrarEvento("FS Error: " + p.getNombre() + " - " + errorFS);
-=======
-                    // EL FIX DEL BUCLE INFINITO: Si falla el FS, el proceso se termina inmediatamente
-                    cluster.registrarEvento("FS Error: " + p.getNombre() + " - " + errorFS + ". Proceso terminado.");
-                    colaBloqueados.eliminar(p); // Lo sacamos de bloqueados
-                    p.setEstado(EstadoProceso.TERMINADO);
-                    p.setCicloFin(cluster.getReloj().getCiclo());
-                    terminados.encolar(p);
-                    return; // IMPORTANTE: Cortamos la ejecución aquí para que no se despierte
->>>>>>> Stashed changes
+                  
                 } else {
-                    cluster.registrarEvento("FS Exitoso: " + p.getNombre() + " aplicó " + s.getOperacion() + " en " + p.getRutaArchivo());
+                    cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " ejecutó " + s.getOperacion() + " en " + p.getRutaArchivo());
                 }
             }
-            // -------------------------------------------------------------
 
-            // LEER / ESCRIBIR / CREAR / ACTUALIZAR / ELIMINAR
             if (p.isEnSwap()) {
-                // Por si acaso ya estaba en Bloq/Susp y terminó su E/S, lo sacamos de ahí
                 colaBloqueadosSusp.eliminar(p); 
-                
                 p.setEstado(EstadoProceso.LISTO_SUSPENDIDO);
                 p.setMotivoBloqueo(null);
                 colaListosSusp.encolar(p);
@@ -355,15 +344,14 @@ public class Nucleo {
         }
     }
 
-    private void ejecutarIOBound(PCB p, int ciclo) {
+          private void ejecutarIOBound(PCB p, int ciclo) {
         if (p.getOperacion() == null) {
             p.ejecutarInstruccion();
             return;
         }
 
-        p.ejecutarInstruccion();
+        p.ejecutarInstruccion(); // Consume 1 instrucción al pedir E/S
         
-        // Si con esa instrucción ya terminó, no lo bloqueamos, lo dejamos morir
         if (p.estaTerminado()) {
             return;
         }
@@ -371,18 +359,26 @@ public class Nucleo {
         cpu.registrarOperacionSistema();
         cpu.entrarModoSistema();
         try {
-<<<<<<< Updated upstream
+            // TRUCO TEMPORAL PARA PROBAR EL DISCO: 
+            // Usamos los bloques del anexo del PDF para que el cabezal se mueva
+            int[] bloquesPrueba = {82, 15, 140, 43, 190, 24, 16};
+            int bloqueReal = bloquesPrueba[p.getId() % bloquesPrueba.length];
+
+            // (Cuando Darío arregle su código, cambiarás esto por:)
+            // int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
+            // if (bloqueReal < 0) bloqueReal = 50;
+
+            SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueReal, 1, ciclo);
             // --- AQUI REEMPLAZAMOS EL BLOQUE FALSO POR EL MÉTODO DE DARIO ---
-=======
->>>>>>> Stashed changes
             int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
             
             SolicitudES solicitud = new SolicitudES(p, p.getOperacion(), bloqueReal, p.getBloques(), ciclo);
+
             cluster.getDisco().encolarSolicitud(solicitud); 
 
             cluster.registrarEvento("Ciclo " + ciclo + ": " + p.getNombre()
                     + " solicitó " + p.getOperacion()
-                    + " sobre " + p.getRutaArchivo());
+                    + " sobre " + p.getRutaArchivo() + " (Bloque: " + bloqueReal + ")");
         } finally {
             cpu.salirModoSistema();
         }
@@ -392,7 +388,6 @@ public class Nucleo {
         cpu.liberar();
         colaBloqueados.encolar(p);
     }
-
     // ---------- Paso 6: cierre ----------
     private void cerrarCiclo(int ciclo) {
         PCB p = cpu.getProcesoActual();
