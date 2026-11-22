@@ -14,6 +14,7 @@ public class Disco implements ComponenteReloj {
     
     private int cabezal = 50;
     private int posPorCiclo = 5; 
+    private int totalBloques;
     private final Cola colaES = new Cola();
     
     private SolicitudES solicitudActual = null;
@@ -35,6 +36,13 @@ public class Disco implements ComponenteReloj {
 
     public void encolarSolicitud(SolicitudES s) {
         colaES.encolar(s);
+    }
+      public void setTotalBloques(int total) {
+        this.totalBloques = total; 
+    }
+    
+    public void setCabezal(int cabezal) {
+        this.cabezal = cabezal;
     }
 
     @Override

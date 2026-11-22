@@ -4,10 +4,19 @@ package sistemaArchivo;
  *
  * @author dariu
  */
-import java.util.List;
+
 
 public class FileSystemConfig {
-    // Esta clase es solo para que Gson lea y guarde el JSON
+    // 1. AGREGAR ESTA CLASE INTERNA PARA EL DISCO
+    public static class DiskConfigDTO {
+        public int totalBlocks;
+        public int initialHead;
+    }
+
+    // 2. AGREGAR ESTA VARIABLE
+    public DiskConfigDTO diskConfig; 
+
+    // Lo que ya tenías
     public NodoFSDTO[] nodos;
 
     public static class NodoFSDTO {
@@ -16,6 +25,6 @@ public class FileSystemConfig {
         public String dueno;
         public int bloqueInicio;
         public int cantidadBloques;
-         public boolean permisoLectura = true;
+        public boolean permisoLectura = true;
     }
 }

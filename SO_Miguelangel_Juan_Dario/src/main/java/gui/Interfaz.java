@@ -23,7 +23,7 @@ public class Interfaz extends javax.swing.JFrame {
    private int ultimaVersionLog = -1;
     public sistemaOperativo.Cluster cluster;
     private gui.PanelArbolFS panelArbolFS;
-    private javax.swing.JLabel[] bloquesVisuales = new javax.swing.JLabel[200];
+    private javax.swing.JLabel[] bloquesVisuales;
     private boolean fsCargado = false;
     private boolean procesosCargados = false; //crea la lógica para que se habilite solo cuando el usuario cargue los dos JSON.
 
@@ -69,7 +69,7 @@ public class Interfaz extends javax.swing.JFrame {
             bloque.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));
             bloque.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 10));
             
-            bloquesVisuales[i] = bloque;
+           
             jPanel3.add(bloque);
         }
         
@@ -129,20 +129,7 @@ public class Interfaz extends javax.swing.JFrame {
                 panelArbolFS.actualizarArbol(cluster.getSistemaArchivos().getSnapshotArbol());
             }
              
-            // --- F. PINTAR EL DISCO ---
-            if (cluster.getDisco() != null) {
-                int cabezalActual = cluster.getDisco().getCabezal();
-                for (int i = 0; i < 200; i++) {
-                    if (i == cabezalActual) {
-                        bloquesVisuales[i].setBackground(java.awt.Color.RED);
-                        bloquesVisuales[i].setForeground(java.awt.Color.WHITE);
-                    } else {
-                        bloquesVisuales[i].setBackground(java.awt.Color.WHITE);
-                        bloquesVisuales[i].setForeground(java.awt.Color.BLACK);
-                    }
-                }
-            } 
-            
+           
             
         }); 
         
@@ -155,7 +142,37 @@ public class Interfaz extends javax.swing.JFrame {
         javax.swing.JOptionPane.showMessageDialog(this, "Archivos Cargados!!!, ya puedes iniciar la simulación");
       
       }
-  } 
+      
+      
+  }
+      // Este método dibuja los bloques dependiendo del tamaño del disco
+    public void generarMapaBloques(int totalBloques) {
+        jPanel3.removeAll(); // Limpia si ya había bloques (por si cargan otro JSON)
+        
+        int columnas = 20; // Fijamos 20 columnas
+        int filas = (int) Math.ceil((double) totalBloques / columnas); // Calcula las filas necesarias
+        
+        jPanel3.setLayout(new java.awt.GridLayout(filas, columnas, 1, 1));
+        
+        bloquesVisuales = new javax.swing.JLabel[totalBloques]; // Creamos el arreglo del tamaño correcto
+        
+        for (int i = 0; i < totalBloques; i++) {
+            javax.swing.JLabel bloque = new javax.swing.JLabel(String.valueOf(i));
+            bloque.setOpaque(true);
+            bloque.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            bloque.setBackground(java.awt.Color.WHITE);
+            bloque.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));
+            bloque.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 10));
+            
+            bloquesVisuales[i] = bloque;
+            jPanel3.add(bloque);
+        }
+        
+        jPanel3.revalidate(); // Refresca el panel
+        jPanel3.repaint();
+    }
+    
+    
     
     
 
@@ -534,7 +551,26 @@ public class Interfaz extends javax.swing.JFrame {
             readerFS.close();
             
             if (configFS != null && configFS.nodos != null) {
+                 // 1. Inicializas los archivos de Darío
                 cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
+                
+                // 2. Obtienes el tamaño del disco (con protección por si el JSON no lo trae)
+                int totalBloques = 200; // Valor por defecto
+                int cabezalInicial = 50;
+                
+                
+                if (configFS.diskConfig != null) {
+                    totalBloques = configFS.diskConfig.totalBlocks;
+                    cabezalInicial = configFS.diskConfig.initialHead;
+                }
+                
+                // 3. Le dices al Disco de Juan cuál es su nuevo tamaño (debes crear este setter en Disco.java)
+                cluster.getDisco().setTotalBloques(totalBloques);
+                cluster.getDisco().setCabezal(cabezalInicial);
+                
+                // 4. Generas el mapa visual en la interfaz
+                generarMapaBloques(totalBloques);
+                
                 fsCargado = true;
                 verificarInicio();
             }
