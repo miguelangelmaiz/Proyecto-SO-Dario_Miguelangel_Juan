@@ -130,7 +130,23 @@ public class Interfaz extends javax.swing.JFrame {
             }
              
            
-            
+                    // --- F. PINTAR EL DISCO (CABEZAL) ---
+            if (cluster.getDisco() != null && bloquesVisuales != null) {
+                int cabezalActual = cluster.getDisco().getCabezal();
+                
+                // Recorremos el arreglo dinámico de bloques
+                for (int i = 0; i < bloquesVisuales.length; i++) {
+                    if (i == cabezalActual) {
+                        // Pintamos el bloque del cabezal de ROJO
+                        bloquesVisuales[i].setBackground(java.awt.Color.RED);
+                        bloquesVisuales[i].setForeground(java.awt.Color.WHITE);
+                    } else {
+                        // Los demás bloques vuelven a estar BLANCOS
+                        bloquesVisuales[i].setBackground(java.awt.Color.WHITE);
+                        bloquesVisuales[i].setForeground(java.awt.Color.BLACK);
+                    }
+                }
+            }    
         }); 
         
         timer.start();
