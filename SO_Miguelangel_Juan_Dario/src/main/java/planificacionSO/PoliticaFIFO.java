@@ -1,5 +1,7 @@
 package planificacionSO;
 
+import losEnums.DireccionCabezal;
+
 /**
  *
  * @author jmmor
@@ -7,19 +9,14 @@ package planificacionSO;
 
 import estructuraDeDatos.Cola;
 import sistemaOperativo.SolicitudES;
+import losEnums.DireccionCabezal;
 
 public class PoliticaFIFO implements PoliticaDisco {
-      // Este método recibe la cola y devuelve cuál es la siguiente solicitud a atender
-     @Override
-    public SolicitudES elegir(Cola colaES, int cabezalActual) {
-        // FIFO simplemente atiende al primero que llegó
+   @Override
+    public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
         return (SolicitudES) colaES.verFrente();
-        
-        
     }
-     @Override
-    public String getNombre() {
-        return "FIFO";
-    }
+    @Override
+    public String getNombre() { return "FIFO"; }
 
 }

@@ -2,37 +2,35 @@ package planificacionSO;
 
 import estructuraDeDatos.Cola;
 import sistemaOperativo.SolicitudES;
+import losEnums.DireccionCabezal;
 /**
  *
  * @author jmmor
  */
 public class PoliticaCSCAN implements PoliticaDisco{
     
-      @Override
-    public SolicitudES elegir(Cola colaES, int cabezalActual) {
+   @Override
+    public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
         if (colaES.estaVacia()) return null;
-        
         SolicitudES mejor = null;
-        int distanciaMinima = Integer.MAX_VALUE;
-
+        int distMin = Integer.MAX_VALUE;
+        
         for (int i = 0; i < colaES.getTamano(); i++) {
             SolicitudES s = (SolicitudES) colaES.desencolar();
-            // C-SCAN siempre barre de izquierda a derecha
-            if (s.getBloqueDestino() >= cabezalActual) {
-                int dist = s.getBloqueDestino() - cabezalActual;
-                if (dist < distanciaMinima) {
-                    distanciaMinima = dist;
+            int destino = s.getBloqueDestino();
+            
+            // C-SCAN SIEMPRE busca hacia adelante (SUBE)
+            if (destino >= cabezalActual) {
+                int dist = Math.abs(destino - cabezalActual);
+                if (dist < distMin) {
+                    distMin = dist;
                     mejor = s;
                 }
             }
             colaES.encolar(s);
         }
-        return mejor;
+        return mejor; 
     }
-    
-     @Override
-    public String getNombre() {
-        return "CSCAN";
-    }
-    
+    @Override
+    public String getNombre() { return "C-SCAN"; }
 }

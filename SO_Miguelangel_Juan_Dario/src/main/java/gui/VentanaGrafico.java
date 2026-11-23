@@ -125,7 +125,7 @@ public class VentanaGrafico extends javax.swing.JFrame {
                         }
                         ultimaPolitica = politicaActual;
                     }
-                    serieActual.add(tiempo, desplazamiento);
+                    serieActual.add(tiempo, (double) desplazamiento);
                 }
 
                   // 2. ACTUALIZAR ESTADÍSTICAS DIRECTAMENTE AQUÍ

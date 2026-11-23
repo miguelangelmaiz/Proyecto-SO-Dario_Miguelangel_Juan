@@ -10,6 +10,7 @@ import losEnums.TipoOperacionES;
 import hardware.CPU;
 import hardware.MemoriaPrincipal;
 import planificacionSO.PoliticaPlanificacion;
+import hardware.Disco;
 
 
 /**
@@ -51,12 +52,14 @@ public class Nucleo {
 
     // ---------- Getters ----------
     public int getIdComputador() { return idComputador; }
+     
     public Cola getColaNuevos()     { return colaNuevos; }
     public Cola getColaListos()     { return colaListos; }
     public Cola getColaBloqueados() { return colaBloqueados; }
     public Cola getTerminados()     { return terminados; }
     public Cola getColaListosSusp()     { return colaListosSusp; }
     public Cola getColaBloqueadosSusp() { return colaBloqueadosSusp; }
+    
 
     public CPU getCpu() { return cpu; }
     public MemoriaPrincipal getRam() { return ram; }
@@ -349,8 +352,7 @@ public class Nucleo {
         try {
             // TRUCO TEMPORAL PARA PROBAR EL DISCO: 
             // Usamos los bloques del anexo del PDF para que el cabezal se mueva
-                        int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
-            if (bloqueReal < 0) bloqueReal = 50;
+            int bloqueReal = 10 + (p.getId() * 15) % (cluster.getDisco().getTotalBloques() - 20);            
             // (Cuando Darío arregle su código, cambiarás esto por:)
             // int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
             // if (bloqueReal < 0) bloqueReal = 50;

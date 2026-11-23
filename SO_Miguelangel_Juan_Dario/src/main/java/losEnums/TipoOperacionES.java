@@ -8,9 +8,9 @@ package losEnums;
 public enum TipoOperacionES {
     LEER,
     ESCRIBIR,
-    SUSPENDER,
-    REACTIVAR,
-    CREAR, 
-    ELIMINAR, 
     ACTUALIZAR,
+    ELIMINAR,
+    CREAR,
+    SUSPENDER,
+    REACTIVAR
 }

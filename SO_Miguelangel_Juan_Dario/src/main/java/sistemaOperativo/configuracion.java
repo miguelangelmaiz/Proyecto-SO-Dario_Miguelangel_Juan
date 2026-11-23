@@ -8,7 +8,7 @@ package sistemaOperativo;
 
 public class configuracion {
 
-   public static class GlobalConfig {
+    public static class GlobalConfig {
         public int cycleDurationMs;
         public int swapSizeBlocks;
         public String initialDiskPolicy;
@@ -27,11 +27,11 @@ public class configuracion {
         public int memory;
         public int deadline;
         public int instructions;
-        public String targetPath;
-        public String operation;
+        public String targetPath; // <--- Nombre en inglés
+        public String operation;  // <--- Nombre en inglés
         public int fileSizeBlocks;
     }
-    public sistemaArchivo.FileSystemConfig fileSystem;
+    
 }
     
     

@@ -66,4 +66,18 @@ public class MapaBloques {
             mutex.release();
         }
     }
+    
+     // Método para marcar bloques que ya vienen asignados desde el JSON
+    public void marcarOcupado(int inicio, int cantidad) throws InterruptedException {
+        mutex.acquire();
+        try {
+            for (int i = 0; i < cantidad; i++) {
+                if (inicio + i < ocupado.length) {
+                    ocupado[inicio + i] = true;
+                }
+            }
+        } finally {
+            mutex.release();
+        }
+    }
 }

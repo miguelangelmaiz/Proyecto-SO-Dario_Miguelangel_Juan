@@ -19,6 +19,8 @@ import java.io.FileWriter;
 import sistemaOperativo.configuracion;
 
 
+
+
 public class Interfaz extends javax.swing.JFrame {
    private int ultimaVersionLog = -1;
     public sistemaOperativo.Cluster cluster;
@@ -125,7 +127,7 @@ public class Interfaz extends javax.swing.JFrame {
             
             
             // --- E. ACTUALIZAR ÁRBOL DE ARCHIVOS ---
-            if (cluster.getSistemaArchivos() != null) {
+           if (cluster.getSistemaArchivos() != null) {
                 panelArbolFS.actualizarArbol(cluster.getSistemaArchivos().getSnapshotArbol());
             }
              
@@ -563,17 +565,15 @@ public class Interfaz extends javax.swing.JFrame {
             com.google.gson.Gson gson = new com.google.gson.Gson();
             java.io.FileReader readerFS = new java.io.FileReader(archivoFS);
             
-            sistemaArchivo.FileSystemConfig configFS = gson.fromJson(readerFS, sistemaArchivo.FileSystemConfig.class);
+               sistemaArchivo.FileSystemConfig configFS = gson.fromJson(readerFS, sistemaArchivo.FileSystemConfig.class);
             readerFS.close();
-            
-            if (configFS != null && configFS.nodos != null) {
-                 // 1. Inicializas los archivos de Darío
+
+            // CAMBIA "nodos" POR "fileSystem"
+            if (configFS != null && configFS.fileSystem != null) {
                 cluster.getSistemaArchivos().inicializarDesdeJSON(configFS);
                 
-                // 2. Obtienes el tamaño del disco (con protección por si el JSON no lo trae)
-                int totalBloques = 200; // Valor por defecto
+                int totalBloques = 200;
                 int cabezalInicial = 50;
-                
                 
                 if (configFS.diskConfig != null) {
                     totalBloques = configFS.diskConfig.totalBlocks;
@@ -609,36 +609,39 @@ public class Interfaz extends javax.swing.JFrame {
                  cluster.getComputador(0).setPolitica(planificacionSO.FabricaPoliticas.crear(config.computer.policy, config.computer.quantum));
             }
 
-            for (sistemaOperativo.configuracion.ProcessDTO pDto : config.processes) {
-                // 1. SI TIENE UNA RUTA, ES UN PROCESO DE E/S (IO_BOUND). SI NO, ES CPU_BOUND.
+              for (sistemaOperativo.configuracion.ProcessDTO pDto : config.processes) {
+                // 1. TIPO DE PROCESO
                 losEnums.TipoProceso tipoProc = losEnums.TipoProceso.CPU_BOUND;
                 if (pDto.targetPath != null && !pDto.targetPath.trim().isEmpty()) {
                     tipoProc = losEnums.TipoProceso.IO_BOUND;
                 }
-                
-                // 2. LEEMOS LA OPERACIÓN (LEER, CREAR, ELIMINAR, ETC)
+
+                // 2. LEEMOS LA OPERACIÓN (En inglés, porque así viene en el JSON)
                 losEnums.TipoOperacionES op = losEnums.TipoOperacionES.LEER;
-                try { 
-                    if (pDto.operation != null) {
-                        op = losEnums.TipoOperacionES.valueOf(pDto.operation); 
-                    }
-                } catch(Exception e) {
-                    System.out.println("Operación desconocida en JSON: " + pDto.operation + ". Se usará LEER por defecto.");
+                if (pDto.operation != null) {
+                    String opJson = pDto.operation.toUpperCase();
+                    if (opJson.equals("READ")) op = losEnums.TipoOperacionES.LEER;
+                    else if (opJson.equals("UPDATE")) op = losEnums.TipoOperacionES.ACTUALIZAR;
+                    else if (opJson.equals("DELETE")) op = losEnums.TipoOperacionES.ELIMINAR;
+                    else if (opJson.equals("CREATE")) op = losEnums.TipoOperacionES.CREAR;
                 }
 
-                // 3. CREAMOS EL PROCESO CON SUS DATOS
+                // 3. CREAMOS EL PROCESO
                 sistemaOperativo.PCB p = new sistemaOperativo.PCB(
-                        pDto.name, tipoProc, sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
-                        pDto.memory, pDto.deadline, pDto.instructions, 1
+                        pDto.name, 
+                        tipoProc, 
+                        sistemaOperativo.PCB.PRIORIDAD_MEDIA, 
+                        pDto.memory, 
+                        pDto.deadline, 
+                        pDto.instructions, 
+                        1
                 );
+                
                 p.setOperacion(op);
+                // Usamos targetPath
                 p.setRutaArchivo(pDto.targetPath != null ? pDto.targetPath : "/sistema/archivo.txt");
                 p.setBloques(pDto.fileSizeBlocks);
-                
-                // LEEMOS EL COMBO PARA ASIGNAR EL DUEÑO AL PROCESO CARGADO
-                String usuarioSeleccionado = comboUserAdmin.getSelectedItem().toString();
-                String dueno = usuarioSeleccionado.equals("Admin") ? "admin" : "user1";
-                p.setDueno(dueno); 
+                p.setDueno("admin");
                 
                 cluster.getComputador(0).getNucleo().admitir(p);
             }

@@ -5,6 +5,7 @@ import estructuraDeDatos.Cola;
 import planificacionSO.PoliticaFIFO;
 import planificacionSO.PoliticaDisco;
 import sistemaOperativo.Cluster;
+import losEnums.DireccionCabezal;
 
 /**
  *
@@ -12,44 +13,37 @@ import sistemaOperativo.Cluster;
  */
 public class Disco implements ComponenteReloj {
     
-    private int cabezal = 50;
+   private int cabezal = 50;
     private int posPorCiclo = 5; 
-    private int totalBloques;
+    private int totalBloques = 200; // Inicializado por defecto
     private final Cola colaES = new Cola();
     
+    private DireccionCabezal direccion = DireccionCabezal.SUBE;
     private SolicitudES solicitudActual = null;
     private int bloquesRestantes = 0;
     public int desplazamientoTotal = 0;
     
     private Cluster cluster;
     private PoliticaDisco politica = new PoliticaFIFO();
-    
-    // NUEVO: Variable para recordar la dirección del cabezal (1 = sube, -1 = baja)
-    private int direccion = 1; 
 
     public void setCluster(Cluster cluster) { this.cluster = cluster; }
     public void setPolitica(PoliticaDisco p) { this.politica = p; }
+    public void setTotalBloques(int total) { this.totalBloques = total; }
+    public void setCabezal(int cabezal) { this.cabezal = cabezal; }
     
-    public int getDesplazamientoTotal() {
-        return desplazamientoTotal;
+    public int getDesplazamientoTotal() { return desplazamientoTotal; }
+    public int getCabezal() { return cabezal; }
+     public int getTotalBloques() {
+        return totalBloques;
     }
+    public planificacionSO.PoliticaDisco getPolitica() { return politica; }
 
     public void encolarSolicitud(SolicitudES s) {
         colaES.encolar(s);
     }
-      public void setTotalBloques(int total) {
-        this.totalBloques = total; 
-    }
-    
-    public void setCabezal(int cabezal) {
-        this.cabezal = cabezal;
-    }
 
     @Override
     public void tic(int ciclo) {
-         if (ciclo <= 8) {
-            return; 
-        }
         // 1. SI ESTÁ TRANSFIRIENDO, SE QUEDA QUIETO
         if (bloquesRestantes > 0) {
             bloquesRestantes--;
@@ -62,45 +56,38 @@ public class Disco implements ComponenteReloj {
             return; 
         }
 
-        // 2. SI NO TIENE SOLICITUD, PIDE UNA A LA COLA USANDO LA POLÍTICA
+        // 2. SI NO TIENE SOLICITUD, PIDE UNA A LA COLA
         if (solicitudActual == null) {
-            solicitudActual = politica.elegir(colaES, cabezal);
+            solicitudActual = politica.elegir(colaES, cabezal, direccion, totalBloques);
+            
             if (solicitudActual != null) {
-                colaES.eliminar(solicitudActual);
-            } else {
-                // SI NO HAY NADA ADELANTE, SIMULAMOS EL COMPORTAMIENTO DEL BRAZO
-                if (!colaES.estaVacia()) {
-                    
-                    if (politica.getNombre().equals("SCAN")) {
-                        // SCAN: Sube y baja recordando su dirección
-                        if (direccion == 1) { // Va subiendo
-                            if (cabezal < 199) {
-                                cabezal += posPorCiclo;
-                            } else {
-                                direccion = -1; // Cambia de dirección
-                                cabezal -= posPorCiclo;
-                            }
-                        } else { // Va bajando
-                            if (cabezal > 0) {
-                                cabezal -= posPorCiclo;
-                            } else {
-                                direccion = 1; // Cambia de dirección
-                                cabezal += posPorCiclo;
-                            }
-                        }
-                        return;
-                        
-                    } else if (politica.getNombre().equals("CSCAN")) {
-                        // C-SCAN: Sube hasta el final, salta al 0 y vuelve a subir
-                        if (cabezal < 199) {
-                            cabezal += posPorCiclo;
-                        } else {
-                            cabezal = 0;
-                            desplazamientoTotal += 199; // Costo del salto
-                        }
-                        return;
+                colaES.eliminar(solicitudActual); 
+            } else if (!colaES.estaVacia()) {
+                // ¡AQUÍ ESTÁ LA MAGIA DEL EXTREMO! (Si la política devolvió null pero hay solicitudes)
+                if (politica.getNombre().equals("SCAN")) {
+                    if (direccion == DireccionCabezal.SUBE) {
+                        int mover = Math.min(posPorCiclo, (totalBloques - 1) - cabezal);
+                        cabezal += mover;
+                        desplazamientoTotal += mover;
+                        if (cabezal == totalBloques - 1) direccion = DireccionCabezal.BAJA;
+                    } else if (direccion == DireccionCabezal.BAJA) {
+                        int mover = Math.min(posPorCiclo, cabezal);
+                        cabezal -= mover;
+                        desplazamientoTotal += mover;
+                        if (cabezal == 0) direccion = DireccionCabezal.SUBE;
+                    }
+                } else if (politica.getNombre().equals("C-SCAN")) {
+                    if (cabezal < totalBloques - 1) {
+                        int mover = Math.min(posPorCiclo, (totalBloques - 1) - cabezal);
+                        cabezal += mover;
+                        desplazamientoTotal += mover;
+                    } else {
+                        cabezal = 0; // Salto sin sumar desplazamiento
+                        direccion = DireccionCabezal.SUBE;
                     }
                 }
+                return;
+            } else {
                 return; 
             }
         }
@@ -111,23 +98,20 @@ public class Disco implements ComponenteReloj {
             int mover = Math.min(posPorCiclo, destino - cabezal);
             cabezal += mover;
             desplazamientoTotal += mover;
-            direccion = 1; // Si va a un destino mayor, sube
+            direccion = DireccionCabezal.SUBE;
         } else if (cabezal > destino) {
             int mover = Math.min(posPorCiclo, cabezal - destino);
             cabezal -= mover;
             desplazamientoTotal += mover;
-            direccion = -1; // Si va a un destino menor, baja
+            direccion = DireccionCabezal.BAJA;
         }
 
-        // 4. SI YA LLEGÓ AL DESTINO, EMPIEZA A TRANSFERIR
+        // 4. SI YA LLEGÓ, TRANSFIERE
         if (cabezal == destino) {
             bloquesRestantes = solicitudActual.getBloquesRequeridos();
         }
     }
-    
-    public planificacionSO.PoliticaDisco getPolitica() {
-        return this.politica;
-    }
-    
-    public int getCabezal() { return cabezal; }
 }
+
+    
+    
