@@ -1,6 +1,6 @@
 ÁvilaOS - Simulador de Sistema Operativo Distribuido
 
-Proyecto 1 - Sistemas Operativos (Trimestre 2627-1)
+Proyecto 2 - Sistemas Operativos (Trimestre 2627-1)
 
 ÁvilaOS es un simulador de sistema operativo distribuido desarrollado en Java. El sistema modela la gestión de procesos, la planificación de la CPU bajo múltiples políticas y la sincronización mediante semáforos (productor-consumidor) en un clúster de computadoras, manteniendo un estricto diseño por capas.
 
