@@ -157,7 +157,10 @@ public class Interfaz extends javax.swing.JFrame {
                         bloquesVisuales[i].setForeground(java.awt.Color.BLACK);
                     }
                 }
-            }    
+            }  
+             
+             
+             
         }); 
         
         timer.start();
@@ -795,7 +798,15 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_cbxPoliticaDiscoActionPerformed
 
     private void comboUserAdminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboUserAdminActionPerformed
-        // TODO add your handling code here:
+        String usuario = comboUserAdmin.getSelectedItem().toString();
+        
+        if (usuario.equals("Admin")) {
+            cbxOperacion.setEnabled(true);
+        } else {
+            // Si es User1, obligamos a que sea LEER (puedes dejar CREAR también)
+            cbxOperacion.setSelectedItem("LEER");
+            // Opcional: cbxOperacion.setEnabled(false); 
+        }// TODO add your handling code here:
     }//GEN-LAST:event_comboUserAdminActionPerformed
 
   private void llenarTabla(sistemaArchivo.NodoFS nodo) {

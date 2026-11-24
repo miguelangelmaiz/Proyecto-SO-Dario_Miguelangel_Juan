@@ -202,14 +202,11 @@ public class Nucleo {
         victima.setEnSwap(true);
         cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando suspensión de " + victima.getNombre() + "...");
 
-        // Pide tantos bloques como memoria tenga el proceso
-        int bloquesSwap = victima.getMemoria();
+        // Calculamos el bloque de swap (al final del disco)
+        int bloqueSwap = cluster.getDisco().getTotalBloques() - 1;
         
-        // Lo limitamos al tamaño del Swap
-        int maxSwap = cluster.getSwapSizeBlocks(); 
-        if (bloquesSwap > maxSwap) bloquesSwap = maxSwap; 
-
-        SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, -1, bloquesSwap, ciclo);
+        // Transferimos solo 1 bloque y lo mandamos al bloque de swap
+        SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, bloqueSwap, 1, ciclo);
         cluster.getDisco().encolarSolicitud(solicitud);
         
         return false; 
@@ -220,13 +217,11 @@ public class Nucleo {
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaListosSusp.desencolar();
             
-            // ¡VERIFICAR QUE HAYA RAM!
-            if (ram.hayEspacio(p.getMemoria())) {
-                int bloquesSwap = p.getMemoria(); 
-                int maxSwap = cluster.getSwapSizeBlocks();
-                if (bloquesSwap > maxSwap) bloquesSwap = maxSwap;
+             if (ram.hayEspacio(p.getMemoria())) {
+                int bloqueSwap = cluster.getDisco().getTotalBloques() - 1;
 
-                SolicitudES solicitud = new SolicitudES(p, TipoOperacionES.REACTIVAR, -1, bloquesSwap, ciclo);
+                // Transferimos solo 1 bloque desde el bloque de swap
+                SolicitudES solicitud = new SolicitudES(p, TipoOperacionES.REACTIVAR, bloqueSwap, 1, ciclo);
                 cluster.getDisco().encolarSolicitud(solicitud);
                 cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando reactivación de " + p.getNombre());
             } else {
@@ -271,16 +266,19 @@ public class Nucleo {
             
         } else {
             // LEER / ESCRIBIR / CREAR / ELIMINAR
-            if (cluster.getSistemaArchivos() != null) {
-                boolean esAdmin = p.getDueno().equals("admin");
-                String error = cluster.getSistemaArchivos().aplicarCRUD(
-                        s.getOperacion(), p.getRutaArchivo(), p.getDueno(), esAdmin, p.getBloques());
-                
-                if (error != null) {
-                    cluster.registrarEvento("Error de FS: " + error);
-                } else {
-                    cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " ejecutó " + s.getOperacion() + " en " + p.getRutaArchivo());
-                }
+           if (cluster.getSistemaArchivos() != null) {
+        // Si el dueño del PCB es "admin", tiene todos los permisos
+        boolean esAdmin = p.getDueno().equals("admin"); 
+        
+        String error = cluster.getSistemaArchivos().aplicarCRUD(
+                s.getOperacion(), p.getRutaArchivo(), p.getDueno(), esAdmin, p.getBloques());
+        
+        if (error != null) {
+            cluster.registrarEvento("Error de FS: " + error);
+        } else {
+            cluster.registrarEvento("Ciclo " + cluster.getReloj().getCiclo() + ": " + p.getNombre() + " ejecutó " + s.getOperacion() + " en " + p.getRutaArchivo());
+        }
+    }
             }
 
             if (p.isEnSwap()) {
@@ -293,7 +291,7 @@ public class Nucleo {
                 despertar(p); 
             }
         } 
-    }  
+      
      
     // ---------- Paso 4: planificación CPU ----------
     private void planificar(int ciclo) {

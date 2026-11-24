@@ -35,24 +35,30 @@ public class SistemaArchivos {
 
     // AHORA DEVUELVE String: null si todo bien, o el mensaje de error
      public String aplicarCRUD(TipoOperacionES op, String ruta, String usuario, boolean admin, int bloquesSolicitados) {
-          try {
+           try {
             mutex.acquire();
             NodoFS nodo = buscarRutaInterno(ruta);
-
-            // Validación de permisos
-            if (nodo != null && !admin && !nodo.getDueno().equals(usuario)) {
-                return "Permiso denegado: no eres el dueño";
-            }
+            boolean esDueno = (nodo != null && nodo.getDueno().equals(usuario));
 
             switch (op) {
+                case LEER:
+                    if (nodo == null || nodo.isEsDirectorio()) return "Archivo inválido";
+                    // Regla: Admin lee todo. Usuario lee si es suyo o si es público.
+                    if (!admin && !esDueno && !nodo.isPermisoLectura()) {
+                        return "Acceso denegado: archivo privado de otro usuario";
+                    }
+                    return null; // Éxito
+
                 case CREAR:
                     if (nodo != null) return "El archivo ya existe";
                     String rutaPadre = obtenerRutaPadre(ruta);
                     NodoFS padre = buscarRutaInterno(rutaPadre);
                     if (padre == null || !padre.isEsDirectorio()) return "El directorio padre no existe";
                     
-                    // Validar que el usuario cree en su carpeta
-                    if (!admin && !ruta.contains("/" + usuario)) return "Solo puedes crear en tu carpeta";
+                    // Regla: Usuario solo crea en /usuarios
+                    if (!admin && !ruta.startsWith("/usuarios")) {
+                        return "Acceso denegado: los usuarios solo crean en /usuarios";
+                    }
 
                     int bloque = mapa.asignarCadena(bloquesSolicitados);
                     if (bloque == -1) return "No hay espacio en disco";
@@ -60,34 +66,31 @@ public class SistemaArchivos {
                     NodoFS nuevo = new NodoFS(obtenerNombre(ruta), false, usuario);
                     nuevo.setBloqueInicio(bloque);
                     nuevo.setCantidadBloques(bloquesSolicitados);
+                    nuevo.setPermisoLectura(true); // Por defecto público
                     padre.getHijos().insertFinale(nuevo);
                     return null; // Éxito
 
-                case ELIMINAR:
-                    if (nodo == null) return "No existe";
-                    if (nodo == raiz) return "No puedes borrar la raíz";
-                    
-                    // Borrado recursivo si es directorio
-                    if (nodo.isEsDirectorio()) {
-                        if (!admin) return "Solo el admin puede borrar directorios";
-                        eliminarRecursivo(nodo);
-                    } else {
-                        mapa.liberarCadena(nodo.getBloqueInicio());
-                    }
-                    
-                    eliminarNodoDePadre(ruta);
-                    return null; // Éxito
-
-                case LEER:
-                    if (nodo == null || nodo.isEsDirectorio()) return "Archivo inválido";
-                    return null; // Éxito
-
                 case ACTUALIZAR:
+                case ELIMINAR:
+                    // Regla: Solo el Admin puede renombrar o borrar
+                    if (!admin) {
+                        return "Acceso denegado: solo el administrador puede modificar o eliminar";
+                    }
                     if (nodo == null) return "No existe";
-                    if (!admin) return "Solo el admin puede renombrar";
-                    // Renombrar
-                    String nuevoNombre = obtenerNombre(ruta) + "_modificado";
-                    nodo.setNombre(nuevoNombre);
+                    
+                    if (op == TipoOperacionES.ELIMINAR) {
+                        if (nodo == raiz) return "No puedes borrar la raíz";
+                        if (nodo.isEsDirectorio()) {
+                            eliminarRecursivo(nodo);
+                        } else {
+                            mapa.liberarCadena(nodo.getBloqueInicio());
+                        }
+                        eliminarNodoDePadre(ruta);
+                    } else {
+                        // ACTUALIZAR (Renombrar)
+                        String nuevoNombre = obtenerNombre(ruta) + "_mod";
+                        nodo.setNombre(nuevoNombre);
+                    }
                     return null; // Éxito
 
                 default:
@@ -244,6 +247,8 @@ public class SistemaArchivos {
                     NodoFS nuevoArch = new NodoFS(nombre, false, dto.owner);
                     nuevoArch.setBloqueInicio(dto.startBlock);
                     nuevoArch.setCantidadBloques(dto.blocks);
+                    
+                    nuevoArch.setPermisoLectura(dto.permissions.equals("public")); 
                     
                     insertarNodo(dto.path, nuevoArch);
                     
