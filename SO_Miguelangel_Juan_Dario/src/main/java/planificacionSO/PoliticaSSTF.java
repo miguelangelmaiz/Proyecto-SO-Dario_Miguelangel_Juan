@@ -11,7 +11,7 @@ import sistemaOperativo.SolicitudES;
 import losEnums.DireccionCabezal;
 
 public class PoliticaSSTF implements PoliticaDisco {
-   @Override
+    @Override
     public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
         Criterio masCercano = (a, b) -> {
             SolicitudES solA = (SolicitudES) a;
@@ -22,6 +22,18 @@ public class PoliticaSSTF implements PoliticaDisco {
         };
         return (SolicitudES) colaES.verMejor(masCercano);
     }
+
     @Override
     public String getNombre() { return "SSTF"; }
+
+    @Override
+    public boolean esBarrido() { return false; }
+
+    @Override
+    public boolean esCircular() { return false; }
+
+    @Override
+    public int getSiguienteDestino(int cabezal, int maxBloques, DireccionCabezal dir) {
+        return cabezal; // SSTF tampoco va a los extremos ciegamente
+    }
 }

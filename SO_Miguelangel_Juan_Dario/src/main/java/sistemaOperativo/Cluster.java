@@ -14,11 +14,12 @@ import sistemaArchivo.SistemaArchivos;
 public class Cluster {
     private final RelojGlobal reloj;
     private final ListaSimple computadores;
-    
+    private int swapSizeBlocks = 100; // Valor por defecto
     // EL ARREGLO DEL LOG:
     private final Log logSistema = new Log(); 
     private final Disco disco; 
     private Thread hiloReloj;
+    
 
     // --- NUEVO: Instancia del Sistema de Archivos ---
     private final SistemaArchivos sistemaArchivos; 
@@ -58,7 +59,8 @@ public class Cluster {
 
     // ---------- Getters ----------
     public Disco getDisco() { return disco; }
-
+public int getSwapSizeBlocks() { return swapSizeBlocks; }
+    public void setSwapSizeBlocks(int swapSizeBlocks) { this.swapSizeBlocks = swapSizeBlocks; }
     // --- NUEVO: Getter para que el Núcleo y la Interfaz usen el FS ---
     public SistemaArchivos getSistemaArchivos() { return sistemaArchivos; }
 

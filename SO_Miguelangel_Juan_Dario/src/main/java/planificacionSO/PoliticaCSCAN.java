@@ -12,6 +12,7 @@ public class PoliticaCSCAN implements PoliticaDisco{
    @Override
     public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
         if (colaES.estaVacia()) return null;
+        
         SolicitudES mejor = null;
         int distMin = Integer.MAX_VALUE;
         
@@ -19,7 +20,6 @@ public class PoliticaCSCAN implements PoliticaDisco{
             SolicitudES s = (SolicitudES) colaES.desencolar();
             int destino = s.getBloqueDestino();
             
-            // C-SCAN SIEMPRE busca hacia adelante (SUBE)
             if (destino >= cabezalActual) {
                 int dist = Math.abs(destino - cabezalActual);
                 if (dist < distMin) {
@@ -31,6 +31,19 @@ public class PoliticaCSCAN implements PoliticaDisco{
         }
         return mejor; 
     }
+
     @Override
     public String getNombre() { return "C-SCAN"; }
+
+    @Override
+    public boolean esBarrido() { return true; }
+
+    @Override
+    public boolean esCircular() { return true; }
+
+    @Override
+    public int getSiguienteDestino(int cabezal, int maxBloques, DireccionCabezal dir) {
+        // C-SCAN siempre va hacia el final del disco
+        return maxBloques - 1;
+    }
 }

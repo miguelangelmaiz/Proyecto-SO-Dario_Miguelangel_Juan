@@ -23,6 +23,7 @@ import sistemaOperativo.configuracion;
 
 public class Interfaz extends javax.swing.JFrame {
    private int ultimaVersionLog = -1;
+   private javax.swing.table.DefaultTableModel modeloTabla;
     public sistemaOperativo.Cluster cluster;
     private gui.PanelArbolFS panelArbolFS;
     private javax.swing.JLabel[] bloquesVisuales;
@@ -31,10 +32,12 @@ public class Interfaz extends javax.swing.JFrame {
 
     public Interfaz() {
         initComponents();
-         
+        String[] columnas = {"Nombre", "Dueño", "Bloque Inicio", "Cant. Bloques"};
+        modeloTabla = new javax.swing.table.DefaultTableModel(columnas, 0);
+        tablaDatos.setModel(modeloTabla); 
         // 1. CONFIGURACIÓN INICIAL Y PANELES
         panelArbolFS = new gui.PanelArbolFS(); 
-        Tab.addTab("Sistema de Archivos", panelArbolFS); 
+        tablaArchivos.addTab("Sistema de Archivos", panelArbolFS); 
         
         spnMemoria.setModel(new javax.swing.SpinnerNumberModel(1, 1, 4096, 1));
         spnDeadline.setModel(new javax.swing.SpinnerNumberModel(1, 1, 9999, 1));
@@ -129,22 +132,28 @@ public class Interfaz extends javax.swing.JFrame {
             // --- E. ACTUALIZAR ÁRBOL DE ARCHIVOS ---
            if (cluster.getSistemaArchivos() != null) {
                 panelArbolFS.actualizarArbol(cluster.getSistemaArchivos().getSnapshotArbol());
+                modeloTabla.setRowCount(0); // Limpiar tabla
+                llenarTabla(cluster.getSistemaArchivos().getRaiz());
             }
              
            
                     // --- F. PINTAR EL DISCO (CABEZAL) ---
-            if (cluster.getDisco() != null && bloquesVisuales != null) {
+             if (cluster.getDisco() != null && bloquesVisuales != null) {
                 int cabezalActual = cluster.getDisco().getCabezal();
+                boolean[] ocupados = null;
+                if (cluster.getSistemaArchivos() != null) {
+                    ocupados = cluster.getSistemaArchivos().getMapaBloques().getOcupado();
+                }
                 
-                // Recorremos el arreglo dinámico de bloques
                 for (int i = 0; i < bloquesVisuales.length; i++) {
                     if (i == cabezalActual) {
-                        // Pintamos el bloque del cabezal de ROJO
-                        bloquesVisuales[i].setBackground(java.awt.Color.RED);
+                        bloquesVisuales[i].setBackground(java.awt.Color.RED); // Cabezal
                         bloquesVisuales[i].setForeground(java.awt.Color.WHITE);
+                    } else if (ocupados != null && i < ocupados.length && ocupados[i]) {
+                        bloquesVisuales[i].setBackground(java.awt.Color.CYAN); // Bloque Ocupado
+                        bloquesVisuales[i].setForeground(java.awt.Color.BLACK);
                     } else {
-                        // Los demás bloques vuelven a estar BLANCOS
-                        bloquesVisuales[i].setBackground(java.awt.Color.WHITE);
+                        bloquesVisuales[i].setBackground(java.awt.Color.WHITE); // Bloque Libre
                         bloquesVisuales[i].setForeground(java.awt.Color.BLACK);
                     }
                 }
@@ -152,6 +161,7 @@ public class Interfaz extends javax.swing.JFrame {
         }); 
         
         timer.start();
+        
     }
     
   private void verificarInicio(){
@@ -204,7 +214,7 @@ public class Interfaz extends javax.swing.JFrame {
         jSpinner1 = new javax.swing.JSpinner();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
-        Tab = new javax.swing.JTabbedPane();
+        tablaArchivos = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         Computador = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -234,7 +244,12 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel15 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
         spnQuantum = new javax.swing.JSpinner();
+        cbxOperacion = new javax.swing.JComboBox<>();
+        txtRuta = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
+        jPanel5 = new javax.swing.JPanel();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        tablaDatos = new javax.swing.JTable();
         btnGrafico = new javax.swing.JButton();
         guardarJson = new javax.swing.JButton();
         cargarJson = new javax.swing.JButton();
@@ -256,7 +271,7 @@ public class Interfaz extends javax.swing.JFrame {
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel2.setText("Velocidad (ms): 0");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 50, -1, -1));
-        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 30, -1, -1));
+        jPanel1.add(jSpinner1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 10, -1, -1));
 
         jButton1.setText("INICIAR");
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -397,14 +412,46 @@ public class Interfaz extends javax.swing.JFrame {
         });
         crearProceso.add(spnQuantum, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 130, 90, -1));
 
+        cbxOperacion.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "LEER", "CREAR", "ACTUALIZAR", "ELIMINAR" }));
+        crearProceso.add(cbxOperacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 330, -1, -1));
+
+        txtRuta.setText("/sistema/archivo.txt");
+        crearProceso.add(txtRuta, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 360, -1, -1));
+
         jPanel2.add(crearProceso);
 
-        Tab.addTab("Simulación", jPanel2);
+        tablaArchivos.addTab("Simulación", jPanel2);
 
         jPanel3.setLayout(new java.awt.GridLayout(1, 0));
-        Tab.addTab("Disco", jPanel3);
+        tablaArchivos.addTab("Disco", jPanel3);
 
-        jPanel1.add(Tab, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 110, 1110, 500));
+        tablaDatos.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane6.setViewportView(tablaDatos);
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane6, javax.swing.GroupLayout.DEFAULT_SIZE, 1110, Short.MAX_VALUE)
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane6, javax.swing.GroupLayout.DEFAULT_SIZE, 465, Short.MAX_VALUE)
+        );
+
+        tablaArchivos.addTab("Tabla Archivos ", jPanel5);
+
+        jPanel1.add(tablaArchivos, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 110, 1110, 500));
 
         btnGrafico.setText("GRAFICOS");
         btnGrafico.addActionListener(new java.awt.event.ActionListener() {
@@ -499,59 +546,65 @@ public class Interfaz extends javax.swing.JFrame {
 
     private void guardarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarJsonActionPerformed
            try {
-            // 1. Creamos el objeto de configuración global
-            sistemaOperativo.configuracion.GlobalConfig config = new sistemaOperativo.configuracion.GlobalConfig();
-            
-            // 2. Llenamos los datos globales
-            config.cycleDurationMs = (int) jSpinner1.getValue();
-            config.swapSizeBlocks = 100; // Valor por defecto para el Proyecto 2
-            config.initialDiskPolicy = "FIFO"; // Valor por defecto para el Proyecto 2
+            // 1. Guardar el JSON del Sistema de Archivos PRIMERO
+            javax.swing.JFileChooser chooserFS = new javax.swing.JFileChooser();
+            chooserFS.setDialogTitle("Guardar Sistema de Archivos (FS)");
+            if (chooserFS.showSaveDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
+                java.io.File archivoFS = chooserFS.getSelectedFile();
+                if (!archivoFS.getName().toLowerCase().endsWith(".json")) {
+                    archivoFS = new java.io.File(archivoFS.getParentFile(), archivoFS.getName() + ".json");
+                }
+                
+                sistemaArchivo.FileSystemConfig fsConfig = cluster.getSistemaArchivos().exportarAJSON(
+                        cluster.getDisco().getTotalBloques(), cluster.getDisco().getCabezal());
+                
+                com.google.gson.Gson gsonFS = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                java.io.FileWriter writerFS = new java.io.FileWriter(archivoFS);
+                gsonFS.toJson(fsConfig, writerFS);
+                writerFS.close();
+            }
 
-            // 3. Llenamos la configuración de la computadora
+            // 2. Guardar el JSON de Procesos (Lógica existente)
+            sistemaOperativo.configuracion.GlobalConfig config = new sistemaOperativo.configuracion.GlobalConfig();
+            config.cycleDurationMs = (int) jSpinner1.getValue();
+            config.swapSizeBlocks = cluster.getSwapSizeBlocks();
+            config.initialDiskPolicy = cbxPoliticaDisco.getSelectedItem().toString();
+            
             config.computer = new sistemaOperativo.configuracion.ComputerConfig();
-            config.computer.ramCapacity = 8192; // RAM por defecto de la GUI
-            config.computer.policy = "FCFS"; // O podrías leerlo del combo jComboBox1
+            config.computer.ramCapacity = 8192; 
+            config.computer.policy = jComboBox1.getSelectedItem().toString(); 
             config.computer.quantum = (int) spnQuantum.getValue();
 
-            // 4. Creamos el proceso que está en pantalla para guardarlo
             sistemaOperativo.configuracion.ProcessDTO pDto = new sistemaOperativo.configuracion.ProcessDTO();
             pDto.name = txtNombre.getText().isEmpty() ? "Proceso_Ejemplo" : txtNombre.getText();
             pDto.memory = (int) spnMemoria.getValue();
             pDto.deadline = (int) spnDeadline.getValue();
             pDto.instructions = (int) spnInstrucciones.getValue();
-            
-            // El Proyecto 2 pide targetPath y operation, le ponemos valores por defecto
             pDto.targetPath = "/sistema/archivo.txt"; 
-            pDto.operation = cbxTipoProceso.getSelectedItem().toString(); // Usamos el combo como operación
-            pDto.fileSizeBlocks = 0;
+            pDto.operation = "READ"; 
+            pDto.fileSizeBlocks = 1;
 
-            // Lo metemos en el arreglo de procesos (de tamaño 1)
             config.processes = new sistemaOperativo.configuracion.ProcessDTO[1];
             config.processes[0] = pDto;
 
-            // 5. Ventana para elegir el archivo JSON
             javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
-            fileChooser.setDialogTitle("Guardar Procesos (Proyecto 2)");
+            fileChooser.setDialogTitle("Guardar Procesos");
             fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos JSON (*.json)", "json"));
             
             if (fileChooser.showSaveDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
                 java.io.File archivo = fileChooser.getSelectedFile();
-                
                 if (!archivo.getName().toLowerCase().endsWith(".json")) {
                     archivo = new java.io.File(archivo.getParentFile(), archivo.getName() + ".json");
                 }
-
-                // 6. Guardar con Gson
                 com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
                 java.io.FileWriter writer = new java.io.FileWriter(archivo);
                 gson.toJson(config, writer);
                 writer.close();
-
-                javax.swing.JOptionPane.showMessageDialog(this, "¡Procesos guardados exitosamente en:\n" + archivo.getAbsolutePath());
+                javax.swing.JOptionPane.showMessageDialog(this, "¡Procesos y Sistema de Archivos guardados exitosamente!");
             }
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage());
-        }  // TODO add your handling code here:
+        }    // TODO add your handling code here:
     }//GEN-LAST:event_guardarJsonActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
@@ -567,6 +620,8 @@ public class Interfaz extends javax.swing.JFrame {
             
                sistemaArchivo.FileSystemConfig configFS = gson.fromJson(readerFS, sistemaArchivo.FileSystemConfig.class);
             readerFS.close();
+            
+            
 
             // CAMBIA "nodos" POR "fileSystem"
             if (configFS != null && configFS.fileSystem != null) {
@@ -603,7 +658,10 @@ public class Interfaz extends javax.swing.JFrame {
             readerProc.close();
 
             if (config == null || config.processes == null) return;
-
+            if (config.swapSizeBlocks > 0) {
+                cluster.setSwapSizeBlocks(config.swapSizeBlocks);
+            }
+            
             if (config.cycleDurationMs > 0) jSpinner1.setValue(config.cycleDurationMs);
             if (config.computer != null && config.computer.policy != null) {
                  cluster.getComputador(0).setPolitica(planificacionSO.FabricaPoliticas.crear(config.computer.policy, config.computer.quantum));
@@ -676,10 +734,13 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_cbxTipoProcesoActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        try {
-            // Leemos el combo que agregaste
+         try {
             String usuarioSeleccionado = comboUserAdmin.getSelectedItem().toString();
             String dueno = usuarioSeleccionado.equals("Admin") ? "admin" : "user1";
+            
+            // LEEMOS LO NUEVO DE LA GUI
+            String operacionSeleccionada = cbxOperacion.getSelectedItem().toString();
+            String rutaSeleccionada = txtRuta.getText();
             
             sistemaOperativo.Resultado r = sistemaOperativo.ProcesoESFactory.crear(
                     cluster,
@@ -689,9 +750,9 @@ public class Interfaz extends javax.swing.JFrame {
                     (int) spnMemoria.getValue(),
                     (int) spnDeadline.getValue(),
                     (int) spnInstrucciones.getValue(),
-                    "LEER",                       
-                    "/sistema/archivo.txt",
-                    dueno); // <-- AGREGADO AQUÍ
+                    operacionSeleccionada, // <-- AHORA ES DINÁMICO
+                    rutaSeleccionada,      // <-- AHORA ES DINÁMICO
+                    dueno);
 
             if (!r.isOk()) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Rechazado: " + r.getMotivo());
@@ -737,13 +798,23 @@ public class Interfaz extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_comboUserAdminActionPerformed
 
-   
+  private void llenarTabla(sistemaArchivo.NodoFS nodo) {
+        if (!nodo.isEsDirectorio()) {
+            modeloTabla.addRow(new Object[]{
+                nodo.getNombre(), nodo.getDueno(), nodo.getBloqueInicio(), nodo.getCantidadBloques()
+            });
+        }
+        estructuraDeDatos.ListaSimple hijos = nodo.getHijos();
+        for (int i = 0; i < hijos.getSize(); i++) {
+            llenarTabla((sistemaArchivo.NodoFS) hijos.getValue(i));
+        }
+    } 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Computador;
-    private javax.swing.JTabbedPane Tab;
     private javax.swing.JButton btnGrafico;
     private javax.swing.JButton cargarJson;
+    private javax.swing.JComboBox<String> cbxOperacion;
     private javax.swing.JComboBox<String> cbxPoliticaDisco;
     private javax.swing.JComboBox<String> cbxPrioridad;
     private javax.swing.JComboBox<String> cbxTipoProceso;
@@ -770,22 +841,27 @@ public class Interfaz extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JSpinner spnDeadline;
     private javax.swing.JSpinner spnInstrucciones;
     private javax.swing.JSpinner spnMemoria;
     private javax.swing.JSpinner spnQuantum;
+    private javax.swing.JTabbedPane tablaArchivos;
+    private javax.swing.JTable tablaDatos;
     private javax.swing.JTextArea txtColaBloqSusp;
     private javax.swing.JTextArea txtColaListosSusp;
     private javax.swing.JTextArea txtColaNuevos;
     private javax.swing.JTextArea txtLog;
     private javax.swing.JTextField txtNombre;
+    private javax.swing.JTextField txtRuta;
     // End of variables declaration//GEN-END:variables
 
 

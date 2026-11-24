@@ -258,6 +258,44 @@ public class SistemaArchivos {
         }
     }
 
+    public MapaBloques getMapaBloques() { return mapa; }
+        public sistemaArchivo.FileSystemConfig exportarAJSON(int totalBloques, int cabezal) {
+        sistemaArchivo.FileSystemConfig config = new sistemaArchivo.FileSystemConfig();
+        config.diskConfig = new sistemaArchivo.FileSystemConfig.DiskConfigDTO();
+        config.diskConfig.totalBlocks = totalBloques;
+        config.diskConfig.initialHead = cabezal;
+        
+        int totalNodos = contarNodos(raiz);
+        config.fileSystem = new sistemaArchivo.FileSystemConfig.FileSystemDTO[totalNodos];
+        
+        llenarDTO(raiz, "", config.fileSystem, new int[]{0});
+        return config;
+    }
 
-    
+    private int contarNodos(sistemaArchivo.NodoFS nodo) {
+        int count = 1; 
+        for (int i = 0; i < nodo.getHijos().getSize(); i++) {
+            count += contarNodos((sistemaArchivo.NodoFS) nodo.getHijos().getValue(i));
+        }
+        return count;
+    }
+
+    private void llenarDTO(sistemaArchivo.NodoFS nodo, String rutaPadre, sistemaArchivo.FileSystemConfig.FileSystemDTO[] arr, int[] index) {
+        String rutaActual = rutaPadre.equals("") ? "/" + nodo.getNombre() : rutaPadre + "/" + nodo.getNombre();
+        if (nodo.getNombre().equals("raiz")) rutaActual = "/"; 
+        
+        sistemaArchivo.FileSystemConfig.FileSystemDTO dto = new sistemaArchivo.FileSystemConfig.FileSystemDTO();
+        dto.path = rutaActual;
+        dto.type = nodo.isEsDirectorio() ? "DIRECTORY" : "FILE";
+        dto.owner = nodo.getDueno();
+        dto.permissions = nodo.isPermisoLectura() ? "public" : "private";
+        dto.startBlock = nodo.getBloqueInicio();
+        dto.blocks = nodo.getCantidadBloques();
+        
+        arr[index[0]++] = dto;
+        
+        for (int i = 0; i < nodo.getHijos().getSize(); i++) {
+            llenarDTO((sistemaArchivo.NodoFS) nodo.getHijos().getValue(i), rutaActual.equals("/") ? "" : rutaActual, arr, index);
+        }
+    }
 }

@@ -199,12 +199,17 @@ public class Nucleo {
         if (victima == null) return false;
         colaBloqueados.eliminar(victima);
 
-        victima.setEnSwap(true); // CLAVE: Lo marcamos para que LEER sepa que está en trámite
+        victima.setEnSwap(true);
+        cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando suspensión de " + victima.getNombre() + "...");
 
-        cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando suspensión de "
-                + victima.getNombre() + " para admitir a " + nuevoProceso.getNombre());
+        // Pide tantos bloques como memoria tenga el proceso
+        int bloquesSwap = victima.getMemoria();
+        
+        // Lo limitamos al tamaño del Swap
+        int maxSwap = cluster.getSwapSizeBlocks(); 
+        if (bloquesSwap > maxSwap) bloquesSwap = maxSwap; 
 
-        SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, -1, victima.getMemoria(), ciclo);
+        SolicitudES solicitud = new SolicitudES(victima, TipoOperacionES.SUSPENDER, -1, bloquesSwap, ciclo);
         cluster.getDisco().encolarSolicitud(solicitud);
         
         return false; 
@@ -215,14 +220,17 @@ public class Nucleo {
         for (int i = 0; i < n; i++) {
             PCB p = (PCB) colaListosSusp.desencolar();
             
+            // ¡VERIFICAR QUE HAYA RAM!
             if (ram.hayEspacio(p.getMemoria())) {
-                // ENVIAMOS LA SOLICITUD AL DISCO REAL
-                SolicitudES solicitud = new SolicitudES(p, TipoOperacionES.REACTIVAR, -1, p.getMemoria(), ciclo);
+                int bloquesSwap = p.getMemoria(); 
+                int maxSwap = cluster.getSwapSizeBlocks();
+                if (bloquesSwap > maxSwap) bloquesSwap = maxSwap;
+
+                SolicitudES solicitud = new SolicitudES(p, TipoOperacionES.REACTIVAR, -1, bloquesSwap, ciclo);
                 cluster.getDisco().encolarSolicitud(solicitud);
-                
                 cluster.registrarEvento("Ciclo " + ciclo + ": Solicitando reactivación de " + p.getNombre());
             } else {
-                colaListosSusp.encolar(p); // Se queda ahí si no hay RAM
+                colaListosSusp.encolar(p); // No hay RAM, se queda esperando
             }
         }
     }
@@ -350,9 +358,9 @@ public class Nucleo {
         cpu.registrarOperacionSistema();
         cpu.entrarModoSistema();
         try {
-            // TRUCO TEMPORAL PARA PROBAR EL DISCO: 
-            // Usamos los bloques del anexo del PDF para que el cabezal se mueva
-            int bloqueReal = 10 + (p.getId() * 15) % (cluster.getDisco().getTotalBloques() - 20);            
+                       // Leemos el bloque real desde el sistema de archivos
+            int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
+            if (bloqueReal < 0) bloqueReal = 50; // Fallback por si no lo encuentra            
             // (Cuando Darío arregle su código, cambiarás esto por:)
             // int bloqueReal = cluster.getSistemaArchivos().primerBloqueReal(p.getRutaArchivo());
             // if (bloqueReal < 0) bloqueReal = 50;

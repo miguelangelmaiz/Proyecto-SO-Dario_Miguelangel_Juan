@@ -42,7 +42,7 @@ public class Disco implements ComponenteReloj {
         colaES.encolar(s);
     }
 
-    @Override
+        @Override
     public void tic(int ciclo) {
         // 1. SI ESTÁ TRANSFIRIENDO, SE QUEDA QUIETO
         if (bloquesRestantes > 0) {
@@ -62,28 +62,28 @@ public class Disco implements ComponenteReloj {
             
             if (solicitudActual != null) {
                 colaES.eliminar(solicitudActual); 
-            } else if (!colaES.estaVacia()) {
-                // ¡AQUÍ ESTÁ LA MAGIA DEL EXTREMO! (Si la política devolvió null pero hay solicitudes)
-                if (politica.getNombre().equals("SCAN")) {
-                    if (direccion == DireccionCabezal.SUBE) {
-                        int mover = Math.min(posPorCiclo, (totalBloques - 1) - cabezal);
-                        cabezal += mover;
-                        desplazamientoTotal += mover;
-                        if (cabezal == totalBloques - 1) direccion = DireccionCabezal.BAJA;
-                    } else if (direccion == DireccionCabezal.BAJA) {
-                        int mover = Math.min(posPorCiclo, cabezal);
-                        cabezal -= mover;
-                        desplazamientoTotal += mover;
-                        if (cabezal == 0) direccion = DireccionCabezal.SUBE;
-                    }
-                } else if (politica.getNombre().equals("C-SCAN")) {
-                    if (cabezal < totalBloques - 1) {
-                        int mover = Math.min(posPorCiclo, (totalBloques - 1) - cabezal);
+            } else if (politica.esBarrido() && !colaES.estaVacia()) {
+                // Si la política es de barrido (SCAN/CSCAN) y no hay solicitudes a la vista
+                int destinoExtremo = politica.getSiguienteDestino(cabezal, totalBloques, direccion);
+                
+                if (cabezal != destinoExtremo) {
+                    // Mueve el cabezal un paso hacia el extremo
+                    if (cabezal < destinoExtremo) {
+                        int mover = Math.min(posPorCiclo, destinoExtremo - cabezal);
                         cabezal += mover;
                         desplazamientoTotal += mover;
                     } else {
-                        cabezal = 0; // Salto sin sumar desplazamiento
-                        direccion = DireccionCabezal.SUBE;
+                        int mover = Math.min(posPorCiclo, cabezal - destinoExtremo);
+                        cabezal -= mover;
+                        desplazamientoTotal += mover;
+                    }
+                } else {
+                    // Llegamos al extremo
+                    if (politica.esCircular()) {
+                        cabezal = 0; // Salto del C-SCAN
+                    } else {
+                        // Rebote del SCAN
+                        direccion = (direccion == DireccionCabezal.SUBE) ? DireccionCabezal.BAJA : DireccionCabezal.SUBE;
                     }
                 }
                 return;

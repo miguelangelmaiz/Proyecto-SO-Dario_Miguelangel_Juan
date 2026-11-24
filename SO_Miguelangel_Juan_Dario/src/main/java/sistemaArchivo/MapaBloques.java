@@ -80,4 +80,6 @@ public class MapaBloques {
             mutex.release();
         }
     }
+    
+        public boolean[] getOcupado() { return ocupado; }
 }
