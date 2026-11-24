@@ -109,10 +109,10 @@ public class Interfaz extends javax.swing.JFrame {
             jProgressBar1.setString("RAM: " + ramUsada + " / 8192");
 
             // --- C. ACTUALIZAR COLAS ---
-            txtColaNuevos.setText("Nuevos: " + nucleo.getColaNuevos().getNombresProcesos() +
-                   "\nListos: " + nucleo.getColaListos().getNombresProcesos() +
-                   "\nBloqueados: " + nucleo.getColaBloqueados().getNombresProcesos() +
-                   "\nTerminados: " + nucleo.getTerminados().getNombresProcesos());
+           txtColaNuevos.setText("Nuevos: " + nucleo.getColaNuevos().getNombresProcesos() +
+                "\nListos: " + nucleo.getColaListos().getNombresProcesos() +
+                "\nBloqueados: " + nucleo.getColaBloqueados().getNombresProcesos() +
+                "\nTerminados: " + nucleo.getTerminados().getNombresProcesos());
             
             txtColaListosSusp.setText("Listos/Susp: " + nucleo.getColaListosSusp().getNombresProcesos());
             txtColaBloqSusp.setText("Bloq/Susp: " + nucleo.getColaBloqueadosSusp().getNombresProcesos());
