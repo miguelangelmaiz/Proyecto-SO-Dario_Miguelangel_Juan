@@ -14,7 +14,7 @@ import losEnums.DireccionCabezal;
 public class Disco implements ComponenteReloj {
     
    private int cabezal = 50;
-    private int posPorCiclo = 5; 
+    private int posPorCiclo = 1; 
     private int totalBloques = 200; // Inicializado por defecto
     private final Cola colaES = new Cola();
     
