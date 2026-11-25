@@ -61,9 +61,9 @@ El proyecto está diseñado bajo un modelo de capas donde la capa superior conoc
   
 ## 👥 Aporte cada integrante al proyecto
 
-* **Juan Moreira:** Primitivas, Hardware y enums
-* **Miguelangel Maíz:** Primitivas, SO y enums
-* **Dario Fernandez:** Semaforo y Buffers.
+* **Juan Moreira:** Disco, Bloque, las 4 políticas, suspruebas y la pestaña Disco.
+* **Miguelangel Maíz:** PCB, Nucleo, procesos de E/S, mediano plazo, 7 estados y la pestaña Computador.
+* **Dario Fernandez:** SistemaArchivos, permisos, JSON,semáforos nuevos y la pestaña Archivos
 * **En conjunto:** La interfaz Grafica de Usuario
   
 ---
