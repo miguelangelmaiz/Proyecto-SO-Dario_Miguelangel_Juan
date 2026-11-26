@@ -4,17 +4,27 @@ package sistemaArchivo;
  *
  * @author dariu
  */
-import java.util.List;
+
 
 public class FileSystemConfig {
-    // Esta clase es solo para que Gson lea y guarde el JSON
-    public NodoFSDTO[] nodos;
 
-    public static class NodoFSDTO {
-        public String ruta;
-        public boolean esDirectorio;
-        public String dueno;
-        public int bloqueInicio;
-        public int cantidadBloques;
+    public static class DiskConfigDTO {
+        public int totalBlocks;
+        public int initialHead;
+    }
+    public DiskConfigDTO diskConfig; 
+    public FileSystemDTO[] fileSystem; 
+
+    public static class FileSystemDTO {
+        public String path;
+        public String type; // "DIRECTORY" o "FILE"
+        public String owner;
+        public String permissions;
+        public int startBlock;
+        public int blocks;
+        // [AJUSTE 25-nov] Opcional. Lo escribe "Guardar JSON" con la cadena exacta de bloques,
+        // para que al volver a cargar el archivo quede en los mismos bloques. Si no viene,
+        // la cadena empieza en startBlock y sigue por los próximos bloques libres.
+        public int[] chain;
     }
 }

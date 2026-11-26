@@ -7,8 +7,7 @@ import estructuraDeDatos.ListaSimple;
  * @author jmmor
  */
 public class RelojGlobal implements Runnable {
-    
-    private volatile boolean corriendo;
+     private volatile boolean corriendo;
     private volatile int duracionCicloMs;
     private int ciclo;
     private final ListaSimple suscritos;   // ← antes era arreglo
@@ -41,21 +40,17 @@ public class RelojGlobal implements Runnable {
                 ComponenteReloj c = (ComponenteReloj) suscritos.getValue(i);
                 c.tic(ciclo);
             }
-            try {
-                Thread.sleep(duracionCicloMs);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+            // [AJUSTE 25-nov] Se duerme en tramos cortos revisando "corriendo": así Pausar
+            // detiene el reloj en menos de 20 ms SIN interrumpir el hilo a mitad de un ciclo
+            // (interrumpirlo hacía fallar los semáforos de las colas y se perdían procesos).
+            long hasta = System.currentTimeMillis() + duracionCicloMs;
+            while (corriendo && System.currentTimeMillis() < hasta) {
+                try {
+                    Thread.sleep(Math.max(1, Math.min(20, hasta - System.currentTimeMillis())));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
             }
-        }
-    }
-    
-     
-     
-     
-     
-     
-     
-     
-}
+        }}}
 

@@ -1,38 +1,51 @@
 package planificacionSO;
 import estructuraDeDatos.Cola;
 import estructuraDeDatos.Criterio;
+import losEnums.DireccionCabezal;
 import sistemaOperativo.SolicitudES;
 /**
  *
  * @author jmmor
  */
 public class PoliticaSCAN implements PoliticaDisco{
-      @Override
-    public SolicitudES elegir(Cola colaES, int cabezalActual) {
-        if (colaES.estaVacia()) return null;
-        
-        SolicitudES mejor = null;
-        int distanciaMinima = Integer.MAX_VALUE;
-
-        // Busca el más cercano que esté por delante (o igual)
-        for (int i = 0; i < colaES.getTamano(); i++) {
-            SolicitudES s = (SolicitudES) colaES.desencolar();
-            if (s.getBloqueDestino() >= cabezalActual) {
-                int dist = s.getBloqueDestino() - cabezalActual;
-                if (dist < distanciaMinima) {
-                    distanciaMinima = dist;
-                    mejor = s;
-                }
-            }
-            colaES.encolar(s);
-        }
-        
-        // Si no hay nada adelante, devolvemos null para que el disco vaya al final
-        return mejor; 
+     static boolean enDireccion(int destino, int cabezal, DireccionCabezal dir) {
+        return (dir == DireccionCabezal.SUBE) ? destino >= cabezal : destino <= cabezal;
     }
-    
+
     @Override
-    public String getNombre() { 
-        return "SCAN"; }
-    
+    public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
+        if (colaES.estaVacia()) return null;
+
+        Criterio masCercanaEnDireccion = (a, b) -> {
+            int da = ((SolicitudES) a).getBloqueDestino();
+            int db = ((SolicitudES) b).getBloqueDestino();
+            boolean aSirve = enDireccion(da, cabezalActual, dir);
+            boolean bSirve = enDireccion(db, cabezalActual, dir);
+            if (aSirve != bSirve) return aSirve;          // la que está en el camino gana
+            return Math.abs(da - cabezalActual) < Math.abs(db - cabezalActual);
+        };
+        SolicitudES mejor = (SolicitudES) colaES.verMejor(masCercanaEnDireccion);
+        if (mejor == null || !enDireccion(mejor.getBloqueDestino(), cabezalActual, dir)) return null;
+        return mejor;
+    }
+
+    @Override
+    public String getNombre() { return "SCAN"; }
+
+    @Override
+    public losEnums.TipoPoliticaDisco getTipo() { return losEnums.TipoPoliticaDisco.SCAN; }
+
+    @Override
+    public boolean esBarrido() { return true; }
+
+    @Override
+    public boolean esCircular() { return false; }
+
+    @Override
+    public int getSiguienteDestino(int cabezal, int maxBloques, DireccionCabezal dir) {
+        // Si va subiendo, va al final. Si va bajando, va al 0
+        return (dir == DireccionCabezal.SUBE) ? maxBloques - 1 : 0;
+    }
 }
+    
+

@@ -15,6 +15,7 @@ public class NodoFS {
     private int bloqueInicio; // -1 si es directorio o archivo sin bloques
     private int cantidadBloques;
     private ListaSimple hijos; // Solo se usa si es directorio
+    private String creadoPor = "JSON"; // [AJUSTE 25-nov] proceso que lo creó (columna de la JTable)
 
     public NodoFS(String nombre, boolean esDirectorio, String dueno) {
         this.nombre = nombre;
@@ -41,4 +42,9 @@ public class NodoFS {
     public int getCantidadBloques() { return cantidadBloques; }
     public void setCantidadBloques(int cantidadBloques) { this.cantidadBloques = cantidadBloques; }
     public ListaSimple getHijos() { return hijos; }
+    public void setDueno(String dueno) { this.dueno = dueno; }
+    public String getCreadoPor() { return creadoPor; }
+    public void setCreadoPor(String creadoPor) { this.creadoPor = creadoPor; }
+    /** permisoLectura = true significa "public" en el JSON; false, "private". */
+    public boolean isPublico() { return permisoLectura; }
 }
