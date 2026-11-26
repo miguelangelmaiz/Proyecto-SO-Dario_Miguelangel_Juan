@@ -47,6 +47,17 @@ private static int contadorId = 1;
     private String dueno;              // "admin", "user1", etc.
     private boolean enSwap;            // Si está suspendido en el disco
 
+    // [AJUSTE 25-nov] Campos para el CRUD completo y para el planificador a mediano plazo
+    private boolean esDirectorio = false;   // CREAR un directorio en vez de un archivo
+    private boolean publico = true;         // permiso del archivo que se crea
+    private String nuevoNombre = null;      // para ACTUALIZAR (renombrar)
+    private boolean ioSolicitada = false;   // el proceso de E/S hace su operación UNA vez
+    private boolean enRam = false;          // tiene memoria asignada en la RAM
+    private int primerBloqueSwap = -1;      // primer bloque de su cadena en el área de intercambio
+    private boolean suspensionPendiente = false;  // el disco está escribiendo el proceso en el swap
+    private boolean reactivacionPendiente = false; // el disco está leyendo el proceso del swap
+    private boolean eventoOcurrido = false; // terminó su E/S mientras se suspendía
+
     public PCB(String nombre, TipoProceso tipo, int prioridad,
                int memoria, int deadline, int restante, int computador) {
         this.id = contadorId++;
@@ -124,6 +135,38 @@ private static int contadorId = 1;
     public boolean isEnSwap() { return enSwap; }
     public void setEnSwap(boolean enSwap) { this.enSwap = enSwap; }
 
+    public boolean isEsDirectorio() { return esDirectorio; }
+    public void setEsDirectorio(boolean esDirectorio) { this.esDirectorio = esDirectorio; }
+    public boolean isPublico() { return publico; }
+    public void setPublico(boolean publico) { this.publico = publico; }
+    public String getNuevoNombre() { return nuevoNombre; }
+    public void setNuevoNombre(String nuevoNombre) { this.nuevoNombre = nuevoNombre; }
+    public boolean isIoSolicitada() { return ioSolicitada; }
+    public void setIoSolicitada(boolean ioSolicitada) { this.ioSolicitada = ioSolicitada; }
+    public boolean isEnRam() { return enRam; }
+    public void setEnRam(boolean enRam) { this.enRam = enRam; }
+    public int getPrimerBloqueSwap() { return primerBloqueSwap; }
+    public void setPrimerBloqueSwap(int b) { this.primerBloqueSwap = b; this.enSwap = b >= 0; }
+    public boolean isSuspensionPendiente() { return suspensionPendiente; }
+    public void setSuspensionPendiente(boolean v) { this.suspensionPendiente = v; }
+    public boolean isReactivacionPendiente() { return reactivacionPendiente; }
+    public void setReactivacionPendiente(boolean v) { this.reactivacionPendiente = v; }
+    public boolean isEventoOcurrido() { return eventoOcurrido; }
+    public void setEventoOcurrido(boolean v) { this.eventoOcurrido = v; }
+
+    /**
+     * [AJUSTE 25-nov] La operación de E/S cuenta como una instrucción (en modo sistema),
+     * pero no puede marcar al proceso como TERMINADO antes de que el disco la atienda.
+     * Por eso no se usa ejecutarInstruccion() aquí.
+     */
+    public void consumirInstruccionSistema() {
+        if (restante > 0) {
+            pc++;
+            mar++;
+            restante--;
+        }
+    }
+
     // ---------- Métodos ----------
     public void ejecutarInstruccion() {
         if (restante > 0) {
@@ -139,7 +182,8 @@ private static int contadorId = 1;
 
     @Override
     public String toString() {
-        return "P" + id + "-" + nombre + "[" + estado + "]";
+        String marca = suspensionPendiente ? " →swap" : (reactivacionPendiente ? " ←swap" : "");
+        return "P" + id + "-" + nombre + "[" + estado + marca + "]";
     }
 
     @Override

@@ -18,6 +18,7 @@ import gui.Interfaz;
  *
  * @author Miguel
  */
+
 public class main {
     public static void main(String[] args) {
           try {
@@ -38,6 +39,6 @@ public class main {
         });
     }
 }
-       
+
     
 

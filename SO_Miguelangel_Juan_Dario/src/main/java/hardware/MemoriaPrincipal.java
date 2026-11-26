@@ -45,6 +45,13 @@ public class MemoriaPrincipal {
         usada -= kb;
         return true;
     }
+    /** [AJUSTE 25-nov] Aplica "ramCapacity" del JSON. Solo si cabe lo que ya está usado. */
+    public boolean setTotal(int totalKB) {
+        if (totalKB <= 0 || totalKB < usada) return false;
+        this.total = totalKB;
+        return true;
+    }
+
     public void reset(){ 
     this.usada = 0; 
     

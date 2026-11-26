@@ -8,7 +8,7 @@ import java.util.concurrent.Semaphore;
 public class Cola {
     
     
-    private Nodo cabeza;
+     private Nodo cabeza;
     private Nodo cola;
     private int tamano;
     
@@ -202,6 +202,26 @@ public class Cola {
         }
     }
 
+    /** [AJUSTE 25-nov] Copia de los elementos (con el semáforo tomado), para recorrer la cola sin chocar con el reloj. */
+    public Object[] aArreglo() {
+        try {
+            mutex.acquire();
+            Object[] r = new Object[tamano];
+            Nodo aux = cabeza;
+            int k = 0;
+            while (aux != null && k < r.length) {
+                r[k++] = aux.getDato();
+                aux = aux.getpNext();
+            }
+            return r;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new Object[0];
+        } finally {
+            mutex.release();
+        }
+    }
+
     public void imprimir() {
         try {
             mutex.acquire();
@@ -218,6 +238,5 @@ public class Cola {
         }
     }
     
-
     
 }
