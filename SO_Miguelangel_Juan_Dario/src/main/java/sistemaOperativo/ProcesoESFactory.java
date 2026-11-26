@@ -1,4 +1,5 @@
 package sistemaOperativo;
+
 import losEnums.TipoProceso;
 import losEnums.TipoOperacionES;
 /**
@@ -15,13 +16,17 @@ public class ProcesoESFactory {
                                   int instrucciones,
                                   String operacionTexto,
                                   String ruta,
-                                  String dueno) { // <-- NUEVO PARÁMETRO
+                                  String dueno,
+                                  int bloques,
+                                  boolean esDirectorio,
+                                  boolean publico,
+                                  String nuevoNombre) {
         if (cluster == null) return Resultado.error("El sistema no está inicializado.");
 
         TipoProceso tipo;
         try {
             tipo = TipoProceso.valueOf(tipoTexto);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             return Resultado.error("Tipo de proceso inválido: " + tipoTexto);
         }
 
@@ -32,16 +37,13 @@ public class ProcesoESFactory {
             return Resultado.error(e.getMessage());
         }
 
-        TipoOperacionES operacion;
-        try {
-            operacion = TipoOperacionES.valueOf(operacionTexto);
-        } catch (IllegalArgumentException e) {
+        TipoOperacionES operacion = TipoOperacionES.desdeTexto(operacionTexto);
+        if (tipo == TipoProceso.IO_BOUND && operacion == null) {
             return Resultado.error("Operación inválida: " + operacionTexto);
         }
 
-        // Delegar al Núcleo (ya con el dueño)
         return cluster.getComputador(0).getNucleo().crearProcesoES(
                 nombre, tipo, prioridad, memoria, deadline, instrucciones,
-                operacion, ruta, 1, dueno); // <-- ENVIAMOS EL DUEÑO
+                operacion, ruta, bloques, dueno, esDirectorio, publico, nuevoNombre);
     }
 }

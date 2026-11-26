@@ -36,8 +36,9 @@ public class Cluster {
         this.disco.setCluster(this); // Para que el disco pueda avisarle al núcleo
         this.reloj.suscribir(this.disco); // El disco ahora late con el reloj
 
-        // --- NUEVO: Inicializamos el FS con 500 bloques ---
-        this.sistemaArchivos = new SistemaArchivos(500);
+        // [AJUSTE 25-nov] El FS arranca con el mismo tamaño que el disco (antes 500 vs 200).
+        // Al cargar el JSON se reconstruye con diskConfig.totalBlocks.
+        this.sistemaArchivos = new SistemaArchivos(this.disco.getTotalBloques());
 
         for (int i = 0; i < ramsPorComputador.length; i++) {
             Computador c = new Computador(i + 1, ramsPorComputador[i], new FCFS());
@@ -100,7 +101,15 @@ public int getSwapSizeBlocks() { return swapSizeBlocks; }
 
     public void iniciar() {
         if (hiloReloj != null && hiloReloj.isAlive()) {
-            return; 
+            // [AJUSTE 25-nov] Si se acaba de pausar, el hilo viejo puede estar terminando:
+            // se le espera un momento para que "Iniciar" justo después de "Pausar" funcione.
+            if (reloj.isCorriendo()) return;
+            try {
+                hiloReloj.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
         }
         reloj.iniciar();
         hiloReloj = new Thread(reloj, "reloj-avilaos");
@@ -111,7 +120,12 @@ public int getSwapSizeBlocks() { return swapSizeBlocks; }
     public void detener() {
         reloj.detener();
         if (hiloReloj != null) {
-            hiloReloj.interrupt();
+            // [AJUSTE 25-nov] Ya no se interrumpe el hilo: termina el ciclo en curso y se detiene solo.
+            try {
+                hiloReloj.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }
