@@ -1,0 +1,71 @@
+{
+  "globalConfig": {
+    "cycleDurationMs": 300,
+    "swapSizeBlocks": 100,
+    "initialDiskPolicy": "FIFO"
+  },
+  "computer": {
+    "ramCapacity": 1024,
+    "policy": "FCFS",
+    "quantum": 0
+  },
+  "processes": [
+    {
+      "name": "Mkdir_Proyectos",
+      "memory": 16,
+      "deadline": 600,
+      "instructions": 1,
+      "targetPath": "/proyectos",
+      "operation": "CREATE",
+      "fileSizeBlocks": 0
+    },
+    {
+      "name": "Crea_Tesis",
+      "memory": 16,
+      "deadline": 600,
+      "instructions": 1,
+      "targetPath": "/proyectos/tesis.doc",
+      "operation": "CREATE",
+      "fileSizeBlocks": 5
+    },
+    {
+      "name": "Renombra_Notas",
+      "memory": 16,
+      "deadline": 600,
+      "instructions": 1,
+      "targetPath": "/usuarios/notas.txt",
+      "operation": "UPDATE",
+      "fileSizeBlocks": 0,
+      "newName": "apuntes.txt"
+    },
+    {
+      "name": "User2_Lee_Publico",
+      "memory": 16,
+      "deadline": 600,
+      "instructions": 1,
+      "targetPath": "/usuarios/data.csv",
+      "operation": "READ",
+      "fileSizeBlocks": 0,
+      "owner": "user2"
+    },
+    {
+      "name": "User2_Lee_Privado",
+      "memory": 16,
+      "deadline": 600,
+      "instructions": 1,
+      "targetPath": "/usuarios/img1.png",
+      "operation": "READ",
+      "fileSizeBlocks": 0,
+      "owner": "user2"
+    },
+    {
+      "name": "Borra_Sistema",
+      "memory": 16,
+      "deadline": 600,
+      "instructions": 1,
+      "targetPath": "/sistema",
+      "operation": "DELETE",
+      "fileSizeBlocks": 0
+    }
+  ]
+}

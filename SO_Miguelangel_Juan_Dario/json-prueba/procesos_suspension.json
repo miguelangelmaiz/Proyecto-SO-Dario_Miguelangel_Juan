@@ -1,0 +1,60 @@
+{
+  "globalConfig": {
+    "cycleDurationMs": 300,
+    "swapSizeBlocks": 60,
+    "initialDiskPolicy": "SSTF"
+  },
+  "computer": {
+    "ramCapacity": 100,
+    "policy": "FCFS",
+    "quantum": 0
+  },
+  "processes": [
+    {
+      "name": "Lector_A",
+      "memory": 30,
+      "deadline": 800,
+      "instructions": 3,
+      "targetPath": "/usuarios/video.mp4",
+      "operation": "READ",
+      "fileSizeBlocks": 0
+    },
+    {
+      "name": "Lector_B",
+      "memory": 30,
+      "deadline": 800,
+      "instructions": 3,
+      "targetPath": "/sistema/boot.bin",
+      "operation": "READ",
+      "fileSizeBlocks": 0
+    },
+    {
+      "name": "Lector_C",
+      "memory": 30,
+      "deadline": 800,
+      "instructions": 3,
+      "targetPath": "/usuarios/data.csv",
+      "operation": "READ",
+      "fileSizeBlocks": 0
+    },
+    {
+      "name": "Calculo_Grande",
+      "memory": 60,
+      "deadline": 800,
+      "instructions": 30,
+      "targetPath": "",
+      "operation": "",
+      "fileSizeBlocks": 0
+    },
+    {
+      "name": "Crea_Reporte",
+      "memory": 20,
+      "deadline": 800,
+      "instructions": 2,
+      "targetPath": "/usuarios/reporte.txt",
+      "operation": "CREATE",
+      "fileSizeBlocks": 4,
+      "owner": "user1"
+    }
+  ]
+}
