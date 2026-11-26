@@ -27,6 +27,9 @@ public class PoliticaSSTF implements PoliticaDisco {
     public String getNombre() { return "SSTF"; }
 
     @Override
+    public losEnums.TipoPoliticaDisco getTipo() { return losEnums.TipoPoliticaDisco.SSTF; }
+
+    @Override
     public boolean esBarrido() { return false; }
 
     @Override

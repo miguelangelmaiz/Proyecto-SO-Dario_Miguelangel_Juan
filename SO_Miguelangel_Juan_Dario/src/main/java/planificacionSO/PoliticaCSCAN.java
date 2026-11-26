@@ -1,6 +1,7 @@
 package planificacionSO;
 
 import estructuraDeDatos.Cola;
+import estructuraDeDatos.Criterio;
 import sistemaOperativo.SolicitudES;
 import losEnums.DireccionCabezal;
 /**
@@ -12,28 +13,25 @@ public class PoliticaCSCAN implements PoliticaDisco{
    @Override
     public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
         if (colaES.estaVacia()) return null;
-        
-        SolicitudES mejor = null;
-        int distMin = Integer.MAX_VALUE;
-        
-        for (int i = 0; i < colaES.getTamano(); i++) {
-            SolicitudES s = (SolicitudES) colaES.desencolar();
-            int destino = s.getBloqueDestino();
-            
-            if (destino >= cabezalActual) {
-                int dist = Math.abs(destino - cabezalActual);
-                if (dist < distMin) {
-                    distMin = dist;
-                    mejor = s;
-                }
-            }
-            colaES.encolar(s);
-        }
-        return mejor; 
+
+        Criterio masCercanaArriba = (a, b) -> {
+            int da = ((SolicitudES) a).getBloqueDestino();
+            int db = ((SolicitudES) b).getBloqueDestino();
+            boolean aSirve = da >= cabezalActual;
+            boolean bSirve = db >= cabezalActual;
+            if (aSirve != bSirve) return aSirve;
+            return Math.abs(da - cabezalActual) < Math.abs(db - cabezalActual);
+        };
+        SolicitudES mejor = (SolicitudES) colaES.verMejor(masCercanaArriba);
+        if (mejor == null || mejor.getBloqueDestino() < cabezalActual) return null;
+        return mejor;
     }
 
     @Override
     public String getNombre() { return "C-SCAN"; }
+
+    @Override
+    public losEnums.TipoPoliticaDisco getTipo() { return losEnums.TipoPoliticaDisco.C_SCAN; }
 
     @Override
     public boolean esBarrido() { return true; }

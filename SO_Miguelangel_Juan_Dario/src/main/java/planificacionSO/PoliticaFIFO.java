@@ -21,6 +21,9 @@ public class PoliticaFIFO implements PoliticaDisco {
     public String getNombre() { return "FIFO"; }
 
     @Override
+    public losEnums.TipoPoliticaDisco getTipo() { return losEnums.TipoPoliticaDisco.FIFO; }
+
+    @Override
     public boolean esBarrido() { return false; }
 
     @Override

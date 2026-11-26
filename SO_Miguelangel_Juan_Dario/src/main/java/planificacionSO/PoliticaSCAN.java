@@ -1,5 +1,6 @@
 package planificacionSO;
 import estructuraDeDatos.Cola;
+import estructuraDeDatos.Criterio;
 import losEnums.DireccionCabezal;
 import sistemaOperativo.SolicitudES;
 /**
@@ -7,33 +8,32 @@ import sistemaOperativo.SolicitudES;
  * @author jmmor
  */
 public class PoliticaSCAN implements PoliticaDisco{
-     @Override
+     static boolean enDireccion(int destino, int cabezal, DireccionCabezal dir) {
+        return (dir == DireccionCabezal.SUBE) ? destino >= cabezal : destino <= cabezal;
+    }
+
+    @Override
     public SolicitudES elegir(Cola colaES, int cabezalActual, DireccionCabezal dir, int maxBloques) {
         if (colaES.estaVacia()) return null;
-        
-        SolicitudES mejor = null;
-        int distMin = Integer.MAX_VALUE;
-        
-        for (int i = 0; i < colaES.getTamano(); i++) {
-            SolicitudES s = (SolicitudES) colaES.desencolar();
-            int destino = s.getBloqueDestino();
-            
-            if ((dir == DireccionCabezal.SUBE && destino >= cabezalActual) ||
-                (dir == DireccionCabezal.BAJA && destino <= cabezalActual)) {
-                
-                int dist = Math.abs(destino - cabezalActual);
-                if (dist < distMin) {
-                    distMin = dist;
-                    mejor = s;
-                }
-            }
-            colaES.encolar(s);
-        }
-        return mejor; 
+
+        Criterio masCercanaEnDireccion = (a, b) -> {
+            int da = ((SolicitudES) a).getBloqueDestino();
+            int db = ((SolicitudES) b).getBloqueDestino();
+            boolean aSirve = enDireccion(da, cabezalActual, dir);
+            boolean bSirve = enDireccion(db, cabezalActual, dir);
+            if (aSirve != bSirve) return aSirve;          // la que está en el camino gana
+            return Math.abs(da - cabezalActual) < Math.abs(db - cabezalActual);
+        };
+        SolicitudES mejor = (SolicitudES) colaES.verMejor(masCercanaEnDireccion);
+        if (mejor == null || !enDireccion(mejor.getBloqueDestino(), cabezalActual, dir)) return null;
+        return mejor;
     }
 
     @Override
     public String getNombre() { return "SCAN"; }
+
+    @Override
+    public losEnums.TipoPoliticaDisco getTipo() { return losEnums.TipoPoliticaDisco.SCAN; }
 
     @Override
     public boolean esBarrido() { return true; }
