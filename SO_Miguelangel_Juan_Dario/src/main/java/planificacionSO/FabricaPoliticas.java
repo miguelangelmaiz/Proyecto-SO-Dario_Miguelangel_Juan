@@ -16,7 +16,7 @@ public class FabricaPoliticas {
     }
 
     /**
-     * [AJUSTE 25-nov] Lleva el texto del JSON ("RR", "ROUND_ROBIN", "PRIORITY"...) al nombre
+     *  Lleva el texto del JSON ("RR", "ROUND_ROBIN", "PRIORITY"...) al nombre
      * que usa el combo de la interfaz. Así el JSON y la GUI hablan el mismo idioma.
      */
     public static String normalizar(String texto) {

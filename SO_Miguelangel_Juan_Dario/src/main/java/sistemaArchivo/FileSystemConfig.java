@@ -22,7 +22,7 @@ public class FileSystemConfig {
         public String permissions;
         public int startBlock;
         public int blocks;
-        // [AJUSTE 25-nov] Opcional. Lo escribe "Guardar JSON" con la cadena exacta de bloques,
+        // Lo escribe "Guardar JSON" con la cadena exacta de bloques,
         // para que al volver a cargar el archivo quede en los mismos bloques. Si no viene,
         // la cadena empieza en startBlock y sigue por los próximos bloques libres.
         public int[] chain;
